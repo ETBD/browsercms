@@ -45,9 +45,9 @@ module Cms
       # We must be showing the page outside of the CMS
       # So we will show the error page
       if status == :not_found
-        return raise ActionController::RoutingError.new('Not Found')
+        render :file => Gem.loaded_specs['theme'].full_gem_path + "/public/404", :layout => false, :status => status
       else
-        return render :layout => false, :status => status
+        render :file => Gem.loaded_specs['theme'].full_gem_path + "/public/500", :layout => false, :status => status
       end
     end
 
