@@ -45,9 +45,9 @@ module Cms
       # We must be showing the page outside of the CMS
       # So we will show the error page
       if status == :not_found
-        render :file => "#{Rails.root}/public/404", :layout => false, :status => status
+        return raise ActionController::RoutingError.new('Not Found')
       else
-        render :file => "#{Rails.root}/public/500", :layout => false, :status => status
+        return render :layout => false, :status => status
       end
     end
 
@@ -57,7 +57,7 @@ module Cms
     def prepare_connectables_for_render
       @_connectors = @page.connectors.for_page_version(@page.version)
       @_connectables = @_connectors.map(&:connectable_with_deleted)
-    
+
       unless (logged_in? && current_user.able_to?(:administrate, :edit_content, :publish_content))
         worst_exception = nil
         @_connectables.each do |c|
