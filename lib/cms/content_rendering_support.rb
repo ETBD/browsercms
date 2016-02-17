@@ -40,24 +40,46 @@ module Cms
     def handle_error_with_cms_page(error_page_path, exception, status, options={})
 
       # If we are in the CMS, we just want to show the exception
+      if perform_caching
+        return handle_server_error(exception) if cms_site?
+      else
         return handle_server_error(exception) if current_user.able_to?(:edit_content, :publish_content)
+      end
 
       # We must be showing the page outside of the CMS
       # So we will show the error page
-      if status == :not_found
-        render :file => Gem.loaded_specs['theme'].full_gem_path + "/public/404", :layout => false, :status => status
+      if @page = Cms::Page.find_live_by_path(error_page_path)
+        logger.debug "Rendering Error Page: #{@page.inspect}"
+        @mode = "view"
+        @show_page_toolbar = false
+
+        # copy new instance variables to the template
+        %w[page mode show_page_toolbar].each do |v|
+          @template.instance_variable_set("@#{v}", instance_variable_get("@#{v}"))
+        end
+
+        # clear out any content already captured
+        # by previous attempts to render the page within this request
+        @template.instance_variables.select{|v| v =~ /@content_for_/ }.each do |v|
+          @template.instance_variable_set("#{v}", nil)
+        end
+
+        prepare_connectables_for_render
+
+        # The error pages are ALWAYS html since they are managed by the CMS as normal pages.
+        # So .gif or .jpg requests that throw errors will return html rather than a format warning.
+        render :layout => determine_page_layout, :template => 'cms/content/show', :status => status, :formats=>[:html]
       else
-        render :file => Gem.loaded_specs['theme'].full_gem_path + "/public/500", :layout => false, :status => status
+        handle_server_error(exception)
       end
     end
-
 
     # If any of the page's connectables (portlets, etc) are renderable, they may have a render method
     # which does "controller" stuff, so we need to get that run before rendering the page.
     def prepare_connectables_for_render
       @_connectors = @page.connectors.for_page_version(@page.version)
       @_connectables = @_connectors.map(&:connectable_with_deleted)
-
+    
       unless (logged_in? && current_user.able_to?(:administrate, :edit_content, :publish_content))
         worst_exception = nil
         @_connectables.each do |c|
