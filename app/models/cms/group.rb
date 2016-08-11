@@ -37,7 +37,7 @@ module Cms
       end
     end
 
-
+    scope :public_access, -> { where(["#{Cms::GroupType.table_name}.cms_access = ?", false]).includes(:group_type).references(:group_type) }
     scope :cms_access, -> { where(["#{Cms::GroupType.table_name}.cms_access = ?", true]).includes(:group_type).references(:group_type) }
 
     def guest?
