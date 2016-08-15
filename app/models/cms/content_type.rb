@@ -51,7 +51,7 @@ module Cms
         subclasses << Cms::Portlet
         subclasses.uniq! { |k| k.name } # filter duplicate classes
         subclasses.map do |klass|
-          unless klass < Cms::Portlet
+          unless klass < Cms::Portlet || klass.name.nil?
             Cms::ContentType.new(name: klass.name)
           end
         end.compact.sort { |a, b| a.name <=> b.name }
