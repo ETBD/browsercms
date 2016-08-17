@@ -1,8 +1,13 @@
 <div class="cms-container" data-container="<%= container %>">
   <%= content %>
-  <%= image_tag "cms/plus.png",
-                :class => 'cms-add-content',
-                :data => {:remote => cms.new_page_component_path(:connect_to_page_id => @page, :connect_to_container => name)}
-  %>
+  <br />
+  <div class="cms-add-container">
+    <%= image_tag "cms/plus.png",
+                  :title => "Add Content to #{container}",
+                  :class => 'cms-add-content',
+                  :data => {:remote => cms.new_page_component_path(:connect_to_page_id => @page, :connect_to_container => name)}
+    %>
+  </div>
+  <br/>
 </div>
 

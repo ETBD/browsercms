@@ -2,3 +2,28 @@
 
 // Need to style 'EDIT'/Pencil button so it floats right and over elements for a content block
 // Need to style 'PLUS' so it fits in the center of a space.
+
+.cms-edit-content-link{
+  background:white;
+  z-index: 999999;
+  float:left;
+  padding:5px;
+  padding-bottom: 0px;
+  border-radius: 10px;
+  border:solid #CCCCCC;
+}
+
+.cms-add-content{
+  padding:5px;
+  border-radius: 10px;
+  border:solid #CCCCCC;
+  background:white;
+  cursor: pointer;
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cms-add-container{
+  width:100%;
+}
