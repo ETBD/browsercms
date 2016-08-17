@@ -14,7 +14,7 @@
             :access_icon => status_icon(access_status),
             :parent => parent
     } %>
-    
+
     <%
       # keep an ever growing list of users who have cache entries
       cache_users = Rails.cache.read( "cache_fragment_sitemap_users" ) || Set.new
@@ -22,7 +22,7 @@
       Rails.cache.write( "cache_fragment_sitemap_users", cache_users )
     %>
 
-    <% cache( "cache_fragment_sitemap_#{current_user.id}_#{node.path}" ) do %>
+    <%# cache( "cache_fragment_sitemap_#{current_user.id}_#{node.path}" ) do %>
       <% children.each do |child_section_node| %>
             <%= render :partial => child_section_node.node.partial_for,
                      :locals => {:access_icon => access_status,
@@ -31,8 +31,8 @@
                                  :child_hash => child_hash[key],
                                  :key => child_section_node
                      } %>
-        
+
       <% end %>
-    <% end %>
+    <%# end %>
   </li>
 </ul>
