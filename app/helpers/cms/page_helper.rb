@@ -141,7 +141,7 @@ module Cms
       else
         items << content_tag(:li, current_page.page_title)
       end
-      content_tag(:ul, "\n  #{items.join("\n  ")}\n".html_safe, :class => "breadcrumbs")
+      content_tag(:ul, "\n  #{items.join("\n \/ ")}\n".html_safe, :class => "breadcrumbs")
     end
 
     def render_portlet(name)
