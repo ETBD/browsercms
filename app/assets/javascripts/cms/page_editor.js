@@ -7,32 +7,32 @@
 //= require 'cms/ajax'
 
 // Since we are within the page editing iframe, add a 'target=_top' to all links so they refresh the entire page.
-jQuery(function($){
+jQuery(function ($) {
   $('a').attr('target', '_top');
 });
 
-jQuery(function($){
+jQuery(function ($) {
   $.cms_editor = {
     // Returns the widget that a user has currently selected.
     // @return [JQuery.Element]
-    selectedElement: function() {
+    selectedElement: function () {
       var editor = CKEDITOR.currentInstance;
       return $(editor.element.$);
     },
-    selectedConnector: function() {
+    selectedConnector: function () {
       var parents = $.cms_editor.selectedElement().parents();
       return $.cms_editor.selectedElement().parents(".connector");
     },
     // Reload the parent window
-    reload: function() {
+    reload: function () {
       window.parent.location.reload();
     },
-    deleteContent: function() {
+    deleteContent: function () {
       var sc = $.cms_editor.selectedConnector();
       var remove_path = sc.data('remove');
       $.cms_ajax.delete({
         url: remove_path,
-        success: function() {
+        success: function () {
           sc.remove();
         },
         beforeSend: $.cms_ajax.asJSON()
@@ -41,25 +41,25 @@ jQuery(function($){
     // Move content up or down. Will save any updates (after moving).
     //
     // @param [String] direction 'move-up' or 'move-down'
-    moveContent: function(editor, direction) {
-      var reload = function() {
+    moveContent: function (editor, direction) {
+      var reload = function () {
         $.cms_editor.reload();
       };
       var path = $.cms_editor.selectedConnector().data(direction);
       $.cms_ajax.put({
         url: path,
-        success: function() {
+        success: function () {
           if (editor.checkDirty()) {
             $.cms_editor.saveChanges(editor, reload);
           } else {
             reload.apply();
           }
         }
-		//,beforeSend: $.cms_ajax.asJSON()
+        //,beforeSend: $.cms_ajax.asJSON()
       });
 
     },
-    updatePageStatus: function(data) {
+    updatePageStatus: function (data) {
       // Update the Page Status indicator
       var status_label = $('#page-status-label', window.parent.document);
       status_label.removeClass('draft published');
@@ -74,7 +74,7 @@ jQuery(function($){
 
       // Update the paths for connectors, so that they can be moved after ending.
       var connectors = $("[data-container='" + data.container + "'] .connector");
-      for(var i = 0; i < connectors.length; i++){
+      for (var i = 0; i < connectors.length; i++) {
         $(connectors[i]).attr('data-move-up', data.routes[i].move_up);
         $(connectors[i]).attr('data-move-down', data.routes[i].move_down);
         $(connectors[i]).attr('data-remove', data.routes[i].remove);
@@ -86,7 +86,7 @@ jQuery(function($){
     // Saves the changes using AJAX for the given editor.
     //
     // @param [CKEditor] editor
-    saveChanges: function(currentEditor, afterSave) {
+    saveChanges: function (currentEditor, afterSave) {
       var block_id = currentEditor.name;
       var block = $("#" + block_id);
       var attribute = block.data('attribute');
@@ -108,7 +108,7 @@ jQuery(function($){
 
       $.cms_ajax.put({
         url: path,
-        success: function(data) {
+        success: function (data) {
           $.cms_editor.updatePageStatus(data);
           currentEditor.resetDirty();
           if (afterSave) {
@@ -116,17 +116,17 @@ jQuery(function($){
           }
         },
         data: message
-		//,beforeSend: $.cms_ajax.asJS()
+        //,beforeSend: $.cms_ajax.asJS()
       });
     }
   };
 });
 
 // On Ready
-jQuery(function($){
+jQuery(function ($) {
 
   // Click the 'Add Content' button (PLUS) when editing content.
-  $('.cms-add-content').click(function() {
+  $('.cms-add-content').click(function () {
     $('#modal-add-content', window.parent.document).modal({
       remote: $(this).data('remote')
     });
@@ -135,12 +135,12 @@ jQuery(function($){
   CKEDITOR.disableAutoInline = true;
 
   // Titles
-  $("#page_title").each(function() {
+  $("#page_title").each(function () {
     var id = $(this).attr('id');
     CKEDITOR.inline(id, {
       toolbar: 'page_title',
       on: {
-        blur: function(event) {
+        blur: function (event) {
           $.cms_editor.saveChanges(event.editor);
         }
       }
@@ -148,12 +148,12 @@ jQuery(function($){
   });
 
   // Create editors for each content-block on the page.
-  $(".content-block").each(function() {
+  $(".content-block").each(function () {
     var id = $(this).attr('id');
     editor = CKEDITOR.inline(id, {
       toolbar: 'inline',
       on: {
-        blur: function(event) {
+        blur: function (event) {
           $.cms_editor.saveChanges(event.editor);
         }
       }
@@ -185,5 +185,40 @@ jQuery(function($){
 //        }
 //
 //    });
+
+  setTimeout(function () {
+    $(".connector").each(function (index, item) {
+      var LINKWIDTH = $('.cms-edit-content-link').outerWidth()
+
+      var mainElement = $(item).children().first();
+      var editLink = $(mainElement).parent().find('.cms-edit-content-link');
+      var upLink = $(mainElement).parent().find('.cms-move-up-content-link');
+      var downLink = $(mainElement).parent().find('.cms-move-down-content-link');
+      var removeLink = $(mainElement).parent().find('.cms-remove-content-link');
+
+      var mainPosition = $(mainElement).position();
+
+      $(editLink).css({
+        position: "absolute",
+        top: mainPosition.top + "px",
+        left: mainPosition.left + "px"
+      }).show();
+      $(upLink).css({
+        position: "absolute",
+        top: mainPosition.top + "px",
+        left: (mainPosition.left + LINKWIDTH) + "px"
+      }).show();
+      $(downLink).css({
+        position: "absolute",
+        top: mainPosition.top + "px",
+        left: (mainPosition.left + LINKWIDTH * 2) + "px"
+      }).show();
+      $(removeLink).css({
+        position: "absolute",
+        top: mainPosition.top + "px",
+        left: (mainPosition.left + LINKWIDTH * 3) + "px"
+      }).show();
+    });
+  }, 1000);
 
 });
