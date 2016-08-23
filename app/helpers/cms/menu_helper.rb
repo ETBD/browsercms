@@ -19,6 +19,7 @@ module Cms
     # * <tt>:id</tt> - The id for the menu item
     # * <tt>:selected</tt> - Boolean value to indicate whether the menu item is the current page
     # * <tt>:target</tt> - The target attribute for the link
+    # * <tt>:has_children</tt> - Boolean value to indicate whether the menu item has children
     # * <tt>:children</tt> - An array of hashes containing the child menu items. This is where the
     #   tree structure comes in.
     #
@@ -142,6 +143,9 @@ module Cms
           item[:url] = page_or_link.try(:path) || '#'
           item[:name] = node.name
           item[:target] = "_blank" if page_or_link.respond_to?(:new_window?) && page_or_link.new_window?
+          if section_node.section? && !node.visible_child_nodes.empty?
+            item[:has_children] = true
+          end
           
           # Now if this is a section, we do the child nodes, 
           # but only if the show_all_siblings parameter is true, 
