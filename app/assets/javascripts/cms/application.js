@@ -14,5 +14,6 @@
 //= require cms/form_builder
 //= require cms/sitemap
 //= require bootstrap
+//= require bcms/ckeditor
 //
 
