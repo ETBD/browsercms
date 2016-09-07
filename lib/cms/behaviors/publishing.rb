@@ -30,7 +30,7 @@ module Cms
           scope :unpublished, -> {
             if self.versioned?
               q = "#{connection.quote_table_name(version_table_name)}.#{connection.quote_column_name('version')} > " +
-                  "#{connection.quote_table_name(table_name)}.#{connection.quote_column_name('version')}"
+                "#{connection.quote_table_name(table_name)}.#{connection.quote_column_name('version')}"
               select("distinct #{connection.quote_table_name(table_name)}.*").where(q).joins(:versions)
             else
               where(:published => false)
@@ -131,29 +131,20 @@ module Cms
 
                   d.update_attributes(:published => true)
 
-                  # copy values from the draft to the main record
-                  quoted_attributes = d.send(:arel_attributes_with_values_for_update, self.class.versioned_columns)
-
-                  #the values from the draft MAY have a relation of the versioned module
-                  #as opposed to the actual class itself
-                  #eg Page::Version, and not Page
-                  #so remap to the actual arel_table´
-                  #I haven't figured out why this is, but I know it happens when you call save! on Page
-                  #during seeding of data
-                  if self.class.arel_table.name != quoted_attributes.keys[0].relation.name
-                    quoted_attributes = quoted_attributes.inject({}) { |hash, pair| hash[self.class.arel_table[pair[0].name]] = pair[1]; hash }
+                  main_record = self.class.unscoped.where("#{self.class.primary_key} = ?", id).first
+                  self.class.versioned_columns.each do |column|
+                    main_record.update_column("#{column}".to_sym, d[column])
                   end
 
-                  # Doing the SQL ourselves to avoid callbacks
-                  self.class.unscoped.where(self.class.arel_table[self.class.primary_key].eq(id)).arel.update(quoted_attributes)
                   did_publish = true
+
                 end
               else
                 self.class.connection.update(
-                    "UPDATE #{self.class.quoted_table_name} " +
-                        "SET published = #{self.class.connection.quote(true, self.class.columns_hash["published"])} " +
-                        "WHERE #{self.class.connection.quote_column_name(self.class.primary_key)} = #{self.class.quote_value(id)}",
-                    "#{self.class.name.demodulize} Publish"
+                  "UPDATE #{self.class.quoted_table_name} " +
+                    "SET published = #{self.class.connection.quote(true, self.class.columns_hash["published"])} " +
+                    "WHERE #{self.class.connection.quote_column_name(self.class.primary_key)} = #{self.class.quote_value(id)}",
+                  "#{self.class.name.demodulize} Publish"
                 )
                 did_publish = true
               end
