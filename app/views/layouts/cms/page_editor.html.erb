@@ -57,13 +57,13 @@
 
     <div class='btn-group'>
       <%= able_to? :publish_content do %>
-          <%= link_to "Delete",
+          <%= link_to "Delete Page",
                       engine_aware_path(@page),
                       :id => "delete_button",
                       title: "Are you sure you want to delete '#{@page.name}'?",
                       :target => "_top",
                       :enabled => current_user.able_to_publish?(@page),
-                      class: 'btn btn-small btn-danger http_delete confirm_with_title' %>
+                      class: 'btn btn-small http_delete confirm_with_title' %>
       <% end %>
     </div>
     <%= render 'mobile_toolbar' %>
