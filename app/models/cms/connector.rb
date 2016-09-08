@@ -7,7 +7,7 @@ module Cms
     extend DefaultAccessible
     #attr_accessible :connectable, :page_version, :connectable_version, :container # Need to be explicit due to seed data loading
 
-    acts_as_list :scope => "#{Connector.table_name}.page_id = \#{page_id} and #{Cms::Connector.table_name}.page_version = \#{page_version} and #{Cms::Connector.table_name}.container = '\#{container}'"
+    acts_as_list :scope => "#{Cms::Connector.table_name}.page_id = \#{page_id} and #{Cms::Connector.table_name}.page_version = \#{page_version} and #{Cms::Connector.table_name}.container = '\#{container}'"
     alias :move_up :move_higher
     alias :move_down :move_lower
 
