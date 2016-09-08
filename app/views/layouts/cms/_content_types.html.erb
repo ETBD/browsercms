@@ -1,6 +1,6 @@
 <ul class="dropdown-menu" id="<%= id %>">
   <% if library %>
-    <%= nav_link_to "Text", cms.content_library_path %>
+    <%= nav_link_to "Content Library", cms.content_library_path %>
     <%= divider_tag %>
   <% end %>
   <% modules = Cms::ContentType.available_by_module
