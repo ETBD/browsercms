@@ -8,7 +8,7 @@ module Cms
       @page = Page.find_draft(params[:page_id].to_i)
       if (!@page.live?)
         page_status = "draft"
-        status_label = "This page is in draft status"
+        status_label = "Draft"
       else
         page_status = "published"
         status_label = "Published"
