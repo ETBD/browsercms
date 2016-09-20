@@ -1,16 +1,7 @@
 <%= stylesheet_link_tag "cms/admin_overrides" %>
 <%= javascript_include_tag "cms/admin_overrides" %>
 
-<div class="logged-in">
-  <div class="container center-column">
-    <ul class="subnav right">
-      <li><%= link_to current_user.email, "https://auth.ricksteves.com/auth/edit" unless current_user.guest? %></li>
-      <li><%= link_to "Settings", "#" unless current_user.guest? %></li>
-      <li><%= link_to "Help", 'https://github.com/browsermedia/browsercms/wiki', target: '_blank' %></li>
-      <li><%= link_to "Logout", cms.logout_path unless current_user.guest? %></li>
-    </ul>
-  </div>
-</div>
+<%= render partial: 'layouts/cms/logged_in' %>
 
 <div class="primary-nav">
   <div class="container center-column">

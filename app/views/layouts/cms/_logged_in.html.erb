@@ -1,0 +1,10 @@
+<div class="logged-in">
+  <div class="container center-column">
+    <ul class="subnav right">
+      <li><%= link_to current_user.full_name, cms.edit_user_path(current_user) unless current_user.guest? %></li>
+      <li><%= link_to "Settings", "#" unless current_user.guest? %></li>
+      <li><%= link_to "Help", 'https://github.com/browsermedia/browsercms/wiki', target: '_blank' %></li>
+      <li><%= link_to "Logout", cms.logout_path unless current_user.guest? %></li>
+    </ul>
+  </div>
+</div>
