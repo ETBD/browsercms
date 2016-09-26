@@ -41,8 +41,9 @@ module Cms
         flash[:notice] = "Published #{published.size} records."
       end
 
-      redirect_to action: :index
+      redirect_to request.referer
     end
+
 
     # Getting content by its path  (i.e. /products/:slug)
     def show_via_slug
