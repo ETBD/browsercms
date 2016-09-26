@@ -7,7 +7,9 @@
 </head>
 <body>
 <nav id="main-nav">
-  <%= render 'layouts/cms/main_menu' %>
+  <% cache([current_user, 'admin-menu'], expires_in: 2.hours) do %>
+    <%= render 'layouts/cms/main_menu' %>
+  <% end %>
 </nav>
 <%= render 'cms/sites/flash' %>
 <section class="container center-column main-container bottom-form-btn clearfix">
