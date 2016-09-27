@@ -43,9 +43,8 @@ group :test do
 
   # Cucumber and dependencies
   gem 'capybara'
-  gem 'database_cleaner'
   gem 'cucumber-rails', require: false
-  gem 'cucumber'
+  gem 'database_cleaner'
   gem 'launchy'
   gem 'ruby-prof'
   gem 'aruba'

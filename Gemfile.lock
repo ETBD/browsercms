@@ -279,7 +279,6 @@ DEPENDENCIES
   bluecloth
   browsercms!
   capybara
-  cucumber
   cucumber-rails
   database_cleaner
   factory_girl_rails

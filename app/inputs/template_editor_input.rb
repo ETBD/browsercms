@@ -2,7 +2,7 @@ class TemplateEditorInput < SimpleForm::Inputs::TextInput
 
   include Cms::FormBuilder::DefaultInput
 
-  def label
+  def label(wrapper_options)
     super if render_template_input?
   end
 
