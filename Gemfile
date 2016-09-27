@@ -32,6 +32,7 @@ end
 
 group :test do
   gem 'pg'
+  gem 'sass-rails'
 
   gem 'poltergeist'
   gem 'm', '~> 1.2'

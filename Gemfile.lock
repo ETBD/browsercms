@@ -296,6 +296,7 @@ DEPENDENCIES
   quiet_assets
   rake
   ruby-prof
+  sass-rails
   single_test
   uglifier
   yard
