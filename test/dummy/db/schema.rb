@@ -13,6 +13,9 @@
 
 ActiveRecord::Schema.define(version: 20130924162315) do
 
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
+
   create_table "catalog_versions", force: true do |t|
     t.string   "name"
     t.datetime "created_at"
@@ -317,13 +320,13 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_groups", ["group_type_id"], name: "index_cms_groups_on_group_type_id", using: :btree
 
   create_table "cms_html_block_versions", force: true do |t|
-    t.text     "content",            limit: 16777215
+    t.text     "content"
     t.integer  "original_record_id"
     t.integer  "version"
     t.string   "name"
-    t.boolean  "published",                           default: false
-    t.boolean  "deleted",                             default: false
-    t.boolean  "archived",                            default: false
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
     t.string   "version_comment"
     t.integer  "created_by_id"
     t.integer  "updated_by_id"
@@ -335,13 +338,13 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_html_block_versions", ["version"], name: "index_cms_html_block_versions_on_version", using: :btree
 
   create_table "cms_html_blocks", force: true do |t|
-    t.text     "content",       limit: 16777215
+    t.text     "content"
     t.integer  "version"
-    t.integer  "lock_version",                   default: 0
+    t.integer  "lock_version",  default: 0
     t.string   "name"
-    t.boolean  "published",                      default: false
-    t.boolean  "deleted",                        default: false
-    t.boolean  "archived",                       default: false
+    t.boolean  "published",     default: false
+    t.boolean  "deleted",       default: false
+    t.boolean  "archived",      default: false
     t.integer  "created_by_id"
     t.integer  "updated_by_id"
     t.datetime "created_at"

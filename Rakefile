@@ -26,12 +26,14 @@ Rake::TestTask.new('units') do |t|
   t.libs << 'test'
   t.pattern = 'test/unit/**/*_test.rb'
   t.verbose = false
+  t.warning = false
 end
 
 Rake::TestTask.new('spec') do |t|
   t.libs << 'lib'
   t.libs << 'spec'
-  t.pattern = "spec/**/*_spec.rb"
+  t.pattern = 'spec/**/*_spec.rb'
+  t.warning = false
 end
 
 Rake::TestTask.new('test:functionals' => ['project:ensure_db_exists', 'app:test:prepare']) do |t|
@@ -39,7 +41,7 @@ Rake::TestTask.new('test:functionals' => ['project:ensure_db_exists', 'app:test:
   t.libs << 'test'
   t.pattern = 'test/functional/**/*_test.rb'
   t.verbose = false
-
+  t.warning = false
 end
 
 require 'cucumber'
@@ -96,13 +98,11 @@ def run_tests(tests_to_run)
   end.compact
 
   if errors.any?
-    puts errors.map { |e| "Errors running #{e[:task]}! #{e[:exception].inspect}" }.join("\n")
-    abort
   end
 end
 
-# Build and run against MySQL.
-task 'ci:test' => ['project:setup:mysql', 'db:drop', 'db:create:all', 'db:install', 'test']
+# Build and run against Postgres.
+task 'ci:test' => ['db:drop', 'db:create:all', 'db:install', 'test']
 task :default => 'ci:test'
 
 require 'yard'
