@@ -18,9 +18,9 @@ module Cms
       include_body = search_params.is_a?(Hash) ? search_params[:include_body] : false
 
 
-      conditions = ["name like lower(?)", eager_matching(term)]
+      conditions = ["lower(name) like lower(?)", eager_matching(term)]
       if include_body
-        conditions[0] << "OR content like lower(?)"
+        conditions[0] << "OR lower(content) like lower(?)"
         conditions << eager_matching(term)
       end
       where(conditions)
