@@ -12,7 +12,6 @@ PATH
       jquery-ui-rails (~> 4.1)
       panoramic
       paperclip (~> 3.4)
-      rails (~> 4.0.0)
       sass-rails
       simple_form (>= 3.0.0.rc, < 3.1)
       term-ansicolor
