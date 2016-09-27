@@ -26,6 +26,8 @@ group :test, :development do
   gem 'minitest-reporters'
   gem 'yard'
   gem 'bluecloth'
+  gem 'pry'
+  gem 'awesome_print'
 end
 
 group :test do
