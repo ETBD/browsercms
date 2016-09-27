@@ -24,8 +24,6 @@ class Cms::PageHelperTest < ActionView::TestCase
 </ul>
 HTML
 
-    ap expected.chomp
-    ap render_breadcrumbs
     assert_equal expected.chomp, render_breadcrumbs
 
     expected = <<HTML
