@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    browsercms (4.0.0.beta.12)
+    browsercms (4.0.0.beta.13)
       actionpack-page_caching (~> 1.0)
       ancestry (~> 2.1.0)
       bootstrap-sass
@@ -97,10 +97,10 @@ GEM
       sass (>= 3.3.0, < 3.5)
     compass-import-once (1.0.5)
       sass (>= 3.2, < 3.5)
-    compass-rails (2.0.5)
+    compass-rails (3.0.2)
       compass (~> 1.0.0)
       sass-rails (< 5.1)
-      sprockets (< 2.13)
+      sprockets (< 4.0)
     contracts (0.14.0)
     cucumber (2.4.0)
       builder (>= 2.1.2)
