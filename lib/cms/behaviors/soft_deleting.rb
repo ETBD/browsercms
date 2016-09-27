@@ -45,17 +45,8 @@ module Cms
 
         # Returns a content block even if it is marked as deleted.
         # @param [Hash] options Hash suitable to be passed to '#where'
-        def find_with_deleted(options)
-          self.unscoped.where(options).first
-        end
-
-        # Returns a count of all records of this type, including those marked as deleted.
-        #
-        # Behaves like ActiveRecord.count is originally implemented.
-        #
-        # @param args Same params as ActiveRecord.count
-        def count_with_deleted(* args)
-          self.unscoped.count(* args)
+        def with_deleted
+          self.unscoped
         end
 
         def delete_all(conditions=nil)
