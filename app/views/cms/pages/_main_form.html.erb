@@ -4,19 +4,21 @@
 <% else %>
   <%= f.hidden_field :lock_version %>
 <% end %>
+<div class="fields">
+  <%= f.input :name, placeholder: 'Page Name', as: :name %>
+  <%= f.input :path, placeholder: 'Page Path' %>
+  <%= f.input :template_file_name, collection: Cms::PageTemplate.options, label: "Template", as: :select, include_blank: false %>
+</div>
+<div class="fields">
+  <hr>
+  <h3>Search Engine Optimization</h3>
+  <%= f.input :title, label: "Browser Title", placeholder: 'Displays page name if left blank.' %>
 
-<%= f.input :name, placeholder: 'Page Name', as: :name %>
-<%= f.input :path, placeholder: 'Page Path' %>
-<%= f.input :template_file_name, collection: Cms::PageTemplate.options, label: "Template", as: :select, include_blank: false %>
+  <%= f.input :description, label: 'Meta Description', :hint => "(Optional) Used for the meta-description element of the page." %>
+  <%= f.input :keywords, :hint => "(Optional) Used for the meta-keyword meta element of the page." %>
+  <%= f.input :language %>
 
-<hr>
-<h3>Search Engine Optimization</h3>
-<%= f.input :title, label: "Browser Title", placeholder: 'Displays page name if left blank.' %>
-
-<%= f.input :description, label: 'Meta Description', :hint => "(Optional) Used for the meta-description element of the page." %>
-<%= f.input :keywords, :hint => "(Optional) Used for the meta-keyword meta element of the page." %>
-<%= f.input :language %>
-
+</div>
 <% if @other_version %>
     <%= render :partial => "cms/shared/version_conflict_diff", :locals => {:other_version => @other_version, :your_version => @page} %>
 <% end %>
