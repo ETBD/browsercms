@@ -4,6 +4,10 @@ Given /^(?:this|a) bug:/ do
   pending
 end
 
+Given /^PENDING/ do
+  pending
+end
+
 Given /^a members only section$/ do
    create(:section, :path=>"/members")
 end
