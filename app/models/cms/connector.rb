@@ -52,8 +52,8 @@ module Cms
     end
 
     def connectable_with_deleted
-      c = if connectable_type.constantize.respond_to?(:find_with_deleted)
-            connectable_type.constantize.find_with_deleted(id: connectable_id)
+      c = if connectable_type.constantize.respond_to?(:with_deleted)
+            connectable_type.constantize.with_deleted.find(connectable_id)
           else
             connectable_type.constantize.find(connectable_id)
           end

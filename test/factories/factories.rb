@@ -28,7 +28,7 @@ FactoryGirl.define do
 
 # Duplication between :file_block and :image_block
   factory :image_block, :class => Cms::ImageBlock do |m|
-    ignore do
+    transient do
       parent { find_or_create_root_section }
       attachment_file { mock_file }
       attachment_file_path { name }
@@ -46,7 +46,7 @@ FactoryGirl.define do
   end
 
   factory :file_block, :class => Cms::FileBlock do |m|
-    ignore do
+    transient do
       parent { find_or_create_root_section }
       attachment_file { mock_file(:original_filename => 'sample_upload.txt') }
       attachment_file_path { name }
@@ -248,7 +248,7 @@ FactoryGirl.define do
 
   # This is just for CMS testing
   factory :portlet_with_helper, :class => UsesHelperPortlet do |portlet|
-    ignore do
+    transient do
       page_path "/random"
     end
     portlet.name "ProductCatalog"

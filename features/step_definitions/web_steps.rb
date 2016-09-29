@@ -100,8 +100,8 @@ end
 
 
 Then /^(?:|I )should see "([^"]*)"$/ do |text|
-  if page.respond_to? :should
-    page.should have_content(text)
+  if respond_to? :expect
+    expect(page).to have_content(text)
   else
     assert page.has_content?(text)
   end
@@ -110,16 +110,16 @@ end
 Then /^(?:|I )should see \/([^\/]*)\/$/ do |regexp|
   regexp = Regexp.new(regexp)
 
-  if page.respond_to? :should
-    page.should have_xpath('//*', :text => regexp)
+  if respond_to? :expect
+    expect(page).to have_xpath('//*', :text => regexp)
   else
     assert page.has_xpath?('//*', :text => regexp)
   end
 end
 
 Then /^(?:|I )should not see "([^"]*)"$/ do |text|
-  if page.respond_to? :should
-    page.should have_no_content(text)
+  if respond_to? :expect
+    expect(page).to have_no_content(text)
   else
     assert page.has_no_content?(text)
   end
@@ -128,8 +128,8 @@ end
 Then /^(?:|I )should not see \/([^\/]*)\/$/ do |regexp|
   regexp = Regexp.new(regexp)
 
-  if page.respond_to? :should
-    page.should have_no_xpath('//*', :text => regexp)
+  if respond_to? :expect
+    expect(page).to have_no_xpath('//*', :text => regexp)
   else
     assert page.has_no_xpath?('//*', :text => regexp)
   end
@@ -139,8 +139,8 @@ Then /^the "([^"]*)" field(?: within (.*))? should contain "([^"]*)"$/ do |field
   with_scope(parent) do
     field = find_field(field)
     field_value = (field.tag_name == 'textarea') ? field.text : field.value
-    if field_value.respond_to? :should
-      field_value.should =~ /#{value}/
+    if respond_to? :expect
+      expect(field_value).to match(/#{value}/)
     else
       assert_match(/#{value}/, field_value)
     end
@@ -151,8 +151,8 @@ Then /^the "([^"]*)" field(?: within (.*))? should not contain "([^"]*)"$/ do |f
   with_scope(parent) do
     field = find_field(field)
     field_value = (field.tag_name == 'textarea') ? field.text : field.value
-    if field_value.respond_to? :should_not
-      field_value.should_not =~ /#{value}/
+    if respond_to? :expect
+      expect(field_value).to_not match(/#{value}/)
     else
       assert_no_match(/#{value}/, field_value)
     end
@@ -162,8 +162,8 @@ end
 Then /^the "([^"]*)" checkbox(?: within (.*))? should be checked$/ do |label, parent|
   with_scope(parent) do
     field_checked = find_field(label)['checked']
-    if field_checked.respond_to? :should
-      field_checked.should be_true
+    if respond_to? :expect
+      expect(field_checked).to be_true
     else
       assert field_checked
     end
@@ -173,18 +173,18 @@ end
 Then /^the "([^"]*)" checkbox(?: within (.*))? should not be checked$/ do |label, parent|
   with_scope(parent) do
     field_checked = find_field(label)['checked']
-    if field_checked.respond_to? :should
-      field_checked.should be_false
+    if respond_to? :expect
+      expect(field_checked).to be_false
     else
       assert !field_checked
     end
   end
 end
- 
+
 Then /^(?:|I )should be on (.+)$/ do |page_name|
   current_path = URI.parse(current_url).path
-  if current_path.respond_to? :should
-    current_path.should == path_to(page_name)
+  if respond_to? :expect
+    expect(current_path).to eq(path_to(page_name))
   else
     assert_equal path_to(page_name), current_path
   end
@@ -194,10 +194,10 @@ Then /^(?:|I )should have the following query string:$/ do |expected_pairs|
   query = URI.parse(current_url).query
   actual_params = query ? CGI.parse(query) : {}
   expected_params = {}
-  expected_pairs.rows_hash.each_pair{|k,v| expected_params[k] = v.split(',')} 
-  
-  if actual_params.respond_to? :should
-    actual_params.should == expected_params
+  expected_pairs.rows_hash.each_pair{|k,v| expected_params[k] = v.split(',')}
+
+  if respond_to? :expect
+    expect(actual_params).to eq(expected_params)
   else
     assert_equal expected_params, actual_params
   end

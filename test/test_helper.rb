@@ -1,4 +1,5 @@
 ENV["RAILS_ENV"] = "test"
+require 'simplecov'
 
 require File.expand_path("../dummy/config/environment.rb", __FILE__)
 require "rails/test_help"
@@ -204,4 +205,3 @@ def create_testing_table(name)
     create_table(name)
   end
 end
-

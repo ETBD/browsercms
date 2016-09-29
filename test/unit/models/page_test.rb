@@ -252,20 +252,19 @@ module Cms
 
     def test_deleting_page
       page = create(:page)
-      page_count = Cms::Page.count_with_deleted
+      page_count = Cms::Page.with_deleted.count
 
       page_version_count = page.versions.count
       assert !page.deleted?
 
       page.destroy
 
-      assert_equal page_count, Cms::Page.count_with_deleted
+      assert_equal page_count, Cms::Page.with_deleted.count
       assert_incremented page_version_count, page.versions.count
       assert page.deleted?
       assert_raise ActiveRecord::RecordNotFound do
         Cms::Page.find(page.id)
       end
-
     end
 
     test "#currently_connected_to" do

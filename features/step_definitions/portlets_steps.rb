@@ -88,7 +88,8 @@ end
 
 Given /^a developer creates a portlet which sets a custom page title as "([^"]*)"$/ do |title|
   @page_path = "/portlet/custom-page-title"
-  @portlet = create(:portlet_with_helper, page_path: @page_path, custom_title: title)
+  @portlet = create(:portlet_with_helper, page_path: @page_path)
+  @portlet.send('custom_title=', title)
 end
 
 When /^a guest views that page$/ do
