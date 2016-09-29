@@ -98,7 +98,7 @@ module Cms
     #
     # @param [Symbol] name The name of the container to check
     # @param [Proc] block
-    # @return [Boolean] True if the container has one or more blocks, or if we are in edit mode. False otherwise. 
+    # @return [Boolean] True if the container has one or more blocks, or if we are in edit mode. False otherwise.
     def container_has_block?(name, &block)
       has_block = (edit_mode?) || current_page.connectable_count_for_container(name) > 0
       logger.info "mode = #{@mode}, has_block = #{has_block}"
@@ -139,7 +139,7 @@ module Cms
       if !show_parent && current_page.landing_page?
         items[items.size-1] = content_tag(:li, current_page.parent.name)
       else
-        items << content_tag(:li, current_page.page_title)
+        items << content_tag(:li, current_page.name)
       end
       content_tag(:ul, "\n  #{items.join("\n \/ ")}\n".html_safe, :class => "breadcrumbs")
     end
