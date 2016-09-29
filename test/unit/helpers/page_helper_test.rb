@@ -63,7 +63,4 @@ HTML
 
     assert_equal "", render_breadcrumbs
   end
-
-
-
 end
