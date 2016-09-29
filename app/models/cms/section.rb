@@ -90,7 +90,7 @@ module Cms
     end
 
     def self.sitemap
-      SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange(:order => :position)
+      SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.limit(50).arrange(:order => :position)
     end
 
     def visible_child_nodes(options={})
