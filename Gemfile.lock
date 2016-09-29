@@ -129,6 +129,7 @@ GEM
       thread_safe (~> 0.1)
       warden (~> 1.2.3)
     diff-lcs (1.2.5)
+    docile (1.1.5)
     erubis (2.7.0)
     execjs (2.7.0)
     factory_girl (4.7.0)
@@ -146,6 +147,7 @@ GEM
       thor (>= 0.14, < 2.0)
     jquery-ui-rails (4.2.1)
       railties (>= 3.2.16)
+    json (1.8.3)
     launchy (2.4.3)
       addressable (~> 2.3)
     m (1.5.0)
@@ -238,6 +240,11 @@ GEM
     simple_form (3.1.0.rc2)
       actionpack (~> 4.0)
       activemodel (~> 4.0)
+    simplecov (0.10.0)
+      docile (~> 1.1.0)
+      json (~> 1.8)
+      simplecov-html (~> 0.10.0)
+    simplecov-html (0.10.0)
     single_test (0.6.0)
       rake
     slop (3.6.0)
@@ -296,6 +303,7 @@ DEPENDENCIES
   rake
   ruby-prof
   sass-rails
+  simplecov
   single_test
   uglifier
   yard

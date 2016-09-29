@@ -33,6 +33,7 @@ end
 group :test do
   gem 'pg'
   gem 'sass-rails'
+  gem 'simplecov', :require => false
 
   gem 'poltergeist'
   gem 'm', '~> 1.2'
