@@ -116,6 +116,11 @@ module Cms
       params.require(:page).permit(Cms::Page.permitted_params)
     end
 
+    def permitted_params
+      params.permit :utf8, :_method, :authenticity_token, :commit, :id, :section_id,
+                    model: [:page]
+    end
+
     def strip_visibility_params
       unless current_user.able_to?(:publish_content)
         params[:page].delete :hidden
