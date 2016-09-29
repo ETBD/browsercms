@@ -76,13 +76,13 @@ class HtmlBlockTest < ActiveSupport::TestCase
     assert_equal html_block_version_count, @html_block.versions.count
 
     # deleting should create a new version
-    html_block_count = Cms::HtmlBlock.count_with_deleted
+    html_block_count = Cms::HtmlBlock.with_deleted.count
     html_block_version_count = @html_block.versions.count
     assert !@html_block.deleted?
 
     @html_block.destroy
 
-    assert_equal html_block_count, Cms::HtmlBlock.count_with_deleted
+    assert_equal html_block_count, Cms::HtmlBlock.with_deleted.count
     assert_incremented html_block_version_count, @html_block.versions.count
     assert @html_block.deleted?
 

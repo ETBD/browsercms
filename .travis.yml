@@ -1,8 +1,5 @@
 language: ruby
 rvm:
-  - "2.0.0"
-#  - "1.9.2"
-# uncomment this line if your project needs to run something other than `rake`:
-# script: bundle exec rspec spec
+  - "2.2.4"
 before_script:
-  - mysql -e 'create database browsercms_test;'
+  - psql -c 'create database browsercms_test;' -U postgres

@@ -30,6 +30,39 @@ See the [Getting Started](https://github.com/browsermedia/browsercms/wiki/Gettin
 ## License
 BrowserCMS is released under a LGPL license, and is copyright 1998-2014 BrowserMedia. The complete copyright can be found in COPYRIGHT.txt, and copy of the license can be found in LICENSE.txt.
 
+## Testing
+Tests are broken into multiple categories. Unit tests, some random mini-test specs, functional tests, and Cucumber
+features.
+
+To set up the test database and run all tests, simply type:
+```
+rake
+```
+
+If the test database is already set up, run:
+```
+rake test
+```
+
+To run a specific type of test only, use the following commands:
+```
+rake test:units
+rake test:spec
+rake test:functionals
+rake features
+```
+
+To run tests for a single file, we use the `m` gem. Example:
+```
+m test/functional/cms/html_blocks_controller_test.rb
+m test/functional/cms/html_blocks_controller_test.rb:40 # run a specific test
+```
+
+To run tests for a single cucumber feature, type `cucumber` followed by the file path. Example:
+```
+cucumber features/page_routes.feature
+```
+
 ## Documentation / Support
 The user documentation and guides for this version of the application can be found at:
 

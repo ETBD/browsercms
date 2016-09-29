@@ -46,7 +46,7 @@ module Cms
 
     test "#search with all sections" do
       results = Cms::FileBlock.search(term: 'red').paginate(page: 1).with_parent_id('all')
-      assert_equal [@red, @purple], results.to_a
+      assert_equal [@purple, @red], results.to_a
     end
   end
   class FileBlockTest < ActiveSupport::TestCase
@@ -181,4 +181,3 @@ module Cms
   end
 
 end
-

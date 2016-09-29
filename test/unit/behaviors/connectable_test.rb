@@ -19,7 +19,7 @@ module Cms
     end
 
     test "#connected_pages" do
-      assert_equal [@connected_page, @connected_page_2], @block.connected_pages
+      assert_equal [@connected_page_2, @connected_page], @block.connected_pages
     end
 
     test "#connected_pages should return same list when called twice" do

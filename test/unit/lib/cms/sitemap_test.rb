@@ -159,16 +159,15 @@ module Cms
     end
 
     test "child_nodes" do
-      page = create(:page, :section => root)
       section = create(:public_section, :parent => root)
+      page = create(:page, :section => root)
 
       assert_equal [page.section_node, section.node], root.child_nodes
     end
 
     test "pages" do
-      page1 = create(:page, :section => root)
       page2 = create(:page, :section => root)
-      section = create(:public_section, :parent => root)
+      page1 = create(:page, :section => root)
 
       assert_equal [page1, page2], root.pages
     end

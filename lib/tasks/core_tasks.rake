@@ -56,16 +56,14 @@ namespace :project do
 
   desc 'Copy database.yml files for running tests'
   task :setup, :database do |t, args|
-    drivers = %w(jdbcmysql mysql postgres sqlite3)
-    unless drivers.include?(args[:database])
-      fail("'#{args[:database]}' is not an available database. Choose from one of the following #{drivers.inspect}. i.e\n\t$ rake project:setup[mysql]")
-    end
-
-    source = File.join('test/dummy/config', "database.#{args[:database]}.yml")
-    destination = File.join('test/dummy/config', "database.yml")
-    cp(source, destination, :verbose => true)
-
-
+    # drivers = %w(jdbcmysql mysql postgres sqlite3)
+    # unless drivers.include?(args[:database])
+      # fail("'#{args[:database]}' is not an available database. Choose from one of the following #{drivers.inspect}. i.e\n\t$ rake project:setup[mysql]")
+    # end
+#
+    # source = File.join('test/dummy/config', "database.#{args[:database]}.yml")
+    # destination = File.join('test/dummy/config', "database.yml")
+    # cp(source, destination, :verbose => true)
   end
 
   namespace :setup do

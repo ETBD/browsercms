@@ -56,8 +56,8 @@ module Cms
       assert block.save
 
       assert_equal 2, block.versions.size
-      assert_equal 1, block.versions[0].version
-      assert_equal 2, block.versions[1].version
+      assert_equal 1, block.versions[1].version
+      assert_equal 2, block.versions[0].version
     end
 
     test "Build new version should create a new version with an incremented version from the primary object" do
@@ -84,7 +84,7 @@ module Cms
     end
 
     test "#build_object_from_version recreates a block based on a given version record" do
-      html_version = @published_block.versions[0]
+      html_version = @published_block.versions.first
       html = html_version.build_object_from_version
 
       assert_equal "Version 1", html.name

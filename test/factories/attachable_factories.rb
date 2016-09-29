@@ -21,7 +21,7 @@ FactoryGirl.define do
 
   # Duplicates :file_block
   factory :versioned_attachable, :class => VersionedAttachable do |m|
-    ignore do
+    transient do
       parent { find_or_create_root_section }
       attachment_file { mock_file }
       attachment_file_path { nil }
@@ -37,7 +37,7 @@ FactoryGirl.define do
   end
 
   factory :has_many_attachments, :class => HasManyAttachments do |m|
-    ignore do
+    transient do
       parent { find_or_create_root_section }
       attachment_file { mock_file }
       attachment_file_path { nil }

@@ -62,15 +62,17 @@ module Cms
         @mode = "view"
         @show_page_toolbar = false
 
-        # copy new instance variables to the template
-        %w[page mode show_page_toolbar].each do |v|
-          @template.instance_variable_set("@#{v}", instance_variable_get("@#{v}"))
-        end
+        if @template
+          # copy new instance variables to the template
+          %w[page mode show_page_toolbar].each do |v|
+            @template.instance_variable_set("@#{v}", instance_variable_get("@#{v}"))
+          end
 
-        # clear out any content already captured
-        # by previous attempts to render the page within this request
-        @template.instance_variables.select { |v| v =~ /@content_for_/ }.each do |v|
-          @template.instance_variable_set("#{v}", nil)
+          # clear out any content already captured
+          # by previous attempts to render the page within this request
+          @template.instance_variables.select { |v| v =~ /@content_for_/ }.each do |v|
+            @template.instance_variable_set("#{v}", nil)
+          end
         end
 
         prepare_connectables_for_render

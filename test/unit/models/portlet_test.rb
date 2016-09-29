@@ -48,7 +48,6 @@ class PortletTest < ActiveSupport::TestCase
 
   def setup
     @portlet = create(:portlet)
-
   end
 
   test ".description" do
@@ -83,8 +82,8 @@ class PortletTest < ActiveSupport::TestCase
   end
 
   test "attributes=" do
-    @portlet.attributes=({:b => "b"})
-    assert_equal "b", @portlet.b
+    @portlet.attributes=({name: "New Name"})
+    assert_equal "New Name", @portlet.name
   end
 
   def test_dynamic_attributes

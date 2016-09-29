@@ -57,12 +57,16 @@ module ActiveRecord
             vt.timestamps unless column_exists?(table_name_versioned, :created_at)
           end
         end
-
       end
 
       def drop_content_table(table_name)
-        drop_table versioned_(table_name)
-        drop_table table_name
+        if table_exists?(versioned_(table_name))
+          drop_table versioned_(table_name)
+        end
+
+        if table_exists?(table_name)
+          drop_table table_name
+        end
       end
 
       # Rename a column for both its
@@ -88,7 +92,6 @@ module ActiveRecord
       def versioned_(table_name)
         "#{table_name.to_s.singularize}_versions".to_sym
       end
-
     end
   end
 end
