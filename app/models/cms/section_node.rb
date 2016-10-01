@@ -3,7 +3,7 @@ require 'ancestry'
 class Cms::SectionNode < ActiveRecord::Base
   # Touches all ancestors in order to bust any cache keys that reference this
   # SectionNode.
-  has_ancestry touch: true
+  has_ancestry
 
   validates :slug, uniqueness: { scope: :node_type }, unless: lambda { |sn| sn.slug.blank?}
 

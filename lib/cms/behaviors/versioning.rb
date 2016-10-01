@@ -82,6 +82,8 @@ module Cms
 
           has_many :versions, :class_name => version_class_name, :foreign_key => version_foreign_key
           after_save :update_latest_version
+          after_save :touch_self_and_ancestors
+          after_destroy :touch_self_and_ancestors
 
           before_validation :initialize_version
           before_save :build_new_version
@@ -156,6 +158,14 @@ module Cms
             sql = "UPDATE #{self.class.table_name} SET latest_version = #{draft.version} where id = #{self.id}"
             self.class.connection.execute sql
             self.latest_version = draft.version # So we don't need to #reload this object. Probably marks it as dirty though, which could have weird side effects.
+          end
+        end
+
+        def touch_self_and_ancestors
+          self.touch
+
+          if respond_to?(:ancestors)
+            ancestors.map(&:touch)
           end
         end
 
