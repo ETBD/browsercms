@@ -35,7 +35,7 @@ module Cms
       @page = Page.new(page_params)
       @page.section = @section
       if @page.save
-        flash[:notice] = "Page was '#{@page.name}' created."
+        flash[:notice] = "Page '#{@page.name}' was created."
         redirect_to @page
       else
         render :action => "new"
@@ -44,7 +44,7 @@ module Cms
 
     def update
       if @page.update(page_params)
-        flash[:notice] = "Page was '#{@page.name}' updated."
+        flash[:notice] = "Page '#{@page.name}' was updated."
         redirect_to @page
       else
         render :action => "edit"

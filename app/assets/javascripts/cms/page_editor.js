@@ -186,6 +186,15 @@ jQuery(function ($) {
 //
 //    });
 
+  editLinkPositioning()
+
+  $(window).resize(function () {
+      editLinkPositioning()
+    }
+  );
+});
+
+function editLinkPositioning(){
   setTimeout(function () {
     $(".connector").each(function (index, item) {
       var LINKWIDTH = $('.cms-edit-content-link').outerWidth()
@@ -219,6 +228,5 @@ jQuery(function ($) {
         left: (mainPosition.left + LINKWIDTH * 3) + "px"
       }).show();
     });
-  }, 1000);
-
-});
+  }, 2000);
+}

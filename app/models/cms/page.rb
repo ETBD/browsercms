@@ -233,12 +233,15 @@ class Cms::Page < ActiveRecord::Base
 
   # Moves a specific connector up or down within its container for a page.
   def move_connector(connector, direction)
-    transaction do
-      raise "Connector is nil" unless connector
-      raise "Direction is nil" unless direction
-      orientation = direction[/_/] ? "#{direction.sub('_', ' the ')} of" : "#{direction} within"
-      update_attributes(:version_comment => "#{connector.connectable} was moved #{orientation} the '#{connector.container}' container", :publish_on_save => false)
-      connectors.for_page_version(draft.version).like(connector).first.send("move_#{direction}")
+    this_connector = connectors.for_page_version(draft.version).like(connector).first
+    unless this_connector.nil?
+      transaction do
+        raise "Connector is nil" unless connector
+        raise "Direction is nil" unless direction
+        orientation = direction[/_/] ? "#{direction.sub('_', ' the ')} of" : "#{direction} within"
+        update_attributes(:version_comment => "#{connector.connectable} was moved #{orientation} the '#{connector.container}' container", :publish_on_save => false)
+        connectors.for_page_version(draft.version).like(connector).first.send("move_#{direction}")
+      end
     end
   end
 

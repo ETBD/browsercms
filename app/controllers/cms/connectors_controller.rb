@@ -50,7 +50,10 @@ class ConnectorsController < Cms::BaseController
       if @page.send("move_connector_#{move}", @connector)
         flash[:notice] = "Moved '#{@connectable.name}' #{where} the '#{@connector.container}' container"
       else
-        flash[:error] = "Failed to move '#{@connectable.name}' #{where} the '#{@connector.container}' container"
+        # TODO: Display Correct Flash Notice: Both success and
+        # error are being called and method is displaying
+        # the 'Failed' message when the change actually succeeds.
+        # flash[:error] = "Failed to move '#{@connectable.name}' #{where} the '#{@connector.container}' container"
       end
 
       respond_to do |format|
