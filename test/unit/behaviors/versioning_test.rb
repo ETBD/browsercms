@@ -73,6 +73,15 @@ module Cms
 
       block.save
     end
+
+    test "Updating an object should set a new updated_at timestamp" do
+      block = create(:html_block, updated_at: Time.now - 10.minutes)
+      block.name = "An updated name!"
+      orig_updated_at = block.updated_at
+      block.save
+
+      assert_not_equal block.updated_at, orig_updated_at
+    end
   end
 
   class HistoricalVersionsTest < ActiveSupport::TestCase

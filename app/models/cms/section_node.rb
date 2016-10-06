@@ -78,7 +78,7 @@ class Cms::SectionNode < ActiveRecord::Base
   def link?
     node_type == 'Cms::Link'
   end
-  
+
   def deletable?
     return false if self.root?
     if node.respond_to?(:deletable?)
@@ -101,12 +101,12 @@ class Cms::SectionNode < ActiveRecord::Base
         position = 0
       else
         #This helps prevent the position from getting out of whack
-        #If you pass in a really high number for position, 
+        #If you pass in a really high number for position,
         #this just corrects it to the right number
         node_count = Cms::SectionNode.where({:ancestry => ancestry}).count
         position = node_count if position > node_count
       end
-      
+
       insert_at_position(position)
     end
   end

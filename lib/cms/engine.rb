@@ -114,7 +114,6 @@ module Cms
       ActiveSupport::Dependencies.autoload_paths += %W( #{Rails.root}/app/portlets )
       ActiveSupport::Dependencies.autoload_paths += %W( #{Rails.root}/app/presenters )
       ActiveSupport::Dependencies.autoload_paths += %W( #{Rails.root}/app/portlets/helpers )
-      ActiveSupport::Dependencies.autoload_paths += %W( #{Rails.root}/app/sweepers )
       ActionController::Base.append_view_path DynamicView.base_path
       ActionController::Base.append_view_path %W( #{self.root}/app/views)
       require 'jdbc_adapter' if defined?(JRUBY_VERSION)

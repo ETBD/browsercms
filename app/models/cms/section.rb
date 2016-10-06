@@ -8,6 +8,9 @@ module Cms
     after_destroy :destroy_node
     before_destroy :deletable?
 
+    after_save :touch_self_and_ancestors
+    after_destroy :touch_self_and_ancestors
+
     SECTION = "Cms::Section"
     PAGE = "Cms::Page"
     LINK = "Cms::Link"
@@ -220,5 +223,14 @@ module Cms
     def accessible_to_guests?(public_sections, parent)
       public_sections.include?(self)
     end
+
+    def touch_self_and_ancestors
+      touch unless destroyed?
+
+      if respond_to?(:ancestors)
+        ancestors.map(&:touch)
+      end
+    end
+
   end
 end
