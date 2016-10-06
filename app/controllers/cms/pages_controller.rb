@@ -36,7 +36,7 @@ module Cms
       @page.section = @section
       if @page.save
         flash[:notice] = "Page '#{@page.name}' was created."
-        redirect_to @page
+        redirect_to sitemap_path
       else
         render :action => "new"
       end
@@ -45,7 +45,7 @@ module Cms
     def update
       if @page.update(page_params)
         flash[:notice] = "Page '#{@page.name}' was updated."
-        redirect_to @page
+        redirect_to sitemap_path
       else
         render :action => "edit"
       end
