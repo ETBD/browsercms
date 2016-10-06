@@ -1,5 +1,5 @@
 <% can_modify_section = current_user_can_modify(@modifiable_sections, section_node, parent) %>
-<% cache([section_node.node, can_modify_section, 'sitemap-item'], expires_in: 6.hours) do %>
+<% cache([section_node.node, can_modify_section, 'sitemap-item']) do %>
   <ul class="nav nav-list">
     <li class="nav-list-item">
       <span class="nav-list-span <%= sitemap_depth_class(section_node) %> <%= draggable_class?(@modifiable_sections, section_node, parent) %>"
@@ -13,7 +13,6 @@
           <span class="text">
             <%= icon_tag(section_node, children) %>
             <%= section_node.node.name %>
-            <small><%= section_node.node.updated_at %></small>
           </span>
 
         <% if can_modify_section %>
