@@ -162,7 +162,7 @@ module Cms
         end
 
         def touch_self_and_ancestors
-          self.touch
+          touch if persisted?
 
           if respond_to?(:ancestors)
             ancestors.map(&:touch)

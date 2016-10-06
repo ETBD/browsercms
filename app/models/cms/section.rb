@@ -225,7 +225,7 @@ module Cms
     end
 
     def touch_self_and_ancestors
-      self.touch
+      touch unless destroyed?
 
       if respond_to?(:ancestors)
         ancestors.map(&:touch)
