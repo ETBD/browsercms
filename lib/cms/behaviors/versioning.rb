@@ -228,11 +228,11 @@ module Cms
         def create_or_update
           logger.debug { "#{self.class}#create_or_update called. Published = #{!!publish_on_save}" }
           self.skip_callbacks = false
-          unless different_from_last_draft?
-            logger.debug { "No difference between this version and last. Skipping save" }
-            self.skip_callbacks = true
-            return true
-          end
+          # unless different_from_last_draft?
+          #   logger.debug { "No difference between this version and last. Skipping save" }
+          #   self.skip_callbacks = true
+          #   return true
+          # end
           logger.debug { "Saving #{self.class} #{self.attributes}" }
           if new_record?
             self.version = 1
