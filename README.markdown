@@ -1,7 +1,7 @@
 # BrowserCMS: Humane Content Management for Rails
 
 
-[![Build Status](https://travis-ci.org/ETBD/browsercms.svg?branch=master)](https://magnum.travis-ci.com/ETBD/browsercms)
+[![Build Status](https://travis-ci.org/ETBD/browsercms.svg?branch=master)](https://magnum.travis-ci.org/ETBD/browsercms)
 
 BrowserCMS is a general purpose, open source Web Content Management System (CMS) that supports Ruby on Rails v4.0. It can be used as a standalone CMS, added to existing Rails projects or extended using Rails Engines. It is designed to support three distinct groups of users:
 
