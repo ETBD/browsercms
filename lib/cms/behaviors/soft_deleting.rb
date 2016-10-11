@@ -82,7 +82,7 @@ module Cms
         end
 
         def destroy!
-          transaction { super.destroy }
+          transaction { self.destroy }
         end
 
         def destroyed?

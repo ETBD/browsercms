@@ -506,6 +506,7 @@ module Cms
       connector_count = Cms::Connector.count
       page_version = @page.version
 
+      @page.publish_on_save = false
       @page.update(:name => @page.name)
 
       assert_equal connector_count, Cms::Connector.count

@@ -1,8 +1,6 @@
 require 'test_helper'
 
 module Cms
-
-
   class PagesControllerTest < ActionController::TestCase
     include Cms::ControllerTestHelper
 
@@ -30,7 +28,6 @@ module Cms
     end
 
     def test_unhide
-
       create_page
 
       @page.update_attributes(:hidden => true)
@@ -39,7 +36,7 @@ module Cms
       assert @page.draft.hidden?
 
       put :update, :id => @page.id, :page => {:hidden => false}
-      assert_redirected_to @page
+      assert_redirected_to '/cms/sitemap'
 
       reset(:page)
       assert !@page.draft.hidden?

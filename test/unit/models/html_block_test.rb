@@ -72,6 +72,7 @@ class HtmlBlockTest < ActiveSupport::TestCase
 
     # Updating with no changes should not generate a new version
     html_block_version_count = @html_block.versions.count
+    @html_block.publish_on_save = false
     @html_block.update_attributes(:name => "Something Different")
     assert_equal html_block_version_count, @html_block.versions.count
 

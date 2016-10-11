@@ -33,14 +33,14 @@ end
 group :test do
   gem 'pg'
   gem 'sass-rails'
-  gem 'simplecov', :require => false
+  gem 'simplecov', require: false
 
   gem 'poltergeist'
-  gem 'm', '~> 1.2'
+  gem 'm'
 
   gem 'single_test'
   gem 'factory_girl_rails'
-  gem "mocha", require: false
+  gem 'mocha', require: false
 
   # Cucumber and dependencies
   gem 'capybara'
