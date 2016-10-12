@@ -107,6 +107,7 @@ describe Cms::Page do
     end
 
     it "should not create a comment when no changes occurred during saving" do
+      page.publish_on_save = false
       page.save
       page.live_version.version_comment.must_equal 'Created'
       page.as_of_version(page.version).live_version.version_comment.must_equal 'Created'

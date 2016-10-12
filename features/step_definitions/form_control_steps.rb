@@ -84,6 +84,7 @@ end
 Given /^a block exists with a single image$/ do
   @block = Dummy::Catalog.create!(:name => "Hello")
   @block.attachments << create(:attachment_document, :attachment_name => "photos", :attachable_type => "Dummy::Catalog", :attachable_version => @block.version)
+  @block.publish_on_save = false
   @block.save!
 
   a = @block.attachments.first

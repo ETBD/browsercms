@@ -52,6 +52,7 @@ class ContentBlockTest < ActiveSupport::TestCase
   end
 
   test "Updating a block without changing attributes shouldn't cause new save" do
+    @block.publish_on_save = false
     result = @block.update_attributes(:name => @block.name)
     assert_equal 1, @block.version, "Block should keep itself at version 1"
     assert_equal 1, @block.versions.size, "Should only have the one original version of the block"
@@ -167,12 +168,12 @@ class VersionedContentBlockTest < ActiveSupport::TestCase
 
   end
 
-  test 'Calling publish_on_save should not be sufficent to publish the block' do
+  test 'Calling publish_on_save should be sufficent to publish the block' do
     @block.publish_on_save = true
     @block.save
 
     found = Cms::HtmlBlock.find(@block)
-    assert_equal 1, found.version
+    assert_equal 2, found.version
   end
 
   test "Setting the 'publish' flag on a block, along with any other change, and saving it should mark that block as published." do

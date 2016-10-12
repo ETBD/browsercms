@@ -83,7 +83,9 @@ module FactoryHelpers
   end
 
   def create_admin_user(attrs={})
-    FactoryGirl.create(:cms_admin, {:login => "cmsadmin"}.merge(attrs))
+    unless Cms::User.find_by_login('cmsadmin')
+      FactoryGirl.create(:cms_admin, {:login => "cmsadmin"}.merge(attrs))
+    end
   end
 
   def given_there_is_a_cmsadmin

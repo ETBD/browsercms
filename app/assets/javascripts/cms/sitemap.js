@@ -75,8 +75,10 @@ Sitemap.prototype.saveAsClosed = function(id) {
 Sitemap.prototype.restoreOpenState = function() {
   var section_node_ids = $.cookieSet.get(Sitemap.STATE);
   _.each(section_node_ids, function(id) {
-    var row = $('.nav-list-span[data-id=' + id + ']');
-    sitemap.open(row, {animate: false});
+    if (id !== '') {
+      var row = $('.nav-list-span[data-id=' + id + ']');
+      sitemap.open(row, {animate: false});
+    }
   });
 };
 

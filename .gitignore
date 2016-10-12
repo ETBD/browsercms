@@ -4,7 +4,6 @@ log/*.log
 tmp/**/*
 db/*.sqlite3
 db/schema.rb
-config/database*.yml
 public/images/tuneup
 public/javascripts/tuneup
 public/stylesheets/tuneup
@@ -23,9 +22,6 @@ test/dummy/db/backups/*
 test/dummy/.sass-cache
 test/dummy/.rvmrc
 test/dummy/.powder
-test/dummy/config/database.yml
-test/dummy/.powder
-test/dummy/.rvmrc
 test/dummy/public/assets/*
 .sass-cache
 .rvmrc

@@ -44,9 +44,21 @@ module Cms
       block.save
 
       block.name = "Testing"
+      block.publish_on_save = false
       assert block.save
 
       assert_equal true, block.skip_callbacks
+    end
+
+    test "Publishing a block without changing any attributes should save" do
+      block = Cms::HtmlBlock.new(:name => "Testing")
+      block.save
+
+      block.publish_on_save = true
+      block.save
+
+      assert block.published?
+      assert_equal false, block.skip_callbacks
     end
 
     test "Updating a block should increment the version on the new draft" do
