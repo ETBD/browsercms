@@ -24,7 +24,7 @@ class ConnectorsController < Cms::BaseController
   
   def destroy
     @connector = Connector.find(params[:id])
-    @page = @connector.page
+    @page = @connector.page.as_of_draft_version
     @connectable = @connector.connectable
     if @page.remove_connector(@connector)
       flash[:notice] = "Removed '#{@connectable.name}' from the '#{@connector.container}' container"
@@ -66,7 +66,7 @@ class ConnectorsController < Cms::BaseController
 
   private
     def load_page
-      @page = Page.find(params[:page_id])
+      @page = Page.find(params[:page_id]).as_of_draft_version
     end
 
 end
