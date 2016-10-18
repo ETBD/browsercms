@@ -16,9 +16,12 @@ module Cms
     def move_to_position
       @section_node = SectionNode.find(params[:id])
       target_node = SectionNode.find(params[:target_node_id])
+      source_node = @section_node.section
       @section_node.move_to(target_node.node, params[:position].to_i)
-      render :json => {:success => true, :message => "'#{@section_node.node.name}' was moved to '#{target_node.node.name}'"}
+      @section_node.node.touch
+      target_node.node.touch_self_and_ancestors
+      source_node.touch_self_and_ancestors
+      render  :json => {:success => true, :message => "'#{@section_node.node.name}' was moved to '#{target_node.node.name}'"}
     end
-
   end
 end
