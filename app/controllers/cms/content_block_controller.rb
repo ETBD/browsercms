@@ -160,6 +160,7 @@ module Cms
     def model_form_name
       content_type.param_key
     end
+
     alias :resource_param :model_form_name
 
     def resource
@@ -171,11 +172,8 @@ module Cms
     def load_blocks
       @search_filter = SearchFilter.build(params[:search_filter], model_class)
 
-      options = {}
-
-      options[:page] = params[:page]
-      options[:order] = model_class.default_order if model_class.respond_to?(:default_order)
-      options[:order] = params[:order] unless params[:order].blank?
+      order_by = model_class.default_order if model_class.respond_to?(:default_order)
+      order_by = params[:order] unless params[:order].blank?
 
       scope = model_class.respond_to?(:list) ? model_class.list : model_class
       if scope.searchable?
@@ -185,9 +183,13 @@ module Cms
         scope = scope.with_parent_id(params[:section_id])
       end
       @total_number_of_items = scope.count
-      @blocks = scope.paginate(options)
-      check_permissions
+      if order_by.nil?
+        @blocks = scope.page(params[:page])
+      else
+        @blocks = scope.page(params[:page]).order(order_by)
+      end
 
+      check_permissions
     end
 
     def load_block
