@@ -135,31 +135,30 @@ jQuery(function ($) {
   CKEDITOR.disableAutoInline = true;
 
   // Titles
-  $("#page_title").each(function () {
-    var id = $(this).attr('id');
-    CKEDITOR.inline(id, {
-      toolbar: 'page_title',
-      on: {
-        blur: function (event) {
-          $.cms_editor.saveChanges(event.editor);
-        }
-      }
-    });
-  });
+  // $("#page_title").each(function () {
+  //   var id = $(this).attr('id');
+  //   CKEDITOR.inline(id, {
+  //     toolbar: 'page_title',
+  //     on: {
+  //       blur: function (event) {
+  //         $.cms_editor.saveChanges(event.editor);
+  //       }
+  //     }
+  //   });
+  // });
 
   // Create editors for each content-block on the page.
-  $(".content-block").each(function () {
-    var id = $(this).attr('id');
-    editor = CKEDITOR.inline(id, {
-      toolbar: 'inline',
-      on: {
-        blur: function (event) {
-          $.cms_editor.saveChanges(event.editor);
-        }
-      }
-    });
-
-  });
+  // $(".content-block").each(function () {
+  //   var id = $(this).attr('id');
+  //   editor = CKEDITOR.inline(id, {
+  //     toolbar: 'inline',
+  //     on: {
+  //       blur: function (event) {
+  //         $.cms_editor.saveChanges(event.editor);
+  //       }
+  //     }
+  //   });
+  // });
 
 
   /* warn user on leaving if he changed text */
