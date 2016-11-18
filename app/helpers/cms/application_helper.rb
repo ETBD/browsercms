@@ -78,22 +78,8 @@ module Cms
     def check_uncheck_tag(selector)
       check_id = to_id(selector, "check")
       uncheck_id = to_id(selector, "uncheck")
-      content_for :html_head do
-        html = <<HTML
-jQuery(function($) {
-  $('a##{check_id}').click(function() {
-    $('#{selector}').prop('checked', true);
-  });
 
-  $('a##{uncheck_id}').click(function() {
-    $('#{selector}').prop('checked', false);
-  });
-})
-HTML
-        javascript_tag html
-      end
-
-      "#{link_to "Check All", '#', :id => check_id}, #{link_to "Uncheck All", '#', :id => uncheck_id}".html_safe
+      "#{link_to "Check All", "javascript:function(){$('#{selector}').prop('checked', true);}", :id => check_id}, #{link_to "Uncheck All", "javascript:function(){$('#{selector}').prop('checked', false);}", :id => uncheck_id}".html_safe
     end
 
     # @deprecated Use check_uncheck_tag instead. Retained for backwards compatibility w/ CMS implementations.
