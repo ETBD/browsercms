@@ -8,22 +8,22 @@
 
 // Sitemap uses JQuery.Draggable/Droppable to handling moving elements, with custom code below.
 // Open/Close are handled as code below.
-var Sitemap = function() {
+var Sitemap = function () {
 };
 
 // Name of cookie that stores SectionNode ids that should be opened.
 Sitemap.STATE = 'cms.sitemap.open_folders';
 
-Sitemap.prototype.select = function(selectedRow) {
+Sitemap.prototype.select = function (selectedRow) {
   $('.nav-list-span').removeClass('active');
   selectedRow.addClass('active');
   newContentButton.updateButtons(selectedRow);
 };
 
 // Different Content types have different behaviors when double clicked.
-Sitemap.prototype._doubleClick = function(event) {
+Sitemap.prototype._doubleClick = function (event) {
   var type = $(event.target).data('type');
-  switch(type) {
+  switch (type) {
     case 'section':
     case 'link':
       $('#properties-button')[0].click();
@@ -36,7 +36,7 @@ Sitemap.prototype._doubleClick = function(event) {
 // @param [Number] node_id
 // @param [Number] target_node_id
 // @param [Number] position A 1 based position for order
-Sitemap.prototype.moveTo = function(node_id, target_node_id, position) {
+Sitemap.prototype.moveTo = function (node_id, target_node_id, position) {
   var path = "/cms/section_nodes/" + node_id + '/move_to_position'
   $.cms_ajax.put({
     url: path,
@@ -44,37 +44,37 @@ Sitemap.prototype.moveTo = function(node_id, target_node_id, position) {
       target_node_id: target_node_id,
       position: position
     },
-    success: function(result) {
+    success: function (result) {
       //console.log(result);
     }
   });
 };
 
 // @param [Selector] Determines if a section is open.
-Sitemap.prototype.isOpen = function(row) {
+Sitemap.prototype.isOpen = function (row) {
   return row.find('.type-icon').hasClass('icon-folder-open');
 };
 
 // @param [Selector] link A selected link (<a>)
 // @param [String] icon The full name of the icon (icon-folder-open)
-Sitemap.prototype.changeIcon = function(row, icon) {
+Sitemap.prototype.changeIcon = function (row, icon) {
   row.find('.type-icon').attr('class', 'type-icon').addClass(icon);
 };
 
 // @param [Number] id
-Sitemap.prototype.saveAsOpened = function(id) {
+Sitemap.prototype.saveAsOpened = function (id) {
   $.cookieSet.add(Sitemap.STATE, id);
 };
 
 // @param [Number] id
-Sitemap.prototype.saveAsClosed = function(id) {
+Sitemap.prototype.saveAsClosed = function (id) {
   $.cookieSet.remove(Sitemap.STATE, id);
 };
 
 // Reopen all sections that the user was last working with.
-Sitemap.prototype.restoreOpenState = function() {
+Sitemap.prototype.restoreOpenState = function () {
   var section_node_ids = $.cookieSet.get(Sitemap.STATE);
-  _.each(section_node_ids, function(id) {
+  _.each(section_node_ids, function (id) {
     if (id !== '') {
       var row = $('.nav-list-span[data-id=' + id + ']');
       sitemap.open(row, {animate: false});
@@ -83,17 +83,17 @@ Sitemap.prototype.restoreOpenState = function() {
 };
 
 // Determines if the selected row is a Folder or not.
-Sitemap.prototype.isFolder = function(row) {
+Sitemap.prototype.isFolder = function (row) {
   return row.data('type') == 'folder';
 };
 
-Sitemap.prototype.isClosable = function(row) {
+Sitemap.prototype.isClosable = function (row) {
   return row.data('closable') == true;
 };
 
 // @param [Selector] link
 // @param [Object] options
-Sitemap.prototype.open = function(row, options) {
+Sitemap.prototype.open = function (row, options) {
   options = options || {}
   _.defaults(options, {animate: true});
   this.changeIcon(row, 'icon-folder-open');
@@ -108,19 +108,19 @@ Sitemap.prototype.open = function(row, options) {
 };
 
 // Attempts to open the given row. Will skip if the item cannot or is already open.
-Sitemap.prototype.attemptOpen = function(row, options) {
+Sitemap.prototype.attemptOpen = function (row, options) {
   if (this.isClosable(row) && !this.isOpen(row)) {
     this.open(row, options);
   }
 };
 
-Sitemap.prototype.close = function(row) {
+Sitemap.prototype.close = function (row) {
   this.changeIcon(row, 'icon-folder');
   row.siblings('.children').slideToggle('fast');
   this.saveAsClosed(row.data('id'));
 };
 
-Sitemap.prototype.toggleOpen = function(row) {
+Sitemap.prototype.toggleOpen = function (row) {
   if (!this.isClosable(row)) {
     return;
   }
@@ -131,7 +131,7 @@ Sitemap.prototype.toggleOpen = function(row) {
   }
 };
 
-Sitemap.prototype.updateDepth = function(element, newDepth) {
+Sitemap.prototype.updateDepth = function (element, newDepth) {
   var depthClass = "level-" + newDepth;
   element.attr('class', 'ui-draggable ui-droppable nav-list-span').addClass(depthClass);
   element.attr('data-depth', newDepth);
@@ -140,7 +140,7 @@ Sitemap.prototype.updateDepth = function(element, newDepth) {
 var sitemap = new Sitemap();
 
 // Enable dragging of items around the sitemap.
-jQuery(function($){
+jQuery(function ($) {
   if ($('#sitemap').exists()) {
 
     $('#sitemap .draggable').draggable({
@@ -150,51 +150,71 @@ jQuery(function($){
       axis: 'y',
       delay: 250,
       cursor: 'move',
-      stack: '.nav-list-span'
+      stack: '.nav-list-span',
+      scroll: false
     });
 
     $('#sitemap .nav-list-span').droppable({
       hoverClass: "droppable",
-      drop: function(event, ui) {
-        var elementToMove = ui.draggable.parents('.nav-list').first();
-        var elementDroppedOn = $(this).parents('.nav-list').first();
-        var targetDepth = $(this).data('depth');
+      drop: function (event, ui) {
+        var sender = this;
 
+        var sourceElement = ui.draggable.parents('.nav-list').first();
+        var destinationElement = $(sender).parents('.nav-list').first();
+        var sourceDepth = $(sourceElement).find("[data-depth]").data('depth');
+        var destinationDepth = $(sender).data('depth');
+        var sourceParentId = sourceElement.parents('.nav-list:first').find('.nav-list-span:first').data('id');
+        var destinationParentId = destinationElement.parents('.nav-list:first').find('.nav-list-span:first').data('id');
+        var newParentId;
 
-        if (sitemap.isFolder($(this))) {
+        if (sitemap.isFolder($(sender))) {
           // Drop INTO sections
-          sitemap.attemptOpen($(this));
-          sitemap.updateDepth(ui.draggable, targetDepth + 1);
-          elementDroppedOn.find('li').first().append(elementToMove);
-          var newParentId = $(this).data('id');
+          if ((sourceDepth == destinationDepth) && (sourceParentId == destinationParentId)) {
+            reorderItem();
+          } else {
+            moveIntoFolder();
+          }
         } else {
-          sitemap.updateDepth(ui.draggable, targetDepth);
-          // Drop AFTER pages
-          var newParentId = elementDroppedOn.parents('.nav-list:first').find('.nav-list-span:first').data('id');
-          elementToMove.insertAfter(elementDroppedOn);
+          // Drop INTO page
+          reorderItem();
         }
 
-        // Move item on server
-        var nodeIdToMove = ui.draggable.data('id');
-        var newPosition = elementToMove.index();
-        console.log("Move section_node", nodeIdToMove, " to parent:", newParentId, 'at position', newPosition);
-        sitemap.moveTo(nodeIdToMove, newParentId, newPosition);
+        function reorderItem() {
+          sitemap.updateDepth(ui.draggable, destinationDepth);
+          sourceElement.insertAfter(destinationElement);
+          newParentId = destinationParentId;
+          moveItemOnServer();
+        }
 
-        // Need a manual delay otherwise the animation happens before the insert.
-        window.setTimeout(function() {
-          ui.draggable.effect({effect: 'highlight', duration: 500, color: '#0079c1'});
-        }, 250);
+        function moveIntoFolder() {
+          sitemap.attemptOpen($(sender));
+          sitemap.updateDepth(ui.draggable, destinationDepth + 1);
+          destinationElement.find('li').first().append(sourceElement);
+          newParentId = $(destinationElement).find('.nav-list-span:first').data('id');
+          moveItemOnServer();
+        }
+
+        function moveItemOnServer() {
+          var nodeIdToMove = ui.draggable.data('id');
+          var newPosition = sourceElement.index();
+          sitemap.moveTo(nodeIdToMove, newParentId, newPosition);
+
+          // Need a manual delay otherwise the animation happens before the insert.
+          window.setTimeout(function () {
+            ui.draggable.effect({effect: 'highlight', duration: 500, color: '#0079c1'});
+          }, 250);
+        }
       }
     });
   }
 });
 
 // Open/close folders when rows are clicked.
-jQuery(function($){
+jQuery(function ($) {
   // Ensure this only loads on sitemap page.
   if ($('#sitemap').exists()) {
     sitemap.restoreOpenState();
-    $('.nav-list-span').on('click', function(event) {
+    $('.nav-list-span').on('click', function (event) {
       sitemap.toggleOpen($(this));
       sitemap.select($(this));
     });
@@ -203,9 +223,9 @@ jQuery(function($){
 });
 
 // Make Sitemap filters show specific content types.
-jQuery(function($){
+jQuery(function ($) {
   $('#sitemap li[data-nodetype]').hide();
-  $('#filtershow').change(function() {
+  $('#filtershow').change(function () {
     $('#sitemap li[data-nodetype]').slideUp();
     var what = $(this).val();
     if (what == "none") {
