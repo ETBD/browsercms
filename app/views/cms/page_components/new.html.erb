@@ -7,6 +7,6 @@
   <%= render 'content' %>
 </div>
 <div class="modal-footer">
-  <%= link_to "Never Mind", "#", class: "btn btn-small", data: {dismiss: "modal", }, "aria-hidden" => "true" %>
+  <%= link_to "Cancel", "#", class: "btn btn-small", data: {dismiss: "modal", }, "aria-hidden" => "true" %>
   <%= link_to "Reuse Content", cms.new_connector_path(:page_id => params[:connect_to_page_id], :container => params[:connect_to_container]) , class: "btn btn-small btn-primary", id: "insert_existing_content" %>
 </div>
