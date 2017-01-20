@@ -84,12 +84,24 @@ module Cms
           end
         end
 
+        #https://github.com/jamesarosen/avatar/blob/master/test/lib/paperclip/lib/paperclip.rb
+        # Places ActiveRecord-style validations on the presence of a file.
+        def validates_attachment_presence(name, options = {})
+          attachment_definitions[name][:validations] << lambda do |attachment, instance|
+            if attachment.file.nil? || !File.exist?(attachment.file.path)
+              "must be set."
+            end
+          end
+        end
+
+
         def validates_attachment_presence(name, options = {})
           message = options[:message] || "Must provide at least one #{name}"
           validate(options) do |record|
-            return if record.deleted?
-            unless record.attachments.any? { |a| a.attachment_name == name.to_s }
-              record.errors.add(:attachment, message)
+            if !record.deleted?
+              unless record.attachments.any? { |a| a.attachment_name == name.to_s }
+                record.errors.add(:attachment, message)
+              end
             end
           end
         end
