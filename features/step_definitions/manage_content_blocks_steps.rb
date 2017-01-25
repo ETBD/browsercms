@@ -19,11 +19,11 @@ When /^I delete "([^"]*)"$/ do |product_name|
 end
 
 Then /^I should be returned to the view products page in the content library$/ do
-  assert_equal dummy_products_url, page.response_headers["Location"]
+  expect(dummy_products_url).to  eq(page.response_headers["Location"])
 end
 
 Then /^I should be redirected to ([^"]*)$/ do |path|
-  assert_equal "http://www.example.com#{path}", page.response_headers["Location"]
+  expect(page.response_headers["Location"]).to eq("http://www.example.com#{path}")
 end
 
 Then /^"([^"]*)" should be selected as the current Content Type$/ do |name|
@@ -63,13 +63,13 @@ Given /^there are multiple pages of products in the Content Library$/ do
 end
 
 Then /^I should see the paging controls$/ do
-  assert_equal 200, page.status_code
-  assert page.has_content?("Displaying 1 - 15 of 30")
+  expect(page.status_code).to eq(200)
+  expect(page.body).to have_css('#next_page_link')
 end
 
 Then /^I should see the second page of content$/ do
-  assert_equal 200, page.status_code
-  assert page.has_content?("Displaying 16 - 30 of 30")
+  expect(page.status_code).to eq(200)
+  expect(page.body).to have_css('#previous_page_link')
 end
 
 When /^I create a new "([^"]*)" portlet$/ do |portlet_type|
@@ -80,16 +80,16 @@ end
 Given /^I have an Html block in draft mode$/ do
   @block = create(:html_block, :content=>"Testing Modes")
   @block.update_attributes(:name => "Should be updated.", :publish_on_save => false)
-  refute @block.live?, "Assumed: Block should not be published."
+  expect(@block.live?).to eq(false)#, "Assumed: Block should not be published."
 end
 
 When /^I should see that block's content$/ do
-  assert page.has_content?(@block.content), "Expected to see #{@block.content} on the page."
+  expect(page.body).to include(@block.content), "Expected to see #{@block.content} on the page."
 end
 
 When /^I should see it's draft mode$/ do
   within(".draft") do
-    assert page.has_content?('Draft')
+    expect(page.body).to include('Draft')
   end
 end
 When /^I add a new product$/ do

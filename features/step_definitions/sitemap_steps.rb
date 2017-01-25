@@ -4,15 +4,15 @@ When /^there are some additional pages and sections$/ do
   @page = create(:page, :name => "Test Page", :section => @bar)
 end
 Then /^I should see the new pages and sections$/ do
-  assert page.has_content?("Foo")
-  assert page.has_content?("Bar")
-  assert page.has_content?("Test Page")
+  expect(page.body).to include("Foo")
+  expect(page.body).to include("Bar")
+  expect(page.body).to include("Test Page")
 
 end
 When /^I should see the stock CMS pages$/ do
-  assert page.has_content?("My Site")
-  assert page.has_content?("system")
-  assert page.has_content?("Page Not Found")
-  assert page.has_content?("Access Denied")
-  assert page.has_content?("Server Error")
+  expect(page.body).to include("My Site")
+  expect(page.body).to include("system")
+  expect(page.body).to include("Page Not Found")
+  expect(page.body).to include("Access Denied")
+  expect(page.body).to include("Server Error")
 end

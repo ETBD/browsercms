@@ -26,7 +26,7 @@ module Cms
     end
 
     def should_be_exactly_one_external_user
-      assert_equal 1, Cms::ExternalUser.count
+      expect(Cms::ExternalUser.count).to eq 1
     end
 
     def logout

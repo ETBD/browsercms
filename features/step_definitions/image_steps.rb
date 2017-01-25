@@ -1,11 +1,11 @@
 Then /^the image (\d+) should be moved to "([^"]*)"$/ do |image_block_id, section_name|
   image = Cms::ImageBlock.find(image_block_id.to_i)
-  assert_equal section_name, image.parent.name
+  expect(section_name).to eq(image.parent.name)
 end
 
 Then /^the image (\d+) should be at path "([^"]*)"$/ do |image_block_id, expected_path|
   image = Cms::ImageBlock.find(image_block_id.to_i)
-  assert_equal expected_path, image.path
+  expect(expected_path).to eq(image.path)
 end
 
 Then /^the following images exist:$/ do |table|
@@ -80,7 +80,7 @@ end
 
 When /^the file template should render$/ do
   within('#file_block_150') do
-    assert page.has_content?('A Sample File')
+    expect(page.body).to include('A Sample File')
   end
 end
 Given /^an image exists with two versions$/ do
@@ -88,7 +88,7 @@ Given /^an image exists with two versions$/ do
   @image.update_attributes(:name => "Version 2", :publish_on_save => true)
 
   @image.reload
-  assert_equal 2, @image.version
+  expect(@image.version).to eq(2)
 end
 
 When /^I revert the image to version 1$/ do
@@ -100,11 +100,11 @@ When /^I revert the image to version 1$/ do
 end
 
 Then /^the image should be reverted to version 1$/ do
-  assert page.has_content? "Image Version 1"
+  expect(page.body).to include("Image Version 1")
 end
 
 When /^the image should be updated to version 3$/ do
-  assert_equal 3, @image.as_of_draft_version.version
+  expect(@image.as_of_draft_version.version).to eq(3)
 end
 
 Given /^a file exists with two versions$/ do
@@ -122,8 +122,8 @@ end
 
 Then /^I should see the first version of the file$/ do
   click_on @original_file_name
-  assert page.has_content?('v1')
-  assert_equal 200, page.status_code
+  expect(page.body).to include('v1')
+  expect(page.status_code).to eq(200)
 end
 
 When /^I view the first version of that image$/ do
@@ -131,10 +131,10 @@ When /^I view the first version of that image$/ do
 end
 
 Then /^I should see the first version of the image$/ do
-  assert page.has_css?("img[data-type=image_block]")
+  expect(page.body).to have_css("img[data-type=image_block]")
   ele = page.first(:css, "img[data-type=image_block]")
   visit ele[:src]
-  assert_equal 200, page.status_code
+  expect(page.status_code).to eq(200)
 end
 
 When /^I view that image on a page$/ do
@@ -149,5 +149,5 @@ end
 
 Then /^I should see the latest version of the image$/ do
   get_image("img[data-type=image_block]")
-  assert_equal @image.file.data_file_path, current_path, "Should not be the login screen."
+  expect(@image.file.data_file_path).to eq(current_path) # "Should not be the login screen."
 end

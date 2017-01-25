@@ -6,8 +6,7 @@ Feature: Manage Pages
 
   Scenario: Edit Page
     When I create a new page
-    Then I should see a page titled "Sitemap"
-    And the page content should contain "New Page"
+    Then I should see a page titled "New Page"
 
   Scenario: Creating Page as unpublished
     When I create a new page

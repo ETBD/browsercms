@@ -39,7 +39,7 @@ Feature: Acts as Content Page
   Scenario: Controller throws Missing Page Error
     When I am at /tests/not-found
     Then the response should be 404
-    And I should see a page named "Not Found"
+    And I should see a page named "Page Not Found"
     And I should see the following content:
       | Page Not Found |
 

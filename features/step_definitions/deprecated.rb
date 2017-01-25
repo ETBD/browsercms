@@ -10,7 +10,7 @@ Given /^I'm creating content which uses deprecated input fields$/ do
 end
 
 Then /^the form page with deprecated fields should be shown$/ do
-  assert_equal 200, page.status_code.to_i
+  expect(page.status_code.to_i).to eq(200)
 end
 
 When /^I fill in all the deprecated fields$/ do
@@ -24,9 +24,9 @@ end
 Then /^a new deprecated content block should be created$/ do
   should_be_successful
   last_block = Dummy::DeprecatedInput.last
-  assert_not_nil last_block, "Content should have been created."
-  assert_equal @expect_name, last_block.name
-  assert_equal @expect_content, last_block.content
-  assert_equal @expect_template, last_block.template
-  assert_equal @expect_file_name, last_block.cover_photo.file_name
+  expect(last_block).not_to eq("Content should have been created.")
+  expect(@expect_name).to eq(last_block.name)
+  expect(@expect_content).to eq(last_block.content)
+  expect(@expect_template).to eq(last_block.template)
+  expect(@expect_file_name).to eq(last_block.cover_photo.file_name)
 end

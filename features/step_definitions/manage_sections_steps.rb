@@ -14,5 +14,5 @@ end
 
 When /^the new section should be accessible to everyone$/ do
   section = Cms::Section.last
-  assert_equal Cms::Group.count, section.groups.size
+  expect(Cms::Group.count).to eq(section.groups.size)
 end

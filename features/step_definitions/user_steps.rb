@@ -4,7 +4,7 @@ end
 
 Then /^I should see myself on the list$/ do
   @user = Cms::User.first
-  assert page.has_content?(@user.email)
+  expect(page.body).to include(@user.email)
 end
 
 Given /^the following user exists:$/ do |table|
@@ -42,8 +42,8 @@ end
 
 Then /^I should see only that user$/ do
   should_be_successful
-  assert page.has_css?("a", text: @that_user.email)
-  assert !page.has_css?("a", text: "dont-find@example.com")
+  expect(page.body).to have_css("a", text: @that_user.email)
+  expect(page.body).not_to have_css("a", text: "dont-find@example.com")
 end
 When /^I search for users with group "([^"]*)"$/ do |group_name|
   visit "/cms/users"
@@ -53,12 +53,12 @@ end
 
 Then /^I should not see that user$/ do
   should_be_successful
-  assert !page.has_css?("a", text: @that_user.email)
+  expect(page.body).not_to have_css("a", text: @that_user.email)
 end
 
 Then /^I should see that user$/ do
   should_be_successful
-  assert page.has_css?("a", text: @that_user.email)
+  expect(page.body).to have_css("a", text: @that_user.email)
 end
 When /^I add that user to a new group$/ do
   create(:group, name: "Sample Group")
@@ -69,7 +69,7 @@ When /^I add that user to a new group$/ do
 end
 
 Then /^that user should have (\d+) group$/ do |number|
-  assert_equal number.to_i, @that_user.groups.size
+  expect(number.to_i).to eq(@that_user.groups.size)
 end
 
 When /^I try to edit another user account$/ do
@@ -77,7 +77,7 @@ When /^I try to edit another user account$/ do
 end
 
 Then /^I should be denied access$/ do
-  assert_equal 403, page.status_code
+  expect(page.status_code).to eq(403)
 end
 
 Given /^I have a content editor account$/ do
@@ -119,7 +119,7 @@ Given /^I create an expired user$/ do
     Then fill valid fields for a new user named "expired_dude"
   }
   @that_user = Cms::User.last
-  assert_equal "expired_dude", @that_user.login
+  expect("expired_dude").to eq(@that_user.login)
 end
 
 When /^fill valid fields for a new user named "([^"]*)"$/ do |username|
@@ -193,7 +193,7 @@ Then(/^I should be able to change some fields$/) do
   click_save_button
   should_be_successful
   should_see_a_page_titled "Users"
-  assert page.has_content?("Tester User")
+  expect(page.body).to include("Tester User")
 end
 
 When /^I fill in passwords as "([^"]*)"$/ do |new_pw|
@@ -205,7 +205,7 @@ When /^I go to the public login page$/ do
 end
 
 Then /^there should be a forgot password link$/ do
-  assert page.has_content?("Forgot your password?")
+  expect(page.body).to include("Forgot your password?")
 end
 
 When /^I click the forgot password link$/ do
@@ -219,9 +219,9 @@ end
 
 Then /^I should receive an email with a reset password link.$/ do
   should_be_successful
-  assert_equal 1, ActionMailer::Base.deliveries.size
-  assert_equal [Cms::User.first.email], ActionMailer::Base.deliveries.first.to
-  assert page.has_content?("You will receive an email")
+  expect(ActionMailer::Base.deliveries.size).to eq(1)
+  expect([Cms::User.first.email]).to eq(ActionMailer::Base.deliveries.first.to)
+  expect(page.body).to include("You will receive an email")
 end
 
 Given /^I have requested to reset my password$/ do

@@ -13,7 +13,7 @@ When /^I edit that portlet$/ do
 end
 
 When /^I visit that page$/ do
-  assert_not_nil @last_page, "Couldn't find @last_page to visit. Check the order on steps'"
+  expect(@last_page).not_to eq(nil) #"Couldn't find @last_page to visit. Check the order on steps'"
   visit @last_page.path
 end
 
@@ -23,7 +23,7 @@ Given /^a page with a portlet that raises a Not Found exception exists$/ do
   @raises_not_found = create(:portlet, :code => 'raise ActiveRecord::RecordNotFound', :template => "I shouldn't be shown.'")
   @last_page.add_content(@raises_not_found)
   @last_page.publish!
-  assert @last_page.published?
+  expect(@last_page.published?).to eq(true)
 end
 
 When /^a page with a portlet that raises an Access Denied exception exists$/ do
@@ -31,7 +31,7 @@ When /^a page with a portlet that raises an Access Denied exception exists$/ do
   @raises_access_denied = create(:portlet, :code => 'raise Cms::Errors::AccessDenied', :template => "I shouldn't be shown.'")
   @last_page.add_content(@raises_access_denied)
   @last_page.publish!
-  assert @last_page.published?
+  expect(@last_page.published?).to eq(true)
 end
 
 When /^a page with a portlet that display "([^"]*)" exists$/ do |view|
@@ -39,7 +39,7 @@ When /^a page with a portlet that display "([^"]*)" exists$/ do |view|
   portlet = create(:portlet, :template => view)
   @last_page.add_content(portlet)
   @last_page.publish!
-  assert @last_page.published?
+  expect(@last_page.published?).to eq(true)
 end
 
 When /^a page with a portlet that raises both a 404 and 403 error exists$/ do
@@ -49,7 +49,7 @@ When /^a page with a portlet that raises both a 404 and 403 error exists$/ do
   @raises_access_denied = create(:portlet, :code => 'raise Cms::Errors::AccessDenied', :template => "I shouldn't be shown.'")
   @last_page.add_content(@raises_access_denied)
   @last_page.publish!
-  assert @last_page.published?
+  expect(@last_page.published?).to eq(true)
 end
 
 When /^a page with a portlet that raises both a 403 and any other error exists$/ do
@@ -59,7 +59,7 @@ When /^a page with a portlet that raises both a 403 and any other error exists$/
   @raises_access_denied = create(:portlet, :code => 'raise Cms::Errors::AccessDenied', :template => "I shouldn't be shown.'")
   @last_page.add_content(@raises_access_denied)
   @last_page.publish!
-  assert @last_page.published?
+  expect(@last_page.published?).to eq(true)
 end
 
 Given /^a portlet that throws an unexpected error exists$/ do
@@ -83,7 +83,7 @@ When /^I view that page$/ do
 end
 
 Then /^I should see the portlet helper rendered in the view$/ do
-  assert page.has_content?(UsesHelperPortletHelper::EXPECTED_CONTENT)
+  expect(page.body).to include(UsesHelperPortletHelper::EXPECTED_CONTENT)
 end
 
 Given /^a developer creates a portlet which sets a custom page title as "([^"]*)"$/ do |title|
@@ -98,9 +98,9 @@ When /^a guest views that page$/ do
 end
 
 Then /^the page should show content but not the error$/ do
-  refute page.has_content?('Exception'), "Exception should not appear on the page"
-  refute page.has_content?('Error'), "The word 'Error' should not appear on the page"
-  assert page.has_content?('hello'), "Should see other content"
+  expect(page.body).not_to include('Exception')#, "Exception should not appear on the page"
+  expect(page.body).not_to include('Error')#, "The word 'Error' should not appear on the page"
+  expect(page.body).to include('hello')#, "Should see other content"
   should_see_a_page_named(most_recently_created_page.title)
 end
 
@@ -119,8 +119,8 @@ end
 Then /^I should see the content loaded by that Portlet$/ do
   should_be_successful
   should_see_a_page_titled @expected_page.name
-  assert page.has_content?(@content.name)
-  assert page.has_content?("Pass.")
+  expect(page.body).to include(@content.name)
+  expect(page.body).to include("Pass.")
 end
 
 When /^I view that Find Content Portlet in the page editor$/ do

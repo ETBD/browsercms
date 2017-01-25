@@ -25,7 +25,7 @@ end
 
 Given /^an archived file named "([^"]*)" exists$/ do  |file_name|
   file = create(:file_block, :archived=>true, :attachment_file_path => file_name)
-  assert file.archived?, "Verify the file I just created should be archived"
+  expect(file.archived?).to eq(true)#, "Verify the file I just created should be archived"
 end
 
 When /^I (?:request|visit) (#{PATH})$/ do |path|

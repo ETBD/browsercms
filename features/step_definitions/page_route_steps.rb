@@ -54,7 +54,7 @@ RUBY
   @route.save!
 end
 Then /^I should see content for that year only$/ do
-  assert page.has_content?("I worked")
+  expect(page.body).to include("I worked")
 end
 
 When /^I POST to (.+)$/ do |path|

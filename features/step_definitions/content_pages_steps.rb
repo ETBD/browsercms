@@ -1,18 +1,18 @@
 # ex: Then I should see a page named "Home"
 Then /^I should see a page named "([^"]*)"$/ do |page_title|
-  should_see_a_page_named(page_title)
+  expect(page.title).to eq(page_title)
 end
 
 Then /^I should see a page titled "([^"]*)"$/ do |page_title|
-  should_see_a_page_titled(page_title)
+  expect(page.title).to eq(page_title)
 end
 
 Then /^I should see a page with a header "([^"]*)"$/ do |page_header|
-  should_see_a_page_header(page_header)
+  expect(page.body).to have_css('h1', text: page_header)
 end
 
 When /^the page header should be "([^"]*)"$/ do |h1|
-  should_see_a_page_header(h1)
+  expect(page.body).to have_css('h1', text: h1)
 end
 
 When /^I am not logged in$/ do
@@ -42,11 +42,11 @@ end
 
 Then /^the homepage should exist$/ do
   cms_page = Cms::Page.with_path("/").first
-  assert_not_nil cms_page
+  expect(cms_page).not_to be_nil
 end
 
 Then /^I should see Welcome, cmsadmin$/ do
-  assert page.has_content? 'Welcome, cmsadmin'
+  expect(page.body).to include('Welcome, cmsadmin')
 end
 
 # Duplicates 'I request /path'
@@ -55,7 +55,7 @@ Given /^I am at (.+)/ do |path|
 end
 
 Then /^the response should be (.*)$/ do |response_code|
-  assert_equal response_code.to_i, page.status_code
+  expect(page.status_code).to eq(response_code.to_i)
 end
 
 When /^login as an authorized user$/ do
@@ -127,7 +127,7 @@ end
 
 Given /^an archived page at "([^"]*)" exists$/ do |path|
   page = create(:page, :archived => true, :path => path)
-  assert page.archived?
+  expect(page.archived?).to eq(true)
 end
 
 Given /^a protected page at "([^"]*)" exists$/ do |path|
@@ -135,7 +135,7 @@ Given /^a protected page at "([^"]*)" exists$/ do |path|
 end
 
 Then /^I should see the CMS :forbidden page$/ do
-  assert_equal 403, page.status_code
+  expect(page.status_code).to eq(403)
   should_see_a_page_named("Access Denied")
 end
 
@@ -177,7 +177,7 @@ end
 
 
 Then /^they should be redirected to "([^"]*)"$/ do |expected_url|
-  assert_equal expected_url, current_url
+  expect(current_url).to eq(expected_url)
 end
 
 
@@ -191,13 +191,13 @@ When /^I view version (\d+) of that page$/ do |version|
 end
 
 Then /^the toolbar should display a revert to button$/ do
-  assert_equal 200, page.status_code
-  assert((page.has_content? "Revert to this Version"), "The Page toolbar does not display the revert to button.")
+  expect(page.status_code).to eq(200)
+  expect(page.body).to include("Revert to this Version")#, "The Page toolbar does not display the revert to button.")
 end
 
 When /^the page content should contain "([^"]*)"$/ do |content|
   within_content_frame do
-    assert page.has_content?(content)
+    expect(page.body).to include(content)
   end
 end
 
@@ -209,7 +209,7 @@ When /^I create a new page$/ do
 end
 
 Then /^that page should not be published$/ do
-  refute most_recently_created_page.published?, "The page should not be published."
+  expect(most_recently_created_page.published?).to eq(false)#, "The page should not be published."
 end
 
 Then /^I publish that page$/ do
@@ -218,7 +218,7 @@ Then /^I publish that page$/ do
 end
 
 Then /^that page should be published$/ do
-  assert most_recently_created_page.published?, "The page should be published."
+  expect(most_recently_created_page.published?).to eq(true)#, "The page should be published."
 end
 
 Then /^I should end up on that page$/ do

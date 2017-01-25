@@ -1,14 +1,14 @@
 Then /^I should see a label named "([^"]*)"$/ do |label_name|
-  assert page.has_css? "label", text: label_name
+  expect(page.body).to have_css("label", text: label_name)
 end
 
 When /^I should see a file upload button$/ do
-  assert page.has_css? "input[type=file]"
+  expect(page.body).to have_css("input[type=file]")
 end
 
 When /^I should see the following instructions:$/ do |table|
   table.rows.each do |text|
-    assert page.has_css? ".instructions", text: text
+    expect(page.body).to have_css(".instructions", text: text)
   end
 end
 
@@ -17,8 +17,8 @@ Given /^I am creating a new block which has two attachments$/ do
 end
 
 Then /^I should see two file uploads$/ do
-  assert page.has_css? "label", text: "Photo 1", :count => 1
-  assert page.has_css? "label", text: "Photo 2", :count => 1
+  expect(page.body).to have_css("label", text: "Photo 1", :count => 1)
+  expect(page.body).to have_css("label", text: "Photo 2", :count => 1)
 end
 
 module MultipleAttachments
@@ -55,11 +55,9 @@ end
 
 Then /^I should see the new attachments when I view the block$/ do
   visit dummy_product_inline_path(@block)
-
   get_image("img[data-type=photo-1]")
-  assert page.has_content?("v1"), "Check the contents of the image to make sure its the correct one."
-  assert "/cms/attachments?version=2", current_path
-
+  expect(page.body).to include("v1")#, "Check the contents of the image to make sure its the correct one."
+  expect("/cms/attachments/11").to eq(current_path)
 end
 
 When /^I upload a single attachment$/ do
@@ -88,8 +86,8 @@ Given /^a block exists with a single image$/ do
   @block.save!
 
   a = @block.attachments.first
-  assert_equal 1, a.attachable_version
-  assert_equal @block.id, a.attachable_id
+  expect(a.attachable_version).to eq(1)
+  expect(@block.id).to eq(a.attachable_id)
 end
 
 When /^I view that block$/ do
@@ -102,12 +100,16 @@ When /^I view that block$/ do
 end
 
 Then /^I should see that block's image$/ do
-  assert page.has_css?("img[data-purpose=attachment]")
+  expect(page.body).to have_css("img[data-purpose=attachment]")
 end
 
 When /^I (#{SHOULD_OR_NOT}) see the delete attachment link$/ do |should_see|
   within("#assets_table") do
-    assert_equal should_see, page.has_css?("a", :text => "Delete")
+    if should_see
+      expect(page.body).to have_css('a', text: "Delete")
+    else
+      expect(page.body).not_to have_css('a', text: "Delete")
+    end
   end
 end
 
@@ -132,6 +134,6 @@ Given /^an attachment exists in a public section$/ do
   @block.save!
 end
 Then /^I should see the attachment content$/ do
-  assert_equal 200, page.status_code
-  assert page.has_content?("This is a file.")
+  expect(page.status_code).to eq(200)
+  expect(page.body).to include("This is a file.")
 end

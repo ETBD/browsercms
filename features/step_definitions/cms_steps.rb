@@ -40,9 +40,6 @@ end
 
 Then /^I should see a widget to select which editor to use$/ do
   # This just verifies that the text editor selection widget is present.
-  assert page.has_selector?('#dhtml_selector')
-  within('#dhtml_selector') do
-    assert page.has_content?("Rich Text")
-    assert page.has_content?("Simple Text")
-  end
+  expect(page.body).to include("Rich Text")
+  expect(page.body).to include("Simple Text")
 end

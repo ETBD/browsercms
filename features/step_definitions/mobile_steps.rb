@@ -31,15 +31,15 @@ end
 
 Then /^they should see the desktop content$/ do
   within_content_frame do
-    assert page.has_content? "I am the desktop TEMPLATE"
-    assert page.has_content? "Mobile Content"
+    expect(page.body).to include("I am the desktop TEMPLATE")
+    expect(page.body).to include("Mobile Content")
   end
 end
 
 Then /^they should see the mobile template$/ do
   within_content_frame do
-    assert page.has_content? "I am a stripped down MOBILE template."
-    assert page.has_content? "Mobile Content"
+    expect(page.body).to include("I am a stripped down MOBILE template.")
+    expect(page.body).to include("Mobile Content")
   end
 end
 
@@ -53,9 +53,13 @@ end
 
 Given /^the page \/mobile-page is public$/ do
   p = Cms::Page.find_live_by_path("/mobile-page")
-  assert_equal 3, p.parent.sections.size
+  expect(p.parent.sections.size).to eq(3)
 end
 
 Then /^they should( not)? see the mobile toggle$/ do |negate|
-  assert_equal negate.blank?, page.has_content?('View as Mobile')
+  if !negate.blank?
+    expect(page.body).not_to include('View as Mobile')
+  else
+    expect(page.body).to include('View as Mobile')
+  end
 end

@@ -12,5 +12,5 @@ When /^the following Categories exist for "([^"]*)":$/ do |category_type, table|
   end
 end
 Then /^an image with id "([^"]*)" should exist$/ do |arg|
-  assert Cms::ImageBlock.find(arg.to_i)
+  expect(Cms::ImageBlock.find(arg.to_i)).not_to be(nil)
 end

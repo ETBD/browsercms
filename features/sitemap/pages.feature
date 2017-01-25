@@ -10,12 +10,12 @@ Feature:  Pages
     And I fill in "Path" with "/my-new-page"
     And I select "Default" from "Template"
     And I click the Save button
-    Then I should see a page titled "Sitemap"
+    Then I should see a page titled "A New Page"
 
   Scenario: Edit a Page
     Given that a page I want to edit exists
     When I go to the sitemap
     And I select the page to edit
     And I change the page name
-    Then I should see a page titled "Sitemap"
-    And the page content should contain "A New Page"
+    Then I should see a page titled "A New Page Name"
+# RSE Intentionally Modified Behavior

@@ -10,12 +10,12 @@ When /^I edit that page template$/ do
 end
 When /^I delete that page template$/ do
   page.driver.delete "/cms/page_templates/#{@page_templates.first.id}"
-  assert_equal 302, page.status_code, "Should redirect after deleting"
+  expect(page.status_code).to eq(302)#, "Should redirect after deleting"
   visit "/cms/page_templates"
 end
 
 When /^I should not see the "([^"]*)" template in the table$/ do |content|
   within ".data" do
-    assert !page.has_content?(content)
+    expect(page.body).not_to include(content)
   end
 end

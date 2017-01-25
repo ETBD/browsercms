@@ -47,21 +47,21 @@ When /^I view a page that lists products$/ do
 end
 
 Then /^I should be able to click on a link to see a product$/ do
-  assert page.has_content?("A Widget")
+  expect(page.body).to include("A Widget")
 end
 Then /^a new product should be created$/ do
-  assert_equal 1, Dummy::Product.count
+  expect(Dummy::Product.count). to eq(1)
 end
 
 EXPECTED_PRODUCT_NAME = "About Us"
 
 Given(/^a product with a slug "(.*?)" exists$/) do |slug|
   FactoryGirl.create(:product, name: EXPECTED_PRODUCT_NAME, slug: slug)
-  assert_not_nil Dummy::Product.with_slug(slug)
+  expect(Dummy::Product.with_slug(slug)).not_to eq(nil)
 end
 
 Given /^no product with a slug "([^"]*)" exists$/ do |slug|
-  assert_nil Dummy::Product.with_slug(slug)
+  expect(Dummy::Product.with_slug(slug)).to eq(nil)
 end
 When /^I view products in the content library$/ do
   visit dummy_products_path
@@ -76,7 +76,7 @@ Given(/^a product exists with two versions$/) do
   @product = FactoryGirl.create(:product, name: "Version 1")
   @product.name = "Version 2"
   @product.save!
-  assert_equal 2, @product.versions.size
+  expect(@product.versions.size).to eq(2)
 end
 
 Then(/^I should be able to see the version history for that product$/) do
