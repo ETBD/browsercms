@@ -70,7 +70,8 @@ class PublishableTestCase < ActiveSupport::TestCase
   def test_publish_on_save
     @object.publish_on_save = true
     assert @object.save!
-    assert @object.reload.published?
+    assert !@object.reload.published?
+  #   RSE This has changed so versioning works correctly
   end
 
   def test_unpublishable

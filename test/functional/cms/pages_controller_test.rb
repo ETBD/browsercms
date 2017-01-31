@@ -36,7 +36,8 @@ module Cms
       assert @page.draft.hidden?
 
       put :update, :id => @page.id, :page => {:hidden => false}
-      assert_redirected_to '/cms/sitemap'
+      assert_redirected_to '/cms/pages/' + @page.id.to_s
+      # RSE Intentional Change
 
       reset(:page)
       assert !@page.draft.hidden?

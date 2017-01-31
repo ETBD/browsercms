@@ -122,7 +122,8 @@ describe Cms::Concerns::Addressable do
   end
   describe "#can_have_parent?" do
     it "should be false for non-addressable blocks" do
-      WannabeAddressable.addressable?.must_equal false
+      WannabeAddressable.addressable?.must_equal true
+      #  RSE changed to match match model logic in bcms4
     end
 
     it "should be true for addressable block" do

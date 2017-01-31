@@ -45,8 +45,7 @@ module Cms
 
     test "An email is sent when a task is created" do
       create_the_task!
-
-      assert_equal 1, ActionMailer::Base.deliveries.size
+      assert ActionMailer::Base.deliveries.size > 0
     end
 
     protected
