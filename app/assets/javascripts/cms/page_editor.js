@@ -62,7 +62,7 @@ jQuery(function ($) {
     updatePageStatus: function (data) {
       // Update the Page Status indicator
       var status_label = $('#page-status-label', window.parent.document);
-      status_label.removeClass('draft published');
+      status_label.removeClass('draft published archived');
       status_label.addClass(data.page_status);
       status_label.html(data.status_label);
 

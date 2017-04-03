@@ -27,6 +27,10 @@
 		@include status-icon($danger);
 	}
 
+    .archived {
+      @include status-icon($warning);
+    }
+
     .published {
         @include status-icon($success);
     }

@@ -22,7 +22,9 @@
 <%= delete_menu_button(@block) %>
 <% if @block.persisted? %>
     <% if @block.publishable? && !@block.live? %>
-        <span id="page-status-label" class="draft-status">DRAFT</span>
+        <span id="page-status-label" class="draft-status">Draft</span>
+    <% elsif @page.archived? %>
+        <span class="status archive" id="page-status-label">Archived</span>
     <% else %>
        <span id="page-status-label" class="published-status">Published</span>
     <% end %>

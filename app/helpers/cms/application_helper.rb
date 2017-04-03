@@ -45,10 +45,12 @@ module Cms
     # @option options [Boolean] :force (false) If we should force show :publish icon. In many cases, its the 'default' so it doesn't make sense to show.
     # @return [String] HTML (HTML safe)
     def draft_icon_tag(content, options={})
-      if content.respond_to?(:draft?) && content.draft?
-        '<span class="draft">Draft</span>'.html_safe
-      elsif options[:force]
-        '<span class="published">Published</span>'.html_safe
+      if !@page.live?
+        '<span class="status draft" id="page-status-label">Draft</span>'.html_safe
+      elsif @page.archived?
+        '<span class="status archive" id="page-status-label">Archived</span>'.html_safe
+      else
+        '<span class="status published" id="page-status-label">Published</span>'.html_safe
       end
     end
 
