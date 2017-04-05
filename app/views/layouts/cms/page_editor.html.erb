@@ -13,6 +13,8 @@
   <div class="container center-column">
     <% if !@page.live? %>
         <span class="status draft" id="page-status-label">Draft</span>
+    <% elsif @page.archived? %>
+        <span class="status archive" id="page-status-label">Archived</span>
     <% else %>
         <span class="status published" id="page-status-label">Published</span>
     <% end %>

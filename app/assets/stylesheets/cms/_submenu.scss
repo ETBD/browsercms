@@ -20,6 +20,9 @@
 		&.draft {
 			background: $danger;
 		}
+        &.archive {
+          background: $warning !important;
+        }
 		&.published {
 			background: $success;
 		}

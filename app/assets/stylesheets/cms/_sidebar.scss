@@ -15,6 +15,11 @@
     .draft {
       @include status-icon($danger);
     }
+
+    .archive {
+      @include status-icon($warning);
+    }
+
     .published {
       @include status-icon($success);
     }
