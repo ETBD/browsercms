@@ -16,7 +16,7 @@
       @include status-icon($danger);
     }
 
-    .archived {
+    .archive {
       @include status-icon($warning);
     }
 
