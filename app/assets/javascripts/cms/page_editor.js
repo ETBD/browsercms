@@ -196,9 +196,13 @@ jQuery(function ($) {
 function editLinkPositioning(){
   setTimeout(function () {
     $(".connector").each(function (index, item) {
-      var LINKWIDTH = $('.cms-edit-content-link').outerWidth()
+      var LINKWIDTH = $('.cms-edit-content-link').outerWidth();
 
       var mainElement = $(item).children().first();
+      //Hack for video episodes, as they build their data differently than other objects (share tag first)
+      if ($(mainElement).hasClass('share')){
+        mainElement = $(item).children()[1];
+      }
       var editLink = $(mainElement).parent().find('.cms-edit-content-link');
       var upLink = $(mainElement).parent().find('.cms-move-up-content-link');
       var downLink = $(mainElement).parent().find('.cms-move-down-content-link');
