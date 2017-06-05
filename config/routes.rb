@@ -80,14 +80,14 @@ Cms::Engine.routes.draw do
   resources :attachments, :only => [:show, :create, :destroy]
 
   content_blocks :html_blocks
-  content_blocks :forms
+  # content_blocks :forms
   resources :form_fields do
     member do
       get :confirm_delete
     end
   end
   post "form_fields/:id/insert_at/:position" => 'form_fields#insert_at'
-  get "/forms/:id/fields/preview" => 'form_fields#preview', as: 'preview_form_field'
+  # get "/forms/:id/fields/preview" => 'form_fields#preview', as: 'preview_form_field'
 
   resources :form_entries do
     collection do
@@ -96,7 +96,7 @@ Cms::Engine.routes.draw do
   end
   put "/form_entries" => "form_entries#bulk_update"
   # Faux nested resource for forms (not sure if #content_blocks allows for it.)
-  get 'forms/:id/entries' => 'form_entries#index', as: 'entries'
+  # get 'forms/:id/entries' => 'form_entries#index', as: 'entries'
 
   content_blocks :portlets
   post '/portlet/:id/:handler', :to => "portlet#execute_handler", :as => "portlet_handler"
