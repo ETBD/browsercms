@@ -2,7 +2,7 @@ module Cms
   class Form < ActiveRecord::Base
     acts_as_content_block
     content_module :forms
-    is_addressable path: '/forms'
+    # is_addressable path: '/forms'
 
     has_many :fields,  -> {order(:position)}, class_name: 'Cms::FormField'
     has_many :entries, class_name: 'Cms::FormEntry'
