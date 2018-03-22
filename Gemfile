@@ -1,6 +1,6 @@
 source 'http://rubygems.org'
 
-ruby '2.2.4'
+ruby '2.4.2'
 
 # Load this project as a gem.
 gemspec
