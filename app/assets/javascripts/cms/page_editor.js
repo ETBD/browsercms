@@ -7,8 +7,15 @@
 //= require 'cms/ajax'
 
 // Since we are within the page editing iframe, add a 'target=_top' to all links so they refresh the entire page.
+//
+// Only do this if the target isn't already defined
 jQuery(function ($) {
-  $('a').attr('target', '_top');
+  $('a').each(function(){
+    var link = $(this);
+    if (typeof(link.attr('target')) === 'undefined') {
+      link.attr('target', '_top');
+    }
+  })
 });
 
 jQuery(function ($) {
