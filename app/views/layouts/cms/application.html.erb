@@ -2,7 +2,7 @@
 <html>
 <head>
   <%= javascript_include_tag "cms/application" %>
-  <%= javascript_include_tag cms_content_editor %>
+  <%= javascript_include_tag cms_content_editor if ENV['ENABLE_ADMIN'].to_b %>
   <%= render 'layouts/cms/head' %>
 </head>
 <body>
