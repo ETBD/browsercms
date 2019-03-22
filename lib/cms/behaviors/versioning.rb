@@ -196,6 +196,9 @@ module Cms
           if new_record?
             "Created"
           else
+            # This doesn't always seem to properly be applied, or is applying for
+            # ALL fields, not just the changed ones.
+            binding.pry
             "Changed #{(changes.keys - %w[  version created_by_id updated_by_id  ]).sort.join(', ')}"
           end
         end
