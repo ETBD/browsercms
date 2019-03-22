@@ -37,6 +37,7 @@ module Cms
 
         # Last but not least, clear the changed attributes
         if changed_attrs = obj.send(:changed_attributes)
+          binding.pry
           changed_attrs.clear
         end
 
