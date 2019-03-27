@@ -176,6 +176,8 @@ module Cms
             attrs[col] = send(col)
           end
 
+
+
           attrs[:version_comment] = @version_comment || default_version_comment
           @version_comment = nil
           #puts "Im a '#{self.class}', vc = #{self.class.version_class}"
@@ -198,7 +200,6 @@ module Cms
           else
             # This doesn't always seem to properly be applied, or is applying for
             # ALL fields, not just the changed ones.
-            binding.pry
             "Changed #{(changes.keys - %w[  version created_by_id updated_by_id  ]).sort.join(', ')}"
           end
         end
@@ -244,6 +245,7 @@ module Cms
             logger.debug { "#{self.class}#update" }
             # Because we are 'skipping' the normal ActiveRecord update here, we must manually call the save callback chain.
             run_callbacks :save do
+              binding.pry
               saved_correctly = @new_version.save
             end
           end
@@ -329,7 +331,7 @@ module Cms
           end
 
           self.after_revert(revert_to_version) if self.respond_to?(:after_revert)
-          self.version_comment = "Reverted to version #{version}"
+          @version_comment = "Reverted to version #{version}"
           self.publish_on_save = false
           self
         end
@@ -341,14 +343,6 @@ module Cms
           save
         end
 
-        def version_comment
-          @version_comment
-        end
-
-        def version_comment=(version_comment)
-          @version_comment = version_comment
-          version_comment = @version_comment
-        end
 
         def different_from_last_draft?
           return true if self.changed?

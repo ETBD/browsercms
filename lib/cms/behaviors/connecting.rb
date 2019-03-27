@@ -83,8 +83,8 @@ module Cms
 
         def connect_to_page
           unless connect_to_page_id.blank? || connect_to_container.blank?
-            #Note that we are setting connected_page so that page can look at that 
-            #to determine if the page should be published            
+            #Note that we are setting connected_page so that page can look at that
+            #to determine if the page should be published
             self.connected_page = Page.find(connect_to_page_id)
             connected_page.create_connector(self, connect_to_container)
           end
@@ -116,6 +116,7 @@ module Cms
               if p != updated_by_page
                 #This just creates a new version of the page
                 action = deleted? ? "Deleted" : "Edited"
+                binding.pry
                 p.update_attributes(:version_comment => "#{self.class.name.demodulize} ##{id} was #{action}", :publish_on_save => false)
 
                 #The previous step will copy over a connector pointing to the previous version of this connectable
