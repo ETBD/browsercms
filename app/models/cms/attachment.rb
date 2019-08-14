@@ -64,8 +64,9 @@ module Cms
         lambda do |paperclip_attachment|
           cms_attachment = paperclip_attachment.instance
 
-          # Look up the style for the given block
-          if cms_attachment.has_assigned_content_type?
+          if cms_attachment.respond_to?(:dynamic_styles) # Added
+            cms_attachment.dynamic_styles # Added
+          elsif cms_attachment.has_assigned_content_type?
             configuration_value(cms_attachment.content_block_class, cms_attachment.attachment_name, :styles)
           else # New attachments that aren't associated with an Attaching type yet have no styles
             {}
