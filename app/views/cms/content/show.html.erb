@@ -1,8 +1,10 @@
 <%= content_for :html_head do %>
-    <meta name="generator" content="BrowserCMS <%= Cms.version %>"/>
-    <% if @show_toolbar %>
+    <% if ENV['ENABLE_ADMIN'].to_b && @show_toolbar %>
         <%= stylesheet_link_tag 'cms/page_content_editing' %>
         <%= csrf_meta_tags %>
+        <%= javascript_include_tag 'jquery' %>
+        <%= javascript_include_tag 'cms/page_editor' %>
+        <%= javascript_include_tag 'cms/site' %>
     <% end %>
 <% end %>
 <% if @show_toolbar %>
