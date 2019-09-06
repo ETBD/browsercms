@@ -64,7 +64,8 @@ module Cms
         lambda do |paperclip_attachment|
           cms_attachment = paperclip_attachment.instance
 
-          if cms_attachment.respond_to?(:dynamic_styles) # Added
+          # Added additional logic to handle dynamic styles for images.
+          if cms_attachment.data_content_type =~ /image/ && cms_attachment.respond_to?(:dynamic_styles) # Added
             cms_attachment.dynamic_styles # Added
           elsif cms_attachment.has_assigned_content_type?
             configuration_value(cms_attachment.content_block_class, cms_attachment.attachment_name, :styles)

@@ -26,7 +26,7 @@ class FilePickerInput < SimpleForm::Inputs::Base
       if matching_attachment?(a)
         html << a.hidden_field("attachment_name", value: attribute_name.to_s)
         html << a.file_field(:data, input_html_options.merge('data-purpose' => "cms_file_field", id: tag_id))
-        html << a.hint(options.delete(:hint)) if has_hint?
+        html << a.hint(options.delete(:hint)) if options[:hint].present?
         if render_section_picker?
           html << a.input(:section_id, collection: sections, label_method: :full_path, include_blank: false, label: "Section", wrapper_html: {class: "inline-section-picker"}, input_html: {'data-purpose' => "section_selector"})
         end
