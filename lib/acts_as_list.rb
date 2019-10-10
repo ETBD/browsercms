@@ -24,8 +24,8 @@ module ActsAsList
     # Configuration options are:
     #
     # * +column+ - specifies the column name to use for keeping the position integer (default: +position+)
-    # * +scope+ - restricts what is to be considered a list. Given a symbol, it'll attach <tt>_id</tt> 
-    #   (if it hasn't already been added) and use that as the foreign key restriction. It's also possible 
+    # * +scope+ - restricts what is to be considered a list. Given a symbol, it'll attach <tt>_id</tt>
+    #   (if it hasn't already been added) and use that as the foreign key restriction. It's also possible
     #   to give it an entire string that is interpolated if you need a tighter scope than just a foreign key.
     #   Example: <tt>acts_as_list :scope => 'todo_list_id = #{todo_list_id} AND completed = 0'</tt>
     def acts_as_list(options = {})
@@ -77,11 +77,20 @@ module ActsAsList
       insert_at_position(position)
     end
 
+    def log_update(method, new_position = nil)
+      if ENV['LOG_LIST_MOVEMENT']
+        Rails.logger.warn("[POS] Updating #{self.class}##{self.id} (#{self.try(:node).try(:name)}): #{position} --> #{new_position || 'n/a'} ActsAsList##{method}")
+        top_nav = Cms::Section.sitemap.keys.first.children.not_of_type('Cms::Attachment').order(:position).select {|n| (n.try(:position) || 1) < 10 }.map {|sn| "#{sn.node.name} - #{sn.position}" }
+        Rails.logger.warn("[POS][NAV] #{top_nav}")
+      end
+    end
+
     # Swap positions with the next lower item, if one exists.
     def move_lower
       lower = lower_item
       return unless lower
       acts_as_list_class.transaction do
+        log_update('move_lower', lower.send(position_column))
         self.update_attribute(position_column, lower.send(position_column))
         lower.decrement_position
       end
@@ -92,6 +101,7 @@ module ActsAsList
       higher = higher_item
       return unless higher
       acts_as_list_class.transaction do
+        log_update('move_higher', higher.send(position_column))
         self.update_attribute(position_column, higher.send(position_column))
         higher.increment_position
       end
@@ -121,6 +131,7 @@ module ActsAsList
     def remove_from_list(save = true)
       if in_list?
         decrement_positions_on_lower_items
+        log_update('remove_from_list')
         update_attribute(position_column, nil) if save
       end
     end
@@ -132,12 +143,14 @@ module ActsAsList
     # Increase the position of this item without adjusting the rest of the list.
     def increment_position
       return unless in_list?
+      log_update('increment_position', send(position_column).to_i + 1)
       update_attribute position_column, self.send(position_column).to_i + 1
     end
 
     # Decrease the position of this item without adjusting the rest of the list.
     def decrement_position
       return unless in_list?
+      log_update('decrement_position', send(position_column).to_i - 1)
       update_attribute position_column, self.send(position_column).to_i - 1
     end
 
@@ -205,16 +218,19 @@ module ActsAsList
 
     # Forces item to assume the bottom position in the list.
     def assume_bottom_position
+      log_update('assume_bottom_position', bottom_position_in_list(self).to_i + 1)
       update_attribute(position_column, bottom_position_in_list(self).to_i + 1)
     end
 
     # Forces item to assume the top position in the list.
     def assume_top_position
+      log_update('assume_top_position', 1)
       update_attribute(position_column, 1)
     end
 
     # This has the effect of moving all the higher items up one.
     def decrement_positions_on_higher_items(position)
+      log_update('decrement_positions_on_higher_items (all)')
       acts_as_list_class.update_all(
           "#{position_column} = (#{position_column} - 1)", "#{scope_condition} AND #{position_column} <= #{position}"
       )
@@ -223,6 +239,7 @@ module ActsAsList
     # This has the effect of moving all the lower items up one.
     def decrement_positions_on_lower_items
       return unless in_list?
+      log_update('decrement_positions_on_lower_items (all)')
       acts_as_list_class.where(
           "#{scope_condition} AND #{position_column} > #{send(position_column).to_i}"
       ).update_all("#{position_column} = (#{position_column} - 1)")
@@ -231,11 +248,13 @@ module ActsAsList
     # This has the effect of moving all the higher items down one.
     def increment_positions_on_higher_items
       return unless in_list?
+      log_update('increment_positions_on_higher_items (all)')
       acts_as_list_class.where("#{scope_condition} AND #{position_column} < #{send(position_column).to_i}").update_all("#{position_column} = (#{position_column} + 1)")
     end
 
     # This has the effect of moving all the lower items down one.
     def increment_positions_on_lower_items(position)
+      log_update('increment_positions_on_lower_items (all)')
       acts_as_list_class.where("#{scope_condition} AND #{position_column} >= #{position}").update_all(
           "#{position_column} = (#{position_column} + 1)"
       )
@@ -243,6 +262,7 @@ module ActsAsList
 
     # Increments position (<tt>position_column</tt>) of all items in the list.
     def increment_positions_on_all_items
+      log_update('increment_positions_on_all_items (all)')
       acts_as_list_class.where("#{scope_condition}").update_all(
           "#{position_column} = (#{position_column} + 1)"
       )
@@ -251,6 +271,7 @@ module ActsAsList
     def insert_at_position(position)
       remove_from_list
       increment_positions_on_lower_items(position)
+      log_update('insert_at_position', position)
       self.update_attribute(position_column, position)
     end
   end
