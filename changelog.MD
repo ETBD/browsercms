@@ -1,3 +1,7 @@
+# 4.1.2
+
+* Add option for logging item and node movement
+
 # 4.1.1
 
 * Only process dynamic styles for images
