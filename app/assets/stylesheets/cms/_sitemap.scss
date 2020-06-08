@@ -53,17 +53,31 @@
 			@include rem(font-size, 1.1rem);
 
 			&:hover {
-                cursor: pointer;
-  				background: rgba($gray,0.175);
+        cursor: pointer;
+				background: rgba($gray,0.175);
 
-              	.type-icon {
+      	.type-icon {
 					@include opacity(1);
 				}
 			}
 
-            &.droppable {
-              background: $light-blue;
-            }
+      &.ui-draggable-dragging {
+        .edit-group {
+          display: none;
+        }
+      }
+
+      &.droppable {
+        // background:rgb(158, 213, 249);
+        border-bottom: 3px solid $light-blue;
+      }
+
+      &.move-into-folder {
+        background:rgb(158, 213, 249);
+        border-bottom: 1px solid $light-blue;
+        border-top: 1px solid $light-blue;
+      }
+
 			&.active {
 				background: rgba($gray,0.4);
 

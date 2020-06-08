@@ -1,5 +1,5 @@
 //= require 'jquery'
-//= require 'jquery.ui.all'
+//= require 'jquery-ui'
 //= require 'jquery.cookie'
 //= require 'bootstrap'
 //= require 'cms/ajax'
@@ -157,52 +157,113 @@ jQuery(function ($) {
     $('#sitemap .nav-list-span').droppable({
       hoverClass: "droppable",
       drop: function (event, ui) {
-        var sender = this;
+        // The target is where the draggable is being dropped.
+        var $target = $(this);
+        var $draggable = ui.draggable;
 
-        var sourceElement = ui.draggable.parents('.nav-list').first();
-        var destinationElement = $(sender).parents('.nav-list').first();
-        var sourceDepth = $(sourceElement).find("[data-depth]").data('depth');
-        var destinationDepth = $(sender).data('depth');
-        var sourceParentId = sourceElement.parents('.nav-list:first').find('.nav-list-span:first').data('id');
+        var sourceElement = $draggable.closest('.nav-list');
+        var destinationElement = $target.closest('.nav-list');
+        // var sourceDepth = $(sourceElement).find("[data-depth]").data('depth');
+        var destinationDepth = $target.data('depth');
+        // var sourceParentId = sourceElement.parents('.nav-list:first').find('.nav-list-span:first').data('id');
         var destinationParentId = destinationElement.parents('.nav-list:first').find('.nav-list-span:first').data('id');
         var newParentId;
 
-        if (sitemap.isFolder($(sender))) {
-          // Drop INTO sections
-          if ((sourceDepth == destinationDepth) && (sourceParentId == destinationParentId)) {
-            reorderItem();
-          } else {
+        // Handle whether the item is dropped onto a folder or not.
+        if (sitemap.isFolder($target)) {
+          // Determine whether the intention is to move the item into the folder, or merely to reorder.
+          if ($target.hasClass('move-into-folder')) {
+            console.log('move into folder');
             moveIntoFolder();
+          } else if ($target.find('.icon-folder-open').length > 0) {
+            console.log('forced reorder to first');
+            reorderItem(1);
+          } else {
+            console.log('reorder next to folder');
+            reorderItem();
           }
         } else {
-          // Drop INTO page
+          console.log('default reorder');
           reorderItem();
         }
 
-        function reorderItem() {
-          sitemap.updateDepth(ui.draggable, destinationDepth);
+        // Handle when a folder is dropped onto another folder
+        // if (sitemap.isFolder($target) && sitemap.isFolder($draggable)) {
+        //   // If the draggable has been held above the target for long enough to get the
+        //   // .folder-into-folder class, move it into the folder. Otherwise, treat the action as
+        //   // a simple reorder.
+        //   if ($target.hasClass('move-into-folder')) {
+        //     console.log('move folder into folder');
+        //     moveIntoFolder();
+        //   } else {
+        //     console.log('reorder folder');
+        //     reorderItem();
+        //   }
+        // // Handle when a file is dropped onto a folder
+        // } else if (sitemap.isFolder($target) && $target.hasClass('move-into-folder')) {
+        //   console.log('move file into folder');
+        //   moveIntoFolder();
+        // // Handle when a file is dropped at the top of an open folder
+        // } else if (sitemap.isFolder($target) && $target.find('.icon-folder-open').length > 0) {
+        //   console.log('reorder first');
+        //   // Force the item into the top position
+        //   reorderItem(1);
+        // // All other actions are simply reorders
+        // } else {
+        //   console.log('default reorder');
+        //   // Drop INTO page
+        //   reorderItem();
+        // }
+
+        // Remove any movement classes that may remain.
+        $('.move-into-folder').removeClass('move-into-folder');
+
+        function reorderItem(position) {
+          console.log('Forced Position: ' + position);
+          sitemap.updateDepth($draggable, destinationDepth);
           sourceElement.insertAfter(destinationElement);
           newParentId = destinationParentId;
-          moveItemOnServer();
+          moveItemOnServer(position);
         }
 
         function moveIntoFolder() {
-          sitemap.attemptOpen($(sender));
-          sitemap.updateDepth(ui.draggable, destinationDepth + 1);
+          sitemap.attemptOpen($target);
+          sitemap.updateDepth($draggable, destinationDepth + 1);
           destinationElement.find('li').first().append(sourceElement);
           newParentId = $(destinationElement).find('.nav-list-span:first').data('id');
           moveItemOnServer();
         }
 
-        function moveItemOnServer() {
-          var nodeIdToMove = ui.draggable.data('id');
-          var newPosition = sourceElement.index();
+        function moveItemOnServer(position) {
+          var nodeIdToMove = $draggable.data('id');
+          // var newPosition = sourceElement.index();
+          var newPosition = (position === undefined) ? sourceElement.index() : position;
+          console.log('Moving ' + nodeIdToMove + ' to ' + newParentId + ', pos: ' + newPosition);
           sitemap.moveTo(nodeIdToMove, newParentId, newPosition);
+
+          // debugger;
 
           // Need a manual delay otherwise the animation happens before the insert.
           window.setTimeout(function () {
-            ui.draggable.effect({effect: 'highlight', duration: 500, color: '#0079c1'});
-          }, 250);
+            ui.draggable.effect({effect: 'highlight', duration: 2000, color: '#d9fccc'});
+          }, 200);
+        }
+      },
+      out: function (event, ui) {
+        $(this).removeClass('move-into-folder');
+      },
+      over: function (event, ui) {
+        var $target = $(this);
+
+        // If hovering over a folder, attempt to determine intntion by pausing.
+        if (sitemap.isFolder($target)) {
+          window.setTimeout(function () {
+            // If still hovering over the holder when this timeout fires, set a new class and allow
+            // dropping into the folder.
+            if ($target.hasClass('droppable')) {
+              $target.addClass('move-into-folder');
+            }
+          }, 1100);
         }
       }
     });
