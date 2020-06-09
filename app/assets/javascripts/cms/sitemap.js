@@ -1,9 +1,3 @@
-//= require 'jquery'
-//= require 'jquery-ui'
-//= require 'jquery.cookie'
-//= require 'bootstrap'
-//= require 'cms/ajax'
-//= require 'underscore'
 //= require 'cms/new_content_button'
 
 // Sitemap uses JQuery.Draggable/Droppable to handling moving elements, with custom code below.
@@ -36,16 +30,30 @@ Sitemap.prototype._doubleClick = function (event) {
 // @param [Number] node_id
 // @param [Number] target_node_id
 // @param [Number] position A 1 based position for order
-Sitemap.prototype.moveTo = function (node_id, target_node_id, position) {
-  var path = "/cms/section_nodes/" + node_id + '/move_to_position'
+Sitemap.prototype.moveTo = function ($draggable, targetNodeId, position) {
+  var nodeId = $draggable.data('id');
+  var path = "/cms/section_nodes/" + nodeId + '/move_to_position'
+
+  console.log('Moving ' + nodeId + ' to ' + targetNodeId + ', pos: ' + position);
+
   $.cms_ajax.put({
     url: path,
     data: {
-      target_node_id: target_node_id,
+      target_node_id: targetNodeId,
       position: position
     },
     success: function (result) {
-      //console.log(result);
+      console.log(result);
+
+      // Set the position attrribute to the  new position. Also update the DOM as well, so it's
+      // visible in the inspector
+      $draggable.data('position', position);
+      $draggable[0].dataset.position = position;
+
+      // Need a manual delay otherwise the animation happens before the insert.
+      window.setTimeout(function () {
+        $draggable.effect({effect: 'highlight', duration: 2000, color: '#d9fccc'});
+      }, 200);
     }
   });
 };
@@ -131,10 +139,30 @@ Sitemap.prototype.toggleOpen = function (row) {
   }
 };
 
-Sitemap.prototype.updateDepth = function (element, newDepth) {
+Sitemap.prototype.updateDepth = function ($element, newDepth) {
   var depthClass = "level-" + newDepth;
-  element.attr('class', 'ui-draggable ui-droppable nav-list-span').addClass(depthClass);
-  element.attr('data-depth', newDepth);
+  $element.attr('class', 'ui-draggable ui-droppable nav-list-span').addClass(depthClass);
+  $element.attr('data-depth', newDepth);
+  console.log('Updating parent depth ' + newDepth);
+
+  this.updateChildDepth($element, newDepth + 1)
+};
+
+Sitemap.prototype.updateChildDepth = function ($element, newDepth) {
+  var $children = $element.closest('.nav-list-item').find('.children .nav-list-span');
+  var that = this;
+
+  if ($children.length > 0) {
+    console.log('Updating children');
+    $children.each(function() {
+      var $element = $(this);
+
+      console.log('Updating child depth ' + newDepth);
+      $element.attr('class', 'ui-draggable ui-droppable nav-list-span').addClass("level-" + newDepth);
+      $element.attr('data-depth', newDepth);
+      that.updateChildDepth($element, newDepth + 1)
+    });
+  }
 };
 
 var sitemap = new Sitemap();
@@ -163,90 +191,65 @@ jQuery(function ($) {
 
         var sourceElement = $draggable.closest('.nav-list');
         var destinationElement = $target.closest('.nav-list');
-        // var sourceDepth = $(sourceElement).find("[data-depth]").data('depth');
         var destinationDepth = $target.data('depth');
-        // var sourceParentId = sourceElement.parents('.nav-list:first').find('.nav-list-span:first').data('id');
+        var destinationPosition = $target.data('position');
         var destinationParentId = destinationElement.parents('.nav-list:first').find('.nav-list-span:first').data('id');
-        var newParentId;
+        var newParentId = $(destinationElement).find('.nav-list-span:first').data('id');
+        var newPosition;
+
+        // debugger
 
         // Handle whether the item is dropped onto a folder or not.
         if (sitemap.isFolder($target)) {
           // Determine whether the intention is to move the item into the folder, or merely to reorder.
+          // If they've hovered long enough to trigger into the folder, put the item there.
           if ($target.hasClass('move-into-folder')) {
-            console.log('move into folder');
+            console.log('Action: Move to bottom of folder');
             moveIntoFolder();
+          // If the folder is open, assume that they want it at the top of the folder.
           } else if ($target.find('.icon-folder-open').length > 0) {
-            console.log('forced reorder to first');
-            reorderItem(1);
+            console.log('Action: Move to top of folder');
+            moveToTopOfFolder();
+          // Otherwise, place the item after the folder.
           } else {
-            console.log('reorder next to folder');
+            console.log('Action: Place after folder');
             reorderItem();
           }
+        // For items NOT dropped into a folder, place the item immediately after the target item.
         } else {
-          console.log('default reorder');
+          console.log('Action: Place after item');
           reorderItem();
         }
-
-        // Handle when a folder is dropped onto another folder
-        // if (sitemap.isFolder($target) && sitemap.isFolder($draggable)) {
-        //   // If the draggable has been held above the target for long enough to get the
-        //   // .folder-into-folder class, move it into the folder. Otherwise, treat the action as
-        //   // a simple reorder.
-        //   if ($target.hasClass('move-into-folder')) {
-        //     console.log('move folder into folder');
-        //     moveIntoFolder();
-        //   } else {
-        //     console.log('reorder folder');
-        //     reorderItem();
-        //   }
-        // // Handle when a file is dropped onto a folder
-        // } else if (sitemap.isFolder($target) && $target.hasClass('move-into-folder')) {
-        //   console.log('move file into folder');
-        //   moveIntoFolder();
-        // // Handle when a file is dropped at the top of an open folder
-        // } else if (sitemap.isFolder($target) && $target.find('.icon-folder-open').length > 0) {
-        //   console.log('reorder first');
-        //   // Force the item into the top position
-        //   reorderItem(1);
-        // // All other actions are simply reorders
-        // } else {
-        //   console.log('default reorder');
-        //   // Drop INTO page
-        //   reorderItem();
-        // }
 
         // Remove any movement classes that may remain.
         $('.move-into-folder').removeClass('move-into-folder');
 
-        function reorderItem(position) {
-          console.log('Forced Position: ' + position);
+        function reorderItem() {
+          // Update item and insert into new location (after current item)
           sitemap.updateDepth($draggable, destinationDepth);
           sourceElement.insertAfter(destinationElement);
-          newParentId = destinationParentId;
-          moveItemOnServer(position);
+
+          // Update the server
+          sitemap.moveTo($draggable, destinationParentId, destinationPosition + 1);
+        }
+
+        function moveToTopOfFolder() {
+          // Update item and insert into new location (at the top of the folder)
+          sitemap.updateDepth($draggable, destinationDepth + 1);
+          sourceElement.prependTo(destinationElement.find('.children:first'));
+
+          // Update the server
+          sitemap.moveTo($draggable, newParentId, 0);
         }
 
         function moveIntoFolder() {
+          // Update item and insert into new location (at the end of the folder)
           sitemap.attemptOpen($target);
           sitemap.updateDepth($draggable, destinationDepth + 1);
           destinationElement.find('li').first().append(sourceElement);
-          newParentId = $(destinationElement).find('.nav-list-span:first').data('id');
-          moveItemOnServer();
-        }
 
-        function moveItemOnServer(position) {
-          var nodeIdToMove = $draggable.data('id');
-          // var newPosition = sourceElement.index();
-          var newPosition = (position === undefined) ? sourceElement.index() : position;
-          console.log('Moving ' + nodeIdToMove + ' to ' + newParentId + ', pos: ' + newPosition);
-          sitemap.moveTo(nodeIdToMove, newParentId, newPosition);
-
-          // debugger;
-
-          // Need a manual delay otherwise the animation happens before the insert.
-          window.setTimeout(function () {
-            ui.draggable.effect({effect: 'highlight', duration: 2000, color: '#d9fccc'});
-          }, 200);
+          // Update the server
+          sitemap.moveTo($draggable, newParentId);
         }
       },
       out: function (event, ui) {
