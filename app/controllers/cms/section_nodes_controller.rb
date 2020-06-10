@@ -19,16 +19,10 @@ module Cms
       source_node = @section_node.section
       position = params[:position].try(:to_i)
 
-      ap "*" * 50
-      ap position
-      ap "*" * 50
       # If position is not present, move item to the end of the list
       if position.present?
         @section_node.move_to(target_node.node, position)
       else
-        ap "*" * 50
-        ap 'Moving to end!'
-        ap "*" * 50
         @section_node.move_to_end(target_node.node)
       end
 
@@ -39,17 +33,17 @@ module Cms
       render json: {
         success: true,
         message: %(
-          '#{@section_node.node.name}' was moved to position ##{position} in '#{target_node.node.name}'
-        )
+          '#{@section_node.node.name}' was moved to position ##{position} in '#{target_node.node.name}' folder.
+        ).squish
       }
     rescue StandardError => e
       render json: {
         success: false,
+        error: e.message,
         message: %(
-          Failed to move #{@section_node.node.name}' to position ##{position} in '#{target_node.node.name}'
-          Error: #{e}
-        )
-      }
+          Failed to move '#{@section_node.node.name}' to position ##{position} in '#{target_node.node.name}' folder.
+        ).squish
+      }, status: 500
     end
   end
 end

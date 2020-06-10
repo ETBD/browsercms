@@ -57,7 +57,7 @@ module Cms
     # Generate the HTML for a given section node.
     def icon_tag(section_node, children)
       name = if section_node.ancestors.size == 0
-               'earth'
+               'folder-open'
              elsif section_node.home?
                'house'
              elsif section_node.link?

@@ -90,15 +90,15 @@ class Cms::SectionNode < ActiveRecord::Base
   # @param [Section] section
   # @param [Integer] position
   def move_to(section, position)
-    #logger.info "Moving Section Node ##{id} to Section ##{sec.id} Position #{pos}"
+    logger.info "Moving Section Node ##{id} to Section ##{section.id} Position #{position}"
     transaction do
       if self.parent != section.node
         remove_from_list
         self.parent = section.node
         save
       end
-      if position < 0
-        position = 0
+      if position < 1
+        position = 1
       else
         #This helps prevent the position from getting out of whack
         #If you pass in a really high number for position,

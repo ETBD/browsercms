@@ -29,7 +29,7 @@ Sitemap.prototype._doubleClick = function (event) {
 
 // @param [Number] node_id
 // @param [Number] target_node_id
-// @param [Number] position A 1 based position for order
+// @param [Number] position A 0-based position for order
 Sitemap.prototype.moveTo = function ($draggable, targetNodeId, position) {
   var nodeId = $draggable.data('id');
   var path = "/cms/section_nodes/" + nodeId + '/move_to_position'
@@ -105,6 +105,7 @@ Sitemap.prototype.open = function (row, options) {
   options = options || {}
   _.defaults(options, {animate: true});
   this.changeIcon(row, 'icon-folder-open');
+  // this.changeIcon(row, 'icon-folder-open');
   var siblings = row.siblings('.children');
   if (options.animate) {
     siblings.slideToggle('fast');
@@ -148,22 +149,64 @@ Sitemap.prototype.updateDepth = function ($element, newDepth) {
   this.updateChildDepth($element, newDepth + 1)
 };
 
+// Recursively updates the depth of all children within the given element.
 Sitemap.prototype.updateChildDepth = function ($element, newDepth) {
   var $children = $element.closest('.nav-list-item').find('.children .nav-list-span');
   var that = this;
 
   if ($children.length > 0) {
-    console.log('Updating children');
+    // console.log('Updating children');
     $children.each(function() {
       var $element = $(this);
 
-      console.log('Updating child depth ' + newDepth);
+      // console.log('Updating child depth ' + newDepth);
       $element.attr('class', 'ui-draggable ui-droppable nav-list-span').addClass("level-" + newDepth);
       $element.attr('data-depth', newDepth);
       that.updateChildDepth($element, newDepth + 1)
     });
   }
 };
+
+// Move an item to the top position within a folder.
+// The $target is the folder itself, so the depth needs to be 1 deeper.
+// The new position will be 1 (first) in the 1-indexed list.
+Sitemap.prototype.moveToTopOfFolder = function ($source, $target, $sourceRow, $targetRow) {
+  // The new folder is the target folder itself.
+  var newFolderId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
+  var newDepth = $target.data('depth') + 1;
+
+  this.updateDepth($source, newDepth);
+  $sourceRow.prependTo($targetRow.find('.children:first'));
+  this.moveTo($source, newFolderId, 1);
+}
+
+// Move an item to the spot immediately after a folder, on the same level.
+// The $target is the folder itself, so the depth should be the same
+// The new position will be 1 greater than the target.
+Sitemap.prototype.moveAfterFolder = function ($source, $target, $sourceRow, $targetRow) {
+  // The new folder is the PARENT folder of the target folder.
+  var newFolderId = $($target.parents('.nav-folder')[1]).find('.nav-list-span:first').data('id');
+  var newDepth = $target.data('depth');
+  var newPosition = $target.data('position') + 1;
+
+  this.updateDepth($source, newDepth);
+  $targetRow.find('li').first().append($sourceRow);
+  this.moveTo($source, newFolderId, newPosition);
+}
+
+// Move an item to the spot immediately after another item, on the same level.
+// The $target is an item, so the depth should be the same
+// The new position will be 1 greater than the target.
+Sitemap.prototype.moveAfterItem = function ($source, $target, $sourceRow, $targetRow) {
+  // The new folder is the PARENT folder of the target item.
+  var newFolderId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
+  var newDepth = $target.data('depth');
+  var newPosition = $target.data('position') + 1;
+
+  this.updateDepth($source, newDepth);
+  $sourceRow.insertAfter($targetRow);
+  this.moveTo($source, newFolderId, newPosition);
+}
 
 var sitemap = new Sitemap();
 
@@ -172,103 +215,58 @@ jQuery(function ($) {
   if ($('#sitemap').exists()) {
 
     $('#sitemap .draggable').draggable({
+      // addClasses: false, // possible performance improvement
+      axis: 'y',
       containment: '#sitemap',
+      cursor: 'move',
+      delay: 250,
+      opacity: .8,
       revert: true,
       revertDuration: 0,
-      axis: 'y',
-      delay: 250,
-      cursor: 'move',
+      scroll: true,
       stack: '.nav-list-span',
-      scroll: false
     });
 
     $('#sitemap .nav-list-span').droppable({
+      // addClasses: false, // possible performance improvement
       hoverClass: "droppable",
       drop: function (event, ui) {
-        // The target is where the draggable is being dropped.
+        // The '$target' is where the '$source' is being dropped.
         var $target = $(this);
-        var $draggable = ui.draggable;
+        var $source = ui.draggable;
+        var $sourceRow = $source.closest('.nav-list');
+        var $targetRow = $target.closest('.nav-list');
+        // var $sourceParentId = $source.closest('.nav-folder').find('.nav-list-span:first').data('id');
+        // var $targetParentId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
 
-        var sourceElement = $draggable.closest('.nav-list');
-        var destinationElement = $target.closest('.nav-list');
-        var destinationDepth = $target.data('depth');
-        var destinationPosition = $target.data('position');
-        var destinationParentId = destinationElement.parents('.nav-list:first').find('.nav-list-span:first').data('id');
-        var newParentId = $(destinationElement).find('.nav-list-span:first').data('id');
-        var newPosition;
-
-        // debugger
-
-        // Handle whether the item is dropped onto a folder or not.
-        if (sitemap.isFolder($target)) {
-          // Determine whether the intention is to move the item into the folder, or merely to reorder.
-          // If they've hovered long enough to trigger into the folder, put the item there.
-          if ($target.hasClass('move-into-folder')) {
-            console.log('Action: Move to bottom of folder');
-            moveIntoFolder();
-          // If the folder is open, assume that they want it at the top of the folder.
-          } else if ($target.find('.icon-folder-open').length > 0) {
-            console.log('Action: Move to top of folder');
-            moveToTopOfFolder();
-          // Otherwise, place the item after the folder.
-          } else {
-            console.log('Action: Place after folder');
-            reorderItem();
-          }
-        // For items NOT dropped into a folder, place the item immediately after the target item.
+        // If dropping on an open folder, put the item at the top.
+        if (sitemap.isFolder($target) && sitemap.isOpen($target)) { // && $sourceParentId == $targetParentId) {
+          console.log('Moving to top of folder');
+          sitemap.moveToTopOfFolder($source, $target, $sourceRow, $targetRow);
+        // If the target is a closed folder, put the item immediately after the folder.
+        } else if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
+          console.log('Moving after target folder');
+          sitemap.moveAfterFolder($source, $target, $sourceRow, $targetRow);
+        // Otherwise, put the item immediately after the target item.
         } else {
-          console.log('Action: Place after item');
-          reorderItem();
-        }
-
-        // Remove any movement classes that may remain.
-        $('.move-into-folder').removeClass('move-into-folder');
-
-        function reorderItem() {
-          // Update item and insert into new location (after current item)
-          sitemap.updateDepth($draggable, destinationDepth);
-          sourceElement.insertAfter(destinationElement);
-
-          // Update the server
-          sitemap.moveTo($draggable, destinationParentId, destinationPosition + 1);
-        }
-
-        function moveToTopOfFolder() {
-          // Update item and insert into new location (at the top of the folder)
-          sitemap.updateDepth($draggable, destinationDepth + 1);
-          sourceElement.prependTo(destinationElement.find('.children:first'));
-
-          // Update the server
-          sitemap.moveTo($draggable, newParentId, 0);
-        }
-
-        function moveIntoFolder() {
-          // Update item and insert into new location (at the end of the folder)
-          sitemap.attemptOpen($target);
-          sitemap.updateDepth($draggable, destinationDepth + 1);
-          destinationElement.find('li').first().append(sourceElement);
-
-          // Update the server
-          sitemap.moveTo($draggable, newParentId);
+          console.log('Moving after target item');
+          sitemap.moveAfterItem($source, $target, $sourceRow, $targetRow);
         }
       },
-      out: function (event, ui) {
-        $(this).removeClass('move-into-folder');
-      },
-      over: function (event, ui) {
-        var $target = $(this);
-
-        // If hovering over a folder, attempt to determine intntion by pausing.
-        if (sitemap.isFolder($target)) {
-          window.setTimeout(function () {
-            // If still hovering over the holder when this timeout fires, set a new class and allow
-            // dropping into the folder.
-            if ($target.hasClass('droppable')) {
-              $target.addClass('move-into-folder');
-            }
-          }, 1100);
-        }
-      }
+      // ABANDONED EXPERIMENT: Attempts to open a closed folder if hovered on for a set amount of time.
+      // In practice, however, the folder would open, but the children were not droppable.
+      // over: function (event, ui) {
+      //   var $target = $(this);
+      //
+      //   // If hovering over a closed folder for a set amount of time, attempt to open the folder.
+      //   if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
+      //     window.setTimeout(function () {
+      //       if ($target.hasClass('ui-droppable-hover')) {
+      //         sitemap.attemptOpen($target);
+      //       }
+      //     }, 1100);
+      //   }
+      // }
     });
   }
 });
