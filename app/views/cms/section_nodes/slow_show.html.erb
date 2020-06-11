@@ -1,0 +1,9 @@
+<%= render 'sitemap_buttons' %>
+<div class="main-content padded row-fluid clearfix">
+  <div id="sitemap">
+    <%= render partial: 'section_node', locals: {section_node: @root_section_node,
+                                                 parent: nil,
+                                                 children: @sitemap[@root_section_node]} %>
+  </div>
+</div>
+

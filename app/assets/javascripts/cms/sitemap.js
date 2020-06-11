@@ -212,10 +212,9 @@ var sitemap = new Sitemap();
 
 // Enable dragging of items around the sitemap.
 jQuery(function ($) {
-  if ($('#sitemap').exists()) {
-
+  if ($('#sitemap').exists() && $('#sitemap').data('editable') == true) {
     $('#sitemap .draggable').draggable({
-      // addClasses: false, // possible performance improvement
+      addClasses: false, // possible performance improvement
       axis: 'y',
       containment: '#sitemap',
       cursor: 'move',
@@ -228,7 +227,7 @@ jQuery(function ($) {
     });
 
     $('#sitemap .nav-list-span').droppable({
-      // addClasses: false, // possible performance improvement
+      addClasses: false, // possible performance improvement
       hoverClass: "droppable",
       drop: function (event, ui) {
         // The '$target' is where the '$source' is being dropped.

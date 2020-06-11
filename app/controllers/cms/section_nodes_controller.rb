@@ -1,16 +1,27 @@
 module Cms
   class SectionNodesController < Cms::BaseController
+    include SectionNodesHelper
 
     check_permissions :publish_content, :except => [:index]
 
     def index
+      @modifiable_sections = current_user.modifiable_sections
+      @sitemap_editable = current_user_can_modify(@modifiable_sections, SectionNode.first, nil)
+
+      # Serializes all necessary pages, links, and sections starting with the Home folder.
+      @sitemap = Section.sitemap.first
+
+      render 'show'
+    end
+
+    def slow_index
       @modifiable_sections = current_user.modifiable_sections
       @public_sections = Group.guest.sections.to_a # Load once here so that every section doesn't need to.
 
       @sitemap = Section.sitemap
       @root_section_node = @sitemap.keys.first
       @section = @root_section_node.node
-      render 'show'
+      render 'slow_show'
     end
 
     def move_to_position

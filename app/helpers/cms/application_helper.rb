@@ -58,6 +58,20 @@ module Cms
       end
     end
 
+    def draft_icon_tag_for_sitemap(page_status)
+      if @page.nil?
+        ''
+      else
+        if !@page.live?
+          '<span class="status draft" id="page-status-label">Draft</span>'.html_safe
+        elsif @page.archived?
+          '<span class="status archive" id="page-status-label">Archived</span>'.html_safe
+        else
+          '<span class="status published" id="page-status-label">Published</span>'.html_safe
+        end
+      end
+    end
+
     def action_icon_src(name)
       "cms/icons/actions/#{name}.png"
     end
@@ -173,7 +187,7 @@ HTML
         }
       end
     end
-      
+
     def url_with_mode(url, mode)
       url = "" unless url # Handles cases where request.referrer is nil (see cms/_page_toolbar.html.erb for an example)
       uri = URI.parse(url)

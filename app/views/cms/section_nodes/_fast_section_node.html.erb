@@ -1,0 +1,45 @@
+<ul class="nav nav-list">
+  <li class="nav-list-item nav-<%= section_node[:display_type] %>">
+    <span class="nav-list-span <%= "level-#{section_node[:depth]}" %> <%= 'draggable' unless home %>"
+      data-id="<%= section_node[:id] %>"
+      data-depth="<%= section_node[:depth] %>"
+      data-position="<%= section_node[:position] %>"
+      data-type="<%= section_node[:display_type] %>"
+      data-closable="<%= home || section_node[:children].empty? ? false : true %>"
+      data-add-page-path="/cms/sections/<%= section_node[:nearest_section_id] %>/pages/new"
+      data-add-link-path="/cms/sections/<%= section_node[:nearest_section_id] %>/links/new"
+      data-add-section-path="/cms/sections/new?section_id=<%= section_node[:nearest_section_id] %>">
+      <span class="text">
+        <span class="type-icon icon-<%= section_node[:icon] %>"></span>
+        <%= section_node[:name] %>
+        <% if ENV['DEBUG_NAV'] %>
+          <strong><%= section_node[:id] %></strong> ---
+          <strong>Depth:</strong> <%= section_node[:depth] %> -
+          <strong>Pos:</strong> <%= section_node[:position] %>
+        <% end %>
+      </span>
+
+      <ul class="edit-group">
+        <% if section_node[:node_type] == :page %>
+          <li><%= link_to('edit', section_node[:path], class: 'add-link') %></li>
+        <% end %>
+        <% if @sitemap_editable && !home %>
+          <li><%= link_to('configure', "#{section_node[:path]}/edit", class: 'add-link') %></li>
+          <li><%= link_to('preview', "#{section_node[:path]}/preview", class: 'add-link') if section_node[:node_type] == :page %></li>
+          <li><%= link_to('delete', section_node[:path], class: 'add-link http-delete confirm_with_title',
+            title: "Are you sure you want to delete #{section_node[:name]}?") if section_node[:deletable] %></li>
+        <% end %>
+      </ul>
+      <div class="permission-group">
+        <% if section_node[:hidden] %>
+          <span aria-hidden="true" class="permission-icon icon-eye-blocked"></span>
+        <% end %>
+      </div>
+    </span>
+    <span class="children <%= 'hide' unless home %>">
+      <% if section_node[:children].any? %>
+        <%= render partial: 'fast_section_node', collection: section_node[:children], as: :section_node, locals: { home: false } %>
+      <% end %>
+    </span>
+  </li>
+</ul>

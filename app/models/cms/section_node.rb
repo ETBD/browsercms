@@ -87,6 +87,24 @@ class Cms::SectionNode < ActiveRecord::Base
     true
   end
 
+  def icon_style(child_count)
+    if id == 1 # home page
+      'folder-open'
+    elsif home?
+      'house'
+    elsif link?
+     'link'
+    elsif page?
+     'file'
+    elsif section? && child_count == 0
+     'folder-open'
+    elsif section?
+     'folder'
+    else
+     'list' # All other content types.
+    end
+  end
+
   # @param [Section] section
   # @param [Integer] position
   def move_to(section, position)

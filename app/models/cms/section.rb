@@ -92,8 +92,30 @@ module Cms
       child_pages.compact
     end
 
-    def self.sitemap
+    def self.old_sitemap
       SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange(:order => :position)
+    end
+
+    def self.sitemap
+      # Rails.cache.fetch(["sitemap-#{Cms::SectionNode.maximum(:updated_at).to_i}"]) do
+        SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange_serializable(:order => :position) do |section_node, children|
+          node_type = section_node.node_type.split('::').last.downcase.to_sym
+          {
+            id: section_node.id,
+            deletable: section_node.deletable?,
+            depth: section_node.depth + 1,
+            display_type: section_node.section? ? 'folder' : 'leaf',
+            hidden: section_node.node.try(:hidden?),
+            icon: section_node.icon_style(children.size),
+            node_type: node_type,
+            name: section_node.node.name,
+            path: "/cms/#{node_type}s/#{section_node.node.id}",
+            position: section_node.position,
+            nearest_section_id: section_node.section? ? section_node.node.id : section_node.parent.node.id,
+            children: children
+          }
+        end
+      # end
     end
 
     def visible_child_nodes(options={})

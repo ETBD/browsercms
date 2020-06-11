@@ -35,17 +35,6 @@ module Cms
       "level-#{one_based_depth}"
     end
 
-    # Generate HTML for 'hidden' icon for hidden content.
-    # @param [Object] content
-    # @return [String] HTML (HTML safe)
-    def hidden_icon_tag(content)
-      if content.respond_to?(:hidden?) && content.hidden?
-        '<span aria-hidden="true" class="permission-icon icon-eye-blocked"></span>'.html_safe
-      else
-        ''
-      end
-    end
-
     def guest_accessible_icon_tag(parent, content)
       unless content.accessible_to_guests?(@public_sections, parent)
         '<span aria-hidden="true" class="permission-icon icon-locked"></span>'.html_safe
