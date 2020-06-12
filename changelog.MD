@@ -1,3 +1,7 @@
+# 4.2.0.beta.1
+
+* Refactor sitemap and drag/drop functionality
+
 # 4.1.2
 
 * Add option for logging item and node movement
