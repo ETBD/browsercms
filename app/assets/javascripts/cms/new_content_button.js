@@ -1,7 +1,6 @@
 //= require 'cms/namespace'
 
 Cms.NewContentButton = function() {
-
 };
 
 // Setting the 'New Page' path should update the global menu
@@ -19,9 +18,11 @@ Cms.NewContentButton.prototype.addLinkPath = function(path) {
 };
 
 Cms.NewContentButton.prototype.updateButtons = function(selectedElement) {
-  this.addPagePath(selectedElement.data('add-page-path'));
-  this.addLinkPath(selectedElement.data('add-link-path'));
-  this.addSectionPath(selectedElement.data('add-section-path'));
+  var nearestSectionId = selectedElement.closest('.nav-folder').find('.nav-list-span:first').data('node-id');
+
+  this.addPagePath(`/cms/sections/${nearestSectionId}/pages/new`);
+  this.addLinkPath(`/cms/sections/${nearestSectionId}/links/new`);
+  this.addSectionPath(`/cms/sections/new?section_id=${nearestSectionId}`);
 };
 
 var newContentButton = new Cms.NewContentButton();

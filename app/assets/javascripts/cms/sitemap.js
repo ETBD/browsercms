@@ -218,10 +218,9 @@ jQuery(function ($) {
       axis: 'y',
       containment: '#sitemap',
       cursor: 'move',
-      delay: 250,
       opacity: .8,
       revert: true,
-      revertDuration: 0,
+      revertDuration: 500,
       scroll: true,
       stack: '.nav-list-span',
     });
