@@ -1,4 +1,4 @@
-# 4.2.0.beta.1
+# 4.2.0
 
 * Refactor sitemap and drag/drop functionality
 
