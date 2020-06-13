@@ -1,9 +1,9 @@
 PATH
   remote: .
   specs:
-    browsercms (4.1.2)
+    browsercms (4.2.0.beta.4)
       actionpack-page_caching (~> 1.0)
-      ancestry (~> 2.1.0)
+      ancestry (~> 3.0.0)
       bootstrap-sass
       ckeditor_rails (~> 4.3.0)
       compass-rails
@@ -51,8 +51,8 @@ GEM
       thread_safe (~> 0.1)
       tzinfo (~> 1.1)
     addressable (2.4.0)
-    ancestry (2.1.0)
-      activerecord (>= 3.0.0)
+    ancestry (3.0.7)
+      activerecord (>= 3.2.0)
     ansi (1.5.0)
     arel (5.0.1.20140414130214)
     aruba (0.14.2)
