@@ -96,26 +96,50 @@ module Cms
       SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange(:order => :position)
     end
 
+    # Return a serialized hash of everything needed to display the sitemap.
+    # Caching is not necessary, but could shave an additional second or two off the load time at the
+    # cost of increased complexity. Turn it on, if desired.
     def self.sitemap
-      Rails.cache.fetch(["sitemap-#{Cms::SectionNode.maximum(:updated_at).to_i}"]) do
-        SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange_serializable(:order => :position) do |section_node, children|
-          node_type = section_node.node_type.split('::').last.downcase.to_sym
-          {
-            id: section_node.id,
-            # deletable: section_node.deletable?,
-            depth: section_node.depth + 1,
-            display_type: section_node.section? ? 'folder' : 'leaf',
-            hidden: section_node.node.try(:hidden?),
-            icon: section_node.icon_style(children.size),
-            node_id: section_node.node.id,
-            node_type: node_type,
-            name: section_node.node.name,
-            path: "/cms/#{node_type}s/#{section_node.node.id}",
-            position: section_node.position,
-            children: children
-          }
-        end
+      if ENV['CACHE_SITEMAP']
+        Rails.cache.fetch(["sitemap-#{sitemap_contents_last_updated}"]) { build_sitemap }
+      else
+        build_sitemap
       end
+    end
+
+    # Build the sitemap hash
+    def self.build_sitemap
+      SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange_serializable(:order => :position) do |section_node, children|
+        node_type = section_node.node_type.split('::').last.downcase.to_sym
+        {
+          id: section_node.id,
+          deletable: section_node.deletable?,
+          depth: section_node.depth + 1,
+          display_type: section_node.section? ? 'folder' : 'leaf',
+          draft: section_node.node.try(:draft?),
+          icon: section_node.icon_style(children.size),
+          node_id: section_node.node.id,
+          node_type: node_type,
+          name: section_node.node.name,
+          path: "/cms/#{node_type}s/#{section_node.node.id}",
+          position: section_node.position,
+          children: children
+        }
+      end
+    end
+
+    # Queries all tables related to the sitemap view to determine the most recently updated record.
+    # Use that record's updated_at timestamp as the cache key.
+    def self.sitemap_contents_last_updated
+      ActiveRecord::Base.connection.execute(%(
+        SELECT MAX(updated_at) FROM "cms_section_nodes"
+        UNION
+        SELECT MAX(updated_at) FROM "cms_sections"
+        UNION
+        SELECT MAX(updated_at) FROM "cms_links"
+        UNION
+        SELECT MAX(updated_at) FROM "cms_pages"
+      )).values.flatten.map(&:to_datetime).max.to_i
     end
 
     def visible_child_nodes(options={})

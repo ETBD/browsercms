@@ -43,13 +43,17 @@ Sitemap.prototype.moveTo = function ($draggable, targetNodeId, position) {
       position: position
     },
     success: function (result) {
-      $draggable.removeClass('dragging');
-      sitemap.updatePositions(result.updated_positions);
       console.log(result);
 
+      // Set the position attrribute to the  new position. Also update the DOM as well, so it's
+      // visible in the inspector
+      $draggable.data('position', position);
+      $draggable[0].dataset.position = position;
+
+      // Need a manual delay otherwise the animation happens before the insert.
       window.setTimeout(function () {
         $draggable.effect({effect: 'highlight', duration: 2000, color: '#d9fccc'});
-      }, 0);
+      }, 200);
     }
   });
 };
@@ -63,14 +67,6 @@ Sitemap.prototype.isOpen = function (row) {
 // @param [String] icon The full name of the icon (icon-folder-open)
 Sitemap.prototype.changeIcon = function (row, icon) {
   row.find('.type-icon').attr('class', 'type-icon').addClass(icon);
-};
-
-Sitemap.prototype.showActions = function ($row) {
-  $row.find('.edit-group').show();
-};
-
-Sitemap.prototype.hideActions = function ($row) {
-  $row.find('.edit-group').hide();
 };
 
 // @param [Number] id
@@ -144,12 +140,11 @@ Sitemap.prototype.toggleOpen = function (row) {
   }
 };
 
-// Updates the depth of a dropped element.
 Sitemap.prototype.updateDepth = function ($element, newDepth) {
   var depthClass = "level-" + newDepth;
-
   $element.attr('class', 'ui-draggable ui-droppable nav-list-span').addClass(depthClass);
   $element.attr('data-depth', newDepth);
+  console.log('Updating parent depth ' + newDepth);
 
   this.updateChildDepth($element, newDepth + 1)
 };
@@ -172,29 +167,9 @@ Sitemap.prototype.updateChildDepth = function ($element, newDepth) {
   }
 };
 
-// Updated related positions after a move.
-Sitemap.prototype.updatePositions = function(updatedPositions) {
-  updatedPositions.forEach(function(positionArray) {
-    var id = positionArray[0];
-    var position = positionArray[1];
-    var $row = $(".nav-list-span[data-id='" + id + "']");
-
-    if ($row.length) {
-      $row.data('position', position);
-      $row.find('.debug-position').html(position);
-
-      // Also update the DOM, so it's visible in the inspector.
-      if ($row[0] !== undefined) {
-        $row[0].dataset.position = position;
-      }
-    }
-  })
-}
-
-
 // Move an item to the top position within a folder.
 // The $target is the folder itself, so the depth needs to be 1 deeper.
-// The new position will be 0 (first).
+// The new position will be 1 (first) in the 1-indexed list.
 Sitemap.prototype.moveToTopOfFolder = function ($source, $target, $sourceRow, $targetRow) {
   // The new folder is the target folder itself.
   var newFolderId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
@@ -202,7 +177,7 @@ Sitemap.prototype.moveToTopOfFolder = function ($source, $target, $sourceRow, $t
 
   this.updateDepth($source, newDepth);
   $sourceRow.prependTo($targetRow.find('.children:first'));
-  this.moveTo($source, newFolderId, 0);
+  this.moveTo($source, newFolderId, 1);
 }
 
 // Move an item to the spot immediately after a folder, on the same level.
@@ -233,90 +208,63 @@ Sitemap.prototype.moveAfterItem = function ($source, $target, $sourceRow, $targe
   this.moveTo($source, newFolderId, newPosition);
 }
 
-// this / event.target is the item being dragged
-Sitemap.prototype.handleDragStart = function(event) {
-  sitemap.hideActions($(this));
-  // Set the id for later retrieval once dropped.
-  event.dataTransfer.setData('text/plain', this.dataset.id);
-  this.classList.add('dragging');
-  event.stopPropagation();
-}
-
-Sitemap.prototype.handleDragOver = function(event) {
-  event.stopPropagation()
-  if (event.preventDefault) { event.preventDefault(); } // Necessary. Allows us to drop.
-  event.dataTransfer.dropEffect = 'move';
-  return false;
-}
-
-// this / event.target is the current hover target.
-Sitemap.prototype.handleDragEnter = function(event) {
-  var $target = $(this);
-
-  this.classList.add('droppable');
-
-  // If hovering over a closed folder for a set amount of time, attempt to open the folder.
-  if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
-    window.setTimeout(function () {
-      if ($target.hasClass('droppable')) {
-        sitemap.attemptOpen($target);
-      }
-    }, 1100);
-  }
-  event.stopPropagation();
-}
-
-// this / event.target is the previous hover target.
-Sitemap.prototype.handleDragLeave = function(event) {
-  this.classList.remove('droppable');
-  event.stopPropagation();
-}
-
-// this / event.target is the current droppable target.
-Sitemap.prototype.handleDrop = function (event) {
-  var $target = $(this);
-  var $targetRow = $target.closest('.nav-list');
-
-  // Get the draggable id from the event, then use it to find the item ebing dragged.
-  var draggableId = event.dataTransfer.getData('text/plain');
-  var $draggable = $(".nav-list-span[data-id='" + draggableId + "']")
-  var $draggableRow = $draggable.closest('.nav-list');
-
-  event.stopPropagation();
-
-  // If dropping on an open folder, put the item at the top.
-  if (sitemap.isFolder($target) && sitemap.isOpen($target)) {
-    console.log('Moving to top of folder');
-    sitemap.moveToTopOfFolder($draggable, $target, $draggableRow, $targetRow);
-  // If the target is a closed folder, put the item immediately after the folder.
-  } else if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
-    console.log('Moving after target folder');
-    sitemap.moveAfterFolder($draggable, $target, $draggableRow, $targetRow);
-  // Otherwise, put the item immediately after the target item.
-  } else {
-    console.log('Moving after target item');
-    sitemap.moveAfterItem($draggable, $target, $draggableRow, $targetRow);
-  }
-}
-
 var sitemap = new Sitemap();
 
-// Enable dragging of items around the sitemap for those that have permissions.
+// Enable dragging of items around the sitemap.
 jQuery(function ($) {
   if ($('#sitemap').exists() && $('#sitemap').data('editable') == true) {
-    var draggables = document.querySelectorAll('#sitemap [draggable]');
+    $('#sitemap .draggable').draggable({
+      addClasses: false, // possible performance improvement
+      axis: 'y',
+      containment: '#sitemap',
+      cursor: 'move',
+      opacity: .8,
+      revert: true,
+      revertDuration: 500,
+      scroll: true,
+      stack: '.nav-list-span',
+    });
 
-    draggables.forEach(function(draggable) {
-      draggable.addEventListener('dragstart', sitemap.handleDragStart, false);
-      draggable.addEventListener('dragenter', sitemap.handleDragEnter, false);
-      draggable.addEventListener('dragover', sitemap.handleDragOver, false);
-      draggable.addEventListener('dragleave', sitemap.handleDragLeave, false);
-      draggable.addEventListener('drop', sitemap.handleDrop, false);
-      draggable.addEventListener('dragend', function(event) {
-        draggables.forEach(function (draggable) {
-          draggable.classList.remove('droppable');
-        });
-      }, false);
+    $('#sitemap .nav-list-span').droppable({
+      addClasses: false, // possible performance improvement
+      hoverClass: "droppable",
+      drop: function (event, ui) {
+        // The '$target' is where the '$source' is being dropped.
+        var $target = $(this);
+        var $source = ui.draggable;
+        var $sourceRow = $source.closest('.nav-list');
+        var $targetRow = $target.closest('.nav-list');
+        // var $sourceParentId = $source.closest('.nav-folder').find('.nav-list-span:first').data('id');
+        // var $targetParentId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
+
+        // If dropping on an open folder, put the item at the top.
+        if (sitemap.isFolder($target) && sitemap.isOpen($target)) { // && $sourceParentId == $targetParentId) {
+          console.log('Moving to top of folder');
+          sitemap.moveToTopOfFolder($source, $target, $sourceRow, $targetRow);
+        // If the target is a closed folder, put the item immediately after the folder.
+        } else if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
+          console.log('Moving after target folder');
+          sitemap.moveAfterFolder($source, $target, $sourceRow, $targetRow);
+        // Otherwise, put the item immediately after the target item.
+        } else {
+          console.log('Moving after target item');
+          sitemap.moveAfterItem($source, $target, $sourceRow, $targetRow);
+        }
+      },
+      // ABANDONED EXPERIMENT: Attempts to open a closed folder if hovered on for a set amount of time.
+      // In practice, however, the folder would open, but the children were not droppable.
+      // over: function (event, ui) {
+      //   var $target = $(this);
+      //
+      //   // If hovering over a closed folder for a set amount of time, attempt to open the folder.
+      //   if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
+      //     window.setTimeout(function () {
+      //       if ($target.hasClass('ui-droppable-hover')) {
+      //         sitemap.attemptOpen($target);
+      //       }
+      //     }, 1100);
+      //   }
+      // }
     });
   }
 });
@@ -326,18 +274,28 @@ jQuery(function ($) {
   // Ensure this only loads on sitemap page.
   if ($('#sitemap').exists()) {
     sitemap.restoreOpenState();
-
     $('.nav-list-span').on('click', function (event) {
       sitemap.toggleOpen($(this));
       sitemap.select($(this));
     });
-
-    $('.nav-list-span').on('mouseenter', function (event) {
-      sitemap.showActions($(this));
-    });
-
-    $('.nav-list-span').on('leave', function (event) {
-      sitemap.showActions($(this));
-    });
   }
+
+});
+
+// Make Sitemap filters show specific content types.
+jQuery(function ($) {
+  $('#sitemap li[data-nodetype]').hide();
+  $('#filtershow').change(function () {
+    $('#sitemap li[data-nodetype]').slideUp();
+    var what = $(this).val();
+    if (what == "none") {
+      $('#sitemap li[data-nodetype]').slideUp();
+    } else if (what == "all") {
+      $('#sitemap li[data-nodetype]').slideDown();
+      $('#sitemap li[data-nodetype]').parents('li').children('a[data-toggle]').click();
+    } else {
+      $('#sitemap li[data-nodetype="' + what + '"]').slideDown();
+      $('#sitemap li[data-nodetype="' + what + '"]').parents('li').children('a[data-toggle]').click();
+    }
+  });
 });

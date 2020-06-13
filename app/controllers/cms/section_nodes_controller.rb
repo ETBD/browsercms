@@ -25,36 +25,40 @@ module Cms
     end
 
     def move_to_position
-      @section_node = SectionNode.find(params[:id])
+      @source_node = SectionNode.find(params[:id])
       target_node = SectionNode.find(params[:target_node_id])
-      source_node = @section_node.section
+      source_node = @source_node.section
       position = params[:position].try(:to_i)
 
       # If position is not present, move item to the end of the list
       if position.present?
-        @section_node.move_to(target_node.node, position)
+        @source_node.move_to(target_node.node, position)
       else
-        @section_node.move_to_end(target_node.node)
+        @source_node.move_to_end(target_node.node)
       end
-
-      @section_node.node.touch
-      target_node.node.touch_self_and_ancestors
-      source_node.touch_self_and_ancestors
 
       render json: {
         success: true,
         message: %(
-          '#{@section_node.node.name}' was moved to position ##{position} in '#{target_node.node.name}' folder.
-        ).squish
+          '#{@source_node.node.name}' was moved to position ##{position} in '#{target_node.node.name}' folder.
+        ).squish,
+        updated_positions: updated_positions(@source_node, target_node)
       }
     rescue StandardError => e
       render json: {
         success: false,
         error: e.message,
         message: %(
-          Failed to move '#{@section_node.node.name}' to position ##{position} in '#{target_node.node.name}' folder.
+          Failed to move '#{@source_node.node.name}' to position ##{position} in '#{target_node.node.name}' folder.
         ).squish
       }, status: 500
+    end
+
+    private
+
+    # Retrieve new positions from all related nodes so that the front-end can be updated.
+    def updated_positions(source_node, target_node)
+      (source_node.siblings.pluck(:id, :position) + target_node.siblings.pluck(:id, :position))
     end
   end
 end

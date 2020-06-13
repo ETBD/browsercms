@@ -115,8 +115,8 @@ class Cms::SectionNode < ActiveRecord::Base
         self.parent = section.node
         save
       end
-      if position < 1
-        position = 1
+      if position < 0
+        position = 0
       else
         #This helps prevent the position from getting out of whack
         #If you pass in a really high number for position,

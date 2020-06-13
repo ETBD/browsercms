@@ -32,10 +32,10 @@
       display: none;
     }
 	.nav-list-item {
-        display: block;
-        float: left;
-        clear: both;
-        width: 100%;
+    display: block;
+    float: left;
+    clear: both;
+    width: 100%;
 		list-style-type: none;
 		margin: 0;
 		padding: 0;
@@ -61,21 +61,19 @@
 				}
 			}
 
-      &.ui-draggable-dragging {
-        .edit-group {
-          display: none;
-        }
-      }
-
       &.droppable {
-        // background:rgb(158, 213, 249);
-        border-bottom: 3px solid $light-blue;
+        border-bottom: 5px solid $light-blue;
       }
 
-      &.move-into-folder {
-        background:rgb(158, 213, 249);
-        border-bottom: 1px solid $light-blue;
-        border-top: 1px solid $light-blue;
+      // Fixes dragging issues, thanks to:
+      // https://medium.com/@reiberdatschi/common-pitfalls-with-html5-drag-n-drop-api-9f011a09ee6c
+      &.droppable * {
+         pointer-events: none;
+      }
+
+      &.dragging {
+        opacity: .2;
+         // color: ;
       }
 
 			&.active {
@@ -85,6 +83,13 @@
 					@include opacity(1);
 				}
 			}
+
+      small {
+        color: $light-blue;
+        display: inline-block;
+        font-size: .85rem;
+        margin-left: 1rem;
+      }
 
 			.type-icon {
 				@include rem(font-size,0.85rem);
@@ -98,7 +103,7 @@
 
 			}
 			&.level-2 {
-                padding-left: 30px;
+        padding-left: 30px;
 			}
 			&.level-3 {
 				padding-left: 60px;
@@ -134,6 +139,7 @@
 }
 
 .edit-group {
+	background: rgba($primary,0.65);
 	height: 70%;
 	position: absolute;
 	top: 0;
@@ -143,10 +149,6 @@
 	@include transition(0.15s);
 	list-style-type: none;
 	@include border-radius(2px);
-
-	&:hover {
-		background: rgba($primary,0.65);
-	}
 
 	li {
 		display: block;
