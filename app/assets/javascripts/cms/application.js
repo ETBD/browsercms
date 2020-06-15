@@ -7,7 +7,7 @@
 //= require jquery.selectbox
 //= require jquery.exists
 //= require jquery.taglist
-//= require jquery-ui
+//= require jquery.ui.all
 //= require cms/core_library
 //= require cms/content_types
 //= require cms/attachment_manager
