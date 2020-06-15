@@ -58,7 +58,8 @@ module Cms
 
     # Retrieve new positions from all related nodes so that the front-end can be updated.
     def updated_positions(source_node, target_node)
-      (source_node.siblings.pluck(:id, :position) + target_node.siblings.pluck(:id, :position))
+      source_node.siblings.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).pluck(:id, :position) +
+      target_node.siblings.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).pluck(:id, :position)
     end
   end
 end

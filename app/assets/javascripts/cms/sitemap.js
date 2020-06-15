@@ -43,13 +43,10 @@ Sitemap.prototype.moveTo = function ($draggable, targetNodeId, position) {
       position: position
     },
     success: function (result) {
+      $draggable.effect({effect: 'highlight', duration: 2000, color: '#d9fccc'});
       $draggable.removeClass('dragging');
       sitemap.updatePositions(result.updated_positions);
       console.log(result);
-
-      window.setTimeout(function () {
-        $draggable.effect({effect: 'highlight', duration: 2000, color: '#d9fccc'});
-      }, 0);
     }
   });
 };
@@ -184,13 +181,10 @@ Sitemap.prototype.updatePositions = function(updatedPositions) {
       $row.find('.debug-position').html(position);
 
       // Also update the DOM, so it's visible in the inspector.
-      if ($row[0] !== undefined) {
-        $row[0].dataset.position = position;
-      }
+      if ($row[0] !== undefined) { $row[0].dataset.position = position; }
     }
   })
 }
-
 
 // Move an item to the top position within a folder.
 // The $target is the folder itself, so the depth needs to be 1 deeper.
