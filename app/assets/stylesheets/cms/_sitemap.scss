@@ -15,7 +15,6 @@
   }
 }
 
-
 .nav-list {
 	width: 100%;
 	list-style-type: none;
@@ -23,14 +22,11 @@
 	position: relative;
 	margin: 0;
 	padding: 0;
-  // Demonstrates positioning of actual list elements
-  //border: 5px solid rgba(black,0.1); // Remove
-  //  margin: 10;
- 	//padding: 10;
 
-    &.hide {
-      display: none;
-    }
+  &.hide {
+    display: none;
+  }
+
 	.nav-list-item {
     display: block;
     float: left;
@@ -52,7 +48,7 @@
 			@include rem(padding,0.7rem);
 			@include rem(font-size, 1.1rem);
 
-			&:hover {
+			&.hover {
         cursor: pointer;
 				background: rgba($gray,0.175);
 
@@ -61,28 +57,29 @@
 				}
 			}
 
+      &.dragging {
+				background: lighten($light-blue, 50%);
+        opacity: .4;
+      }
+
       &.droppable {
         border-bottom: 5px solid $light-blue;
+
+        // Fixes dragging issues, thanks to:
+        // https://medium.com/@reiberdatschi/common-pitfalls-with-html5-drag-n-drop-api-9f011a09ee6c
+        * {
+          pointer-events: none;
+        }
       }
 
-      // Fixes dragging issues, thanks to:
-      // https://medium.com/@reiberdatschi/common-pitfalls-with-html5-drag-n-drop-api-9f011a09ee6c
-      &.droppable * {
-         pointer-events: none;
+      &.dropped {
+				background: lighten($light-blue, 50%);
+        opacity: 1;
       }
 
-      &.dragging {
-        opacity: .2;
-         // color: ;
+      &.failed {
+				background: lighten($danger, 30%);
       }
-
-			&.active {
-				background: rgba($gray,0.4);
-
-				.type-icon {
-					@include opacity(1);
-				}
-			}
 
       small {
         color: $light-blue;

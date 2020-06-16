@@ -8,9 +8,8 @@ var Sitemap = function () {
 // Name of cookie that stores SectionNode ids that should be opened.
 Sitemap.STATE = 'cms.sitemap.open_folders';
 
+// Triggered on row click, updates new page, link, and section URLs
 Sitemap.prototype.select = function (selectedRow) {
-  $('.nav-list-span').removeClass('active');
-  selectedRow.addClass('active');
   newContentButton.updateButtons(selectedRow);
 };
 
@@ -34,6 +33,7 @@ Sitemap.prototype.moveTo = function ($draggable, targetNodeId, position) {
   var nodeId = $draggable.data('id');
   var path = "/cms/section_nodes/" + nodeId + '/move_to_position'
 
+  $draggable.removeClass('dragging').addClass('dropped');
   console.log('Moving ' + nodeId + ' to ' + targetNodeId + ', pos: ' + position);
 
   $.cms_ajax.put({
@@ -42,9 +42,12 @@ Sitemap.prototype.moveTo = function ($draggable, targetNodeId, position) {
       target_node_id: targetNodeId,
       position: position
     },
+    error: function(error, message)  {
+      $draggable.addClass('failed');
+    },
     success: function (result) {
+      sitemap.resetStyles();
       $draggable.effect({effect: 'highlight', duration: 2000, color: '#d9fccc'});
-      $draggable.removeClass('dragging');
       sitemap.updatePositions(result.updated_positions);
       console.log(result);
     }
@@ -62,12 +65,21 @@ Sitemap.prototype.changeIcon = function (row, icon) {
   row.find('.type-icon').attr('class', 'type-icon').addClass(icon);
 };
 
-Sitemap.prototype.showActions = function ($row) {
+Sitemap.prototype.hover = function ($row) {
+  $row.addClass('hover');
   $row.find('.edit-group').show();
 };
 
-Sitemap.prototype.hideActions = function ($row) {
+Sitemap.prototype.unhover = function ($row) {
+  $row.removeClass('hover');
   $row.find('.edit-group').hide();
+};
+
+Sitemap.prototype.resetStyles = function ($row) {
+  $('.hover').removeClass('hover');
+  $('.dragging').removeClass('dragging');
+  $('.dropped').removeClass('dropped');
+  $('.edit-group').hide();
 };
 
 // @param [Number] id
@@ -223,31 +235,35 @@ Sitemap.prototype.moveAfterItem = function ($source, $target, $sourceRow, $targe
   var newPosition = $target.data('position') + 1;
 
   this.updateDepth($source, newDepth);
-  $sourceRow.insertAfter($targetRow);
+  $sourceRow.insertAfter($targetRow).find('.nav-list-span').addClass('dragging');
   this.moveTo($source, newFolderId, newPosition);
 }
 
 // this / event.target is the item being dragged
 Sitemap.prototype.handleDragStart = function(event) {
-  sitemap.hideActions($(this));
+  if(event.stopPropagation) { event.stopPropagation(); }
+
   // Set the id for later retrieval once dropped.
-  event.dataTransfer.setData('text/plain', this.dataset.id);
-  this.classList.add('dragging');
-  event.stopPropagation();
+  event.dataTransfer.setData('text', this.dataset.id);
+  $(this).addClass('dragging');
 }
 
+// this / event.target is the item being dragged
 Sitemap.prototype.handleDragOver = function(event) {
-  event.stopPropagation()
-  if (event.preventDefault) { event.preventDefault(); } // Necessary. Allows us to drop.
+  if(event.preventDefault) { event.preventDefault(); }
+  if(event.stopPropagation) { event.stopPropagation(); }
+
   event.dataTransfer.dropEffect = 'move';
   return false;
 }
 
 // this / event.target is the current hover target.
 Sitemap.prototype.handleDragEnter = function(event) {
+  if(event.stopPropagation) { event.stopPropagation(); }
+
   var $target = $(this);
 
-  this.classList.add('droppable');
+  $target.addClass('droppable');
 
   // If hovering over a closed folder for a set amount of time, attempt to open the folder.
   if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
@@ -257,26 +273,27 @@ Sitemap.prototype.handleDragEnter = function(event) {
       }
     }, 1100);
   }
-  event.stopPropagation();
 }
 
 // this / event.target is the previous hover target.
 Sitemap.prototype.handleDragLeave = function(event) {
+  if(event.stopPropagation) { event.stopPropagation(); }
+
   this.classList.remove('droppable');
-  event.stopPropagation();
 }
 
 // this / event.target is the current droppable target.
 Sitemap.prototype.handleDrop = function (event) {
+  if(event.preventDefault) { event.preventDefault(); }
+  if(event.stopPropagation) { event.stopPropagation(); }
+
   var $target = $(this);
   var $targetRow = $target.closest('.nav-list');
 
   // Get the draggable id from the event, then use it to find the item ebing dragged.
-  var draggableId = event.dataTransfer.getData('text/plain');
+  var draggableId = event.dataTransfer.getData('text');
   var $draggable = $(".nav-list-span[data-id='" + draggableId + "']")
   var $draggableRow = $draggable.closest('.nav-list');
-
-  event.stopPropagation();
 
   // If dropping on an open folder, put the item at the top.
   if (sitemap.isFolder($target) && sitemap.isOpen($target)) {
@@ -327,11 +344,11 @@ jQuery(function ($) {
     });
 
     $('.nav-list-span').on('mouseenter', function (event) {
-      sitemap.showActions($(this));
+      sitemap.hover($(this));
     });
 
-    $('.nav-list-span').on('leave', function (event) {
-      sitemap.showActions($(this));
+    $('.nav-list-span').on('mouseleave', function (event) {
+      sitemap.unhover($(this));
     });
   }
 });
