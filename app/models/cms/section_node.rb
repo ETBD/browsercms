@@ -3,7 +3,8 @@ require 'ancestry'
 class Cms::SectionNode < ActiveRecord::Base
   has_ancestry touch: true
 
-  validates :slug, uniqueness: { scope: :node_type }, unless: lambda { |sn| sn.slug.blank?}
+  validates :slug, uniqueness: { scope: :node_type }, unless: lambda { |sn| sn.slug.blank? }
+  # validates :position, uniqueness: { scope: :ancestry }
 
   # This is the parent section for this node
   # For backwards compatiblity
@@ -26,7 +27,6 @@ class Cms::SectionNode < ActiveRecord::Base
   def scope_condition
     ancestry ? "ancestry = '#{ancestry}'" : 'ancestry IS NULL'
   end
-
 
   class << self
     def of_type(types)

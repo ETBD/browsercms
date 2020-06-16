@@ -92,10 +92,6 @@ module Cms
       child_pages.compact
     end
 
-    def self.old_sitemap
-      SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange(:order => :position)
-    end
-
     # Return a serialized hash of everything needed to display the sitemap.
     # Caching is not necessary, but could shave an additional second or two off the load time at the
     # cost of increased complexity. Turn it on, if desired.
@@ -109,11 +105,19 @@ module Cms
 
     # Build the sitemap hash
     def self.build_sitemap
+      # All pages and links are deletable at any time, because they have no children. Sections
+      # without children are also deletable. Sections with ANY child, including 'hidden'
+      # Cms::Attachment nodes, are NOT deletable. This search for sections to keep is done outside
+      # of the core block to avoid the 'not_of_type' scope which is automatically inserted
+      # into any SectionNode queries inside the block itself.
+      sections_to_keep = ids_of_section_nodes_with_children
+
       SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange_serializable(:order => :position) do |section_node, children|
         node_type = section_node.node_type.split('::').last.downcase.to_sym
+
         {
           id: section_node.id,
-          deletable: section_node.deletable?,
+          deletable: node_type == :section && sections_to_keep.include?(section_node.id) ? false : true,
           depth: section_node.depth + 1,
           display_type: section_node.section? ? 'folder' : 'leaf',
           draft: section_node.node.try(:draft?),
@@ -126,6 +130,19 @@ module Cms
           children: children
         }
       end
+    end
+
+    # Returns an array of ids for all section nodes with children. Sections are the only node
+    # type that can have children.
+    def self.ids_of_section_nodes_with_children
+       Cms::SectionNode.select(:ancestry)
+                       .distinct
+                       .pluck(:ancestry)
+                       .compact
+                       .map { |a| a.split('/') }
+                       .flatten
+                       .map(&:to_i)
+                       .uniq
     end
 
     # Queries all tables related to the sitemap view to determine the most recently updated record.

@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    browsercms (4.2.0.beta.4)
+    browsercms (4.2.0.beta.7)
       actionpack-page_caching (~> 1.0)
       ancestry (~> 3.0.0)
       bootstrap-sass
@@ -11,7 +11,7 @@ PATH
       jquery-rails (~> 3.1)
       jquery-ui-rails (~> 4.1)
       panoramic
-      paperclip (>= 3.4)
+      paperclip (>= 3.4, < 4.0)
       rails (~> 4.1.0)
       sass-rails
       simple_form (~> 3.1.0)
