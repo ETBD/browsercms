@@ -9,6 +9,7 @@
   .children {
     width: 100%;
     height: 0%;
+
     &.hide {
       display: none;
     }
@@ -20,12 +21,8 @@
 	list-style-type: none;
 	display: block;
 	position: relative;
-	margin: 0;
+  margin: 0;
 	padding: 0;
-
-  &.hide {
-    display: none;
-  }
 
 	.nav-list-item {
     display: block;
@@ -81,12 +78,24 @@
 				background: lighten($danger, 30%);
       }
 
-      small {
-        color: $light-blue;
+      .debug {
+        color: $gray;
         display: inline-block;
         font-size: .85rem;
         margin-left: 1rem;
       }
+
+    	.draft {
+    		@include border-radius(2px);
+    		@include rem(font-size,0.875rem);
+    		color: white;
+    		text-transform: uppercase;
+    		background: $danger;
+    		font-weight: 700;
+        margin-left: .5rem;
+    		padding: 2px 5px;
+        vertical-align: top;
+    	}
 
 			.type-icon {
 				@include rem(font-size,0.85rem);
@@ -96,35 +105,39 @@
 				margin-top: 1px;
 			}
 
-			&.level-1 {
-
-			}
-			&.level-2 {
+      &[data-depth='1'] {
         padding-left: 30px;
 			}
-			&.level-3 {
-				padding-left: 60px;
 
+      &[data-depth='2'] {
+				padding-left: 60px;
 			}
-			&.level-4 {
+
+      &[data-depth='3'] {
 				padding-left: 90px;
 			}
-			&.level-5 {
+
+      &[data-depth='4'] {
 				padding-left: 120px;
 			}
-			&.level-6 {
+
+      &[data-depth='5'] {
 				padding-left: 150px;
 			}
-			&.level-7 {
+
+      &[data-depth='6'] {
 				padding-left: 180px;
 			}
-			&.level-8 {
+
+      &[data-depth='7'] {
 				padding-left: 210px;
 			}
-			&.level-9 {
+
+      &[data-depth='8'] {
 				padding-left: 240px;
 			}
-			&.level-10 {
+
+      &[data-depth='9'] {
 				padding-left: 270px;
 			}
 
@@ -192,31 +205,5 @@
 	.nav-list-span:hover &,
 	.nav-list-span:active & {
 		@include opacity(1);
-	}
-}
-
-.permission-group {
-	float: right;
-	display: inline-block;
-	cursor: default;
-
-	.draft {
-		color: white;
-		text-transform: uppercase;
-		background: $danger;
-		font-weight: 700;
-		padding: 2px 5px;
-		@include border-radius(2px);
-		@include rem(font-size,0.875rem);
-		-webkit-font-smoothing: antialiased;
-		display: inline-block;
-		vertical-align: top;
-	}
-
-	.permission-icon {
-		color: $danger;
-		@include rem(font-size,0.875rem);
-		vertical-align: top;
-		margin-left: 10px;
 	}
 }

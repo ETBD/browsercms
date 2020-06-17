@@ -118,7 +118,7 @@ module Cms
         {
           id: section_node.id,
           deletable: node_type == :section && sections_to_keep.include?(section_node.id) ? false : true,
-          depth: section_node.depth + 1,
+          depth: section_node.depth,
           display_type: section_node.section? ? 'folder' : 'leaf',
           draft: section_node.node.try(:draft?),
           icon: section_node.icon_style(children.size),

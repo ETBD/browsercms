@@ -48,7 +48,7 @@ Sitemap.prototype.moveTo = function ($draggable, targetNodeId, position) {
     success: function (result) {
       sitemap.resetStyles();
       $draggable.effect({effect: 'highlight', duration: 2000, color: '#d9fccc'});
-      sitemap.updatePositions(result.updated_positions);
+      sitemap.updateValuesOnSuccess(result.updated_values);
       console.log(result);
     }
   });
@@ -105,11 +105,11 @@ Sitemap.prototype.restoreOpenState = function () {
 
 // Determines if the selected row is a Folder or not.
 Sitemap.prototype.isFolder = function (row) {
-  return row.data('type') == 'folder';
+  return row.data('type') === 'folder';
 };
 
 Sitemap.prototype.isClosable = function (row) {
-  return row.data('closable') == true;
+  return row.data('closable') === true;
 };
 
 // @param [Selector] link
@@ -182,20 +182,60 @@ Sitemap.prototype.updateChildDepth = function ($element, newDepth) {
 };
 
 // Updated related positions after a move.
-Sitemap.prototype.updatePositions = function(updatedPositions) {
+Sitemap.prototype.updateValuesOnSuccess = function(updatedPositions) {
   updatedPositions.forEach(function(positionArray) {
     var id = positionArray[0];
     var position = positionArray[1];
+    var depth = positionArray[2];
     var $row = $(".nav-list-span[data-id='" + id + "']");
 
     if ($row.length) {
       $row.data('position', position);
+      $row.data('depth', depth);
       $row.find('.debug-position').html(position);
+      $row.find('.debug-depth').html(depth);
 
       // Also update the DOM, so it's visible in the inspector.
       if ($row[0] !== undefined) { $row[0].dataset.position = position; }
+      if ($row[0] !== undefined) { $row[0].dataset.depth = depth; }
     }
   })
+}
+
+// Determine the new position for the $source node. If it has the same parent as the $target and
+// it's being moved from before the $target to after the $target, position will be the same as the
+// current $target position to account for the shuffling that will occur. Otherwise, just add 1 to
+// the current $target position.
+Sitemap.prototype.newPosition = function($source, $target, targetParentId) {
+  var sourceParentId = sitemap.parentId($source);
+  var sourcePosition = Number($source.data('position'));
+  var targetPosition = Number($target.data('position'));
+
+  console.log(sourceParentId);
+  console.log(targetParentId);
+  console.log(sourcePosition);
+  console.log(targetPosition);
+  if (sourceParentId === targetParentId && sourcePosition < targetPosition) {
+    console.log('SAME PARENT AND STARTED BEFORE - ' + targetPosition);
+    return targetPosition;
+  } else {
+    console.log('DIFFERENT PARENT OR STARTED AFTER - ' + (targetPosition + 1));
+    return targetPosition + 1;
+  }
+}
+
+// Finds the parent id (the enclosing folder/section) of a given element. The process for finding the
+// parent differs depending on whether the element is a folder or a leaf node.
+Sitemap.prototype.parentId = function($node) {
+  var $parentNode;
+
+  if (sitemap.isFolder($node)) {
+    $parentNode = $($node.parents('.nav-folder')[1]);
+  } else { // leaf
+    $parentNode = $node.closest('.nav-folder');
+  }
+
+  return $parentNode.find('.nav-list-span:first').data('id');
 }
 
 // Move an item to the top position within a folder.
@@ -203,40 +243,44 @@ Sitemap.prototype.updatePositions = function(updatedPositions) {
 // The new position will be 0 (first).
 Sitemap.prototype.moveToTopOfFolder = function ($source, $target, $sourceRow, $targetRow) {
   // The new folder is the target folder itself.
-  var newFolderId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
+  var newParentId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
+  // var newParentId = sitemap.parentId($target);
   var newDepth = $target.data('depth') + 1;
 
   this.updateDepth($source, newDepth);
   $sourceRow.prependTo($targetRow.find('.children:first'));
-  this.moveTo($source, newFolderId, 0);
+  this.moveTo($source, newParentId, 0);
 }
 
-// Move an item to the spot immediately after a folder, on the same level.
-// The $target is the folder itself, so the depth should be the same
-// The new position will be 1 greater than the target.
-Sitemap.prototype.moveAfterFolder = function ($source, $target, $sourceRow, $targetRow) {
-  // The new folder is the PARENT folder of the target folder.
-  var newFolderId = $($target.parents('.nav-folder')[1]).find('.nav-list-span:first').data('id');
-  var newDepth = $target.data('depth');
-  var newPosition = $target.data('position') + 1;
+// // Move an item to the spot immediately after a folder, on the same level.
+// // The $target is the folder itself, so the depth should be the same
+// // The new position will be 1 greater than the target.
+// Sitemap.prototype.moveAfterFolder = function ($source, $target, $sourceRow, $targetRow) {
+//   // The new folder is the PARENT folder of the target folder.
+//   // var newParentId = $($target.parents('.nav-folder')[1]).find('.nav-list-span:first').data('id');
+//   var newParentId = sitemap.parentId($target);
+//   var newDepth = $target.data('depth');
+//   var newPosition = sitemap.newPosition($source, $target, newParentId);
+//
+//   this.updateDepth($source, newDepth);
+//   $targetRow.find('li').first().append($sourceRow);
+//   // $sourceRow.insertAfter($targetRow).find('.nav-list-span').addClass('dragging');
+//   this.moveTo($source, newParentId, newPosition);
+// }
 
-  this.updateDepth($source, newDepth);
-  $targetRow.find('li').first().append($sourceRow);
-  this.moveTo($source, newFolderId, newPosition);
-}
-
-// Move an item to the spot immediately after another item, on the same level.
-// The $target is an item, so the depth should be the same
+// Move an item to the spot immediately after another item.
+// Depth is the same as the target
 // The new position will be 1 greater than the target.
 Sitemap.prototype.moveAfterItem = function ($source, $target, $sourceRow, $targetRow) {
   // The new folder is the PARENT folder of the target item.
-  var newFolderId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
+  // var newParentId = $target.closest('.nav-folder').find('.nav-list-span:first').data('id');
+  var newParentId = sitemap.parentId($target);
   var newDepth = $target.data('depth');
-  var newPosition = $target.data('position') + 1;
+  var newPosition = sitemap.newPosition($source, $target, newParentId);
 
   this.updateDepth($source, newDepth);
   $sourceRow.insertAfter($targetRow).find('.nav-list-span').addClass('dragging');
-  this.moveTo($source, newFolderId, newPosition);
+  this.moveTo($source, newParentId, newPosition);
 }
 
 // this / event.target is the item being dragged
@@ -264,15 +308,6 @@ Sitemap.prototype.handleDragEnter = function(event) {
   var $target = $(this);
 
   $target.addClass('droppable');
-
-  // If hovering over a closed folder for a set amount of time, attempt to open the folder.
-  if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
-    window.setTimeout(function () {
-      if ($target.hasClass('droppable')) {
-        sitemap.attemptOpen($target);
-      }
-    }, 1100);
-  }
 }
 
 // this / event.target is the previous hover target.
@@ -295,6 +330,12 @@ Sitemap.prototype.handleDrop = function (event) {
   var $draggable = $(".nav-list-span[data-id='" + draggableId + "']")
   var $draggableRow = $draggable.closest('.nav-list');
 
+  // NOOP if an item is dropped on itself
+  if ($target.data('id') === $draggable.data('id')) {
+    sitemap.resetStyles();
+    return;
+  }
+
   // If dropping on an open folder, put the item at the top.
   if (sitemap.isFolder($target) && sitemap.isOpen($target)) {
     console.log('Moving to top of folder');
@@ -302,7 +343,8 @@ Sitemap.prototype.handleDrop = function (event) {
   // If the target is a closed folder, put the item immediately after the folder.
   } else if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
     console.log('Moving after target folder');
-    sitemap.moveAfterFolder($draggable, $target, $draggableRow, $targetRow);
+    // sitemap.moveAfterFolder($draggable, $target, $draggableRow, $targetRow);
+    sitemap.moveAfterItem($draggable, $target, $draggableRow, $targetRow);
   // Otherwise, put the item immediately after the target item.
   } else {
     console.log('Moving after target item');
@@ -314,7 +356,7 @@ var sitemap = new Sitemap();
 
 // Enable dragging of items around the sitemap for those that have permissions.
 jQuery(function ($) {
-  if ($('#sitemap').exists() && $('#sitemap').data('editable') == true) {
+  if ($('#sitemap').exists() && $('#sitemap').data('editable') === true) {
     var draggables = document.querySelectorAll('#sitemap [draggable]');
 
     draggables.forEach(function(draggable) {

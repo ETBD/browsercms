@@ -1,44 +1,42 @@
-<ul class="nav nav-list">
+<ul class="nav nav-list <%= 'root' if root %>">
   <li class="nav-list-item nav-<%= section_node[:display_type] %>">
-    <div class="nav-list-span <%= "level-#{section_node[:depth]}" %>" <%= 'draggable=true' unless home %>
+    <div class="nav-list-span" <%= 'draggable=true' unless root %>
       data-id="<%= section_node[:id] %>"
       data-node-id="<%= section_node[:node_id] %>"
       data-depth="<%= section_node[:depth] %>"
       data-position="<%= section_node[:position] %>"
       data-type="<%= section_node[:display_type] %>"
-      data-closable="<%= home || section_node[:children].empty? ? false : true %>">
+      data-closable="<%= root || section_node[:children].empty? ? false : true %>">
       <span class="text">
         <span class="type-icon icon-<%= section_node[:icon] %>"></span>
         <%= section_node[:name] %>
-        <% if ENV['DEBUG_NAV'] %>
-          <small>
-            <strong>Id:</strong> <%= section_node[:id] %> &nbsp;|&nbsp;
-            <strong>Depth:</strong> <%= section_node[:depth] %> &nbsp;|&nbsp;
-            <strong>Pos:</strong> <span class='debug-position'><%= section_node[:position] %></span>
-          </small>
+        <% if section_node[:draft] %>
+          <span class="status draft" id="page-status-label">Draft</span>
         <% end %>
       </span>
+      <% if ENV['DEBUG_NAV'] %>
+        <small class='debug'>
+          <strong>Id:</strong> <%= section_node[:id] %> &nbsp;|&nbsp;
+          <strong>Depth:</strong> <span class='debug-depth'><%= section_node[:depth] %></span> &nbsp;|&nbsp;
+          <strong>Pos:</strong> <span class='debug-position'><%= section_node[:position] %></span>
+        </small>
+      <% end %>
 
       <ul class="edit-group" style='display: none;'>
         <% if section_node[:node_type] == :page %>
           <li><%= link_to('edit', section_node[:path], class: 'add-link') %></li>
         <% end %>
-        <% if @sitemap_editable && !home %>
+        <% if @sitemap_editable && !root %>
           <li><%= link_to('configure', "#{section_node[:path]}/edit", class: 'add-link') %></li>
           <li><%= link_to('preview', "#{section_node[:path]}/preview", class: 'add-link') if section_node[:node_type] == :page %></li>
           <li><%= link_to('delete', section_node[:path], class: 'add-link http_delete confirm_with_title',
             title: "Are you sure you want to delete '#{section_node[:name]}'?") if section_node[:deletable] %></li>
         <% end %>
       </ul>
-      <div class="permission-group">
-        <% if section_node[:draft] %>
-          <span class="status draft" id="page-status-label">Draft</span>
-        <% end %>
-      </div>
     </div>
-    <span class="children <%= 'hide' unless home %>">
+    <span class="children <%= 'hide' unless root %>">
       <% if section_node[:children].any? %>
-        <%= render partial: 'section_node', collection: section_node[:children], as: :section_node, locals: { home: false } %>
+        <%= render partial: 'section_node', collection: section_node[:children], as: :section_node, locals: { root: false } %>
       <% end %>
     </span>
   </li>

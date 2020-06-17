@@ -25,31 +25,30 @@ module Cms
     end
 
     def move_to_position
-      @source_node = SectionNode.find(params[:id])
+      node_to_move = SectionNode.find(params[:id])
       target_node = SectionNode.find(params[:target_node_id])
-      source_node = @source_node.section
       position = params[:position].try(:to_i)
 
       # If position is not present, move item to the end of the list
       if position.present?
-        @source_node.move_to(target_node.node, position)
+        node_to_move.move_to(target_node.node, position)
       else
-        @source_node.move_to_end(target_node.node)
+        node_to_move.move_to_end(target_node.node)
       end
 
       render json: {
         success: true,
         message: %(
-          '#{@source_node.node.name}' was moved to position ##{position} in '#{target_node.node.name}' folder.
+          '#{node_to_move.node.name}' was moved to position ##{position} in '#{target_node.node.name}' folder.
         ).squish,
-        updated_positions: updated_positions(@source_node, target_node)
+        updated_values: updated_values(node_to_move, target_node)
       }
     rescue StandardError => e
       render json: {
         success: false,
         error: e.message,
         message: %(
-          Failed to move '#{@source_node.node.name}' to position ##{position} in '#{target_node.node.name}' folder.
+          Failed to move '#{node_to_move.node.name}' to position ##{position} in '#{target_node.node.name}' folder.
         ).squish
       }, status: 500
     end
@@ -57,9 +56,9 @@ module Cms
     private
 
     # Retrieve new positions from all related nodes so that the front-end can be updated.
-    def updated_positions(source_node, target_node)
-      source_node.siblings.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).pluck(:id, :position) +
-      target_node.siblings.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).pluck(:id, :position)
+    def updated_values(node_to_move, target_node)
+      node_to_move.siblings.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).map { |n| [n.id, n.position, n.depth] } +
+      target_node.siblings.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).map { |n| [n.id, n.position, n.depth] }
     end
   end
 end
