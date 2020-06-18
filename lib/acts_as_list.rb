@@ -193,8 +193,14 @@ module ActsAsList
       increment_positions_on_all_items
     end
 
+    # Callback run 'before_create' to set an initial position.
     def add_to_list_bottom
-      self[position_column] = bottom_position_in_list.to_i + 1
+      # Nodes tied to a Cms::Attachment should have a position of nil.
+      if self.class.name == 'Cms::SectionNode' && node_type == 'Cms::Attachment'
+        self[position_column] = nil
+      else
+        self[position_column] = bottom_position_in_list.to_i + 1
+      end
     end
 
     # Overwrite this method to define the scope of the list changes
@@ -213,6 +219,10 @@ module ActsAsList
     def bottom_item(except = nil)
       conditions = scope_condition
       conditions = "#{conditions} AND #{self.class.primary_key} != #{except.id}" if except
+
+      # For section nodes, we want to exclude attachments from being part of this query.
+      conditions += " AND node_type != 'Cms::Attachment'" if acts_as_list_class.name == 'Cms::SectionNode'
+
       acts_as_list_class.where(conditions).order("#{position_column} DESC").first
     end
 

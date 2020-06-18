@@ -54,6 +54,10 @@
 				}
 			}
 
+      &.active {
+				background: rgba($gray, .3);
+      }
+
       &.dragging {
 				background: lighten($light-blue, 50%);
         opacity: .4;
@@ -81,6 +85,7 @@
       .debug {
         color: $gray;
         display: inline-block;
+        float: right;
         font-size: .85rem;
         margin-left: 1rem;
       }

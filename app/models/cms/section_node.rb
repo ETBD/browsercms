@@ -1,7 +1,7 @@
 require 'ancestry'
 
 class Cms::SectionNode < ActiveRecord::Base
-  has_ancestry touch: true
+  has_ancestry
 
   validates :slug, uniqueness: { scope: :node_type }, unless: lambda { |sn| sn.slug.blank? }
   # validates :position, uniqueness: { scope: :ancestry }
@@ -109,20 +109,21 @@ class Cms::SectionNode < ActiveRecord::Base
   # @param [Integer] position
   def move_to(section, position)
     logger.info "Moving Section Node ##{id} to Section ##{section.id} Position #{position}"
+
     transaction do
       if self.parent != section.node
         remove_from_list
         self.parent = section.node
         save
       end
+
       if position < 0
         position = 0
       else
-        #This helps prevent the position from getting out of whack
-        #If you pass in a really high number for position,
-        #this just corrects it to the right number
-        node_count = Cms::SectionNode.where({:ancestry => ancestry}).not_of_type('Cms::Attachment').count
-        position = node_count if position > node_count
+        # This helps prevent the position from getting out of whack.
+        # If you pass in a really high number for position, this just corrects it to the right number.
+        current_max_position = Cms::SectionNode.where(ancestry: ancestry).not_of_type('Cms::Attachment').maximum(:position) || 0
+        position = (current_max_position + 1) if position > current_max_position
       end
 
       insert_at_position(position)

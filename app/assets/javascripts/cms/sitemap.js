@@ -10,6 +10,8 @@ Sitemap.STATE = 'cms.sitemap.open_folders';
 
 // Triggered on row click, updates new page, link, and section URLs
 Sitemap.prototype.select = function (selectedRow) {
+  $('.nav-list-span').removeClass('active');
+  selectedRow.addClass('active');
   newContentButton.updateButtons(selectedRow);
 };
 
@@ -77,6 +79,7 @@ Sitemap.prototype.unhover = function ($row) {
 
 Sitemap.prototype.resetStyles = function ($row) {
   $('.hover').removeClass('hover');
+  $('.active').removeClass('active');
   $('.dragging').removeClass('dragging');
   $('.dropped').removeClass('dropped');
   $('.edit-group').hide();
@@ -117,8 +120,8 @@ Sitemap.prototype.isClosable = function (row) {
 Sitemap.prototype.open = function (row, options) {
   options = options || {}
   _.defaults(options, {animate: true});
+
   this.changeIcon(row, 'icon-folder-open');
-  // this.changeIcon(row, 'icon-folder-open');
   var siblings = row.siblings('.children');
   if (options.animate) {
     siblings.slideToggle('fast');
@@ -129,17 +132,17 @@ Sitemap.prototype.open = function (row, options) {
   this.saveAsOpened(row.data('id'));
 };
 
+Sitemap.prototype.close = function (row) {
+  this.changeIcon(row, 'icon-folder');
+  row.siblings('.children').slideToggle('fast');
+  this.saveAsClosed(row.data('id'));
+};
+
 // Attempts to open the given row. Will skip if the item cannot or is already open.
 Sitemap.prototype.attemptOpen = function (row, options) {
   if (this.isClosable(row) && !this.isOpen(row)) {
     this.open(row, options);
   }
-};
-
-Sitemap.prototype.close = function (row) {
-  this.changeIcon(row, 'icon-folder');
-  row.siblings('.children').slideToggle('fast');
-  this.saveAsClosed(row.data('id'));
 };
 
 Sitemap.prototype.toggleOpen = function (row) {
@@ -249,24 +252,13 @@ Sitemap.prototype.moveToTopOfFolder = function ($source, $target, $sourceRow, $t
 
   this.updateDepth($source, newDepth);
   $sourceRow.prependTo($targetRow.find('.children:first'));
+
+  // In case this folder was previously empty, ensure it is open and can be closed
+  this.open($target, { animate: false });
+  $target.data('closable', true);
+
   this.moveTo($source, newParentId, 0);
 }
-
-// // Move an item to the spot immediately after a folder, on the same level.
-// // The $target is the folder itself, so the depth should be the same
-// // The new position will be 1 greater than the target.
-// Sitemap.prototype.moveAfterFolder = function ($source, $target, $sourceRow, $targetRow) {
-//   // The new folder is the PARENT folder of the target folder.
-//   // var newParentId = $($target.parents('.nav-folder')[1]).find('.nav-list-span:first').data('id');
-//   var newParentId = sitemap.parentId($target);
-//   var newDepth = $target.data('depth');
-//   var newPosition = sitemap.newPosition($source, $target, newParentId);
-//
-//   this.updateDepth($source, newDepth);
-//   $targetRow.find('li').first().append($sourceRow);
-//   // $sourceRow.insertAfter($targetRow).find('.nav-list-span').addClass('dragging');
-//   this.moveTo($source, newParentId, newPosition);
-// }
 
 // Move an item to the spot immediately after another item.
 // Depth is the same as the target
@@ -317,6 +309,7 @@ Sitemap.prototype.handleDragLeave = function(event) {
   this.classList.remove('droppable');
 }
 
+// Handle when a 'draggable' item is dropped on a 'target' object.
 // this / event.target is the current droppable target.
 Sitemap.prototype.handleDrop = function (event) {
   if(event.preventDefault) { event.preventDefault(); }
@@ -336,16 +329,11 @@ Sitemap.prototype.handleDrop = function (event) {
     return;
   }
 
-  // If dropping on an open folder, put the item at the top.
+  // If dropping on an open folder, put the item at the top. Otherwise, put the item immediately
+  // after the target item.
   if (sitemap.isFolder($target) && sitemap.isOpen($target)) {
     console.log('Moving to top of folder');
     sitemap.moveToTopOfFolder($draggable, $target, $draggableRow, $targetRow);
-  // If the target is a closed folder, put the item immediately after the folder.
-  } else if (sitemap.isFolder($target) && !sitemap.isOpen($target)) {
-    console.log('Moving after target folder');
-    // sitemap.moveAfterFolder($draggable, $target, $draggableRow, $targetRow);
-    sitemap.moveAfterItem($draggable, $target, $draggableRow, $targetRow);
-  // Otherwise, put the item immediately after the target item.
   } else {
     console.log('Moving after target item');
     sitemap.moveAfterItem($draggable, $target, $draggableRow, $targetRow);

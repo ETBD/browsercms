@@ -8,6 +8,8 @@ module Cms
     after_destroy :destroy_node
     before_destroy :deletable?
 
+    before_validation :ensure_section_node_exists
+
     after_save :touch_self_and_ancestors
     after_destroy :touch_self_and_ancestors
 
@@ -56,8 +58,6 @@ module Cms
     def ancestry
       self.node.ancestry
     end
-
-    before_validation :ensure_section_node_exists
 
     def ensure_section_node_exists
       unless node
