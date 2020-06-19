@@ -1,7 +1,7 @@
 <%
    flash.each do |name, msg|
 %>
-    <%= content_tag :div, class: 'flash-message' do %>
+    <%= content_tag :div, class: "flash-message #{name}" do %>
         <button type="button" class="close" data-dismiss="alert" onclick="$(this).parent().hide()">&times;</button>
         <%= msg %>
     <% end %>

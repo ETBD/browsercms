@@ -147,4 +147,14 @@
   margin-top: 10px;
   margin-bottom: -43px;
 
+  &.notice {
+    background-color: darken($success, 10);
+    color: white;
+  }
+
+  &.alert,
+  &.error {
+    background-color: darken($danger, 10);
+    color: white;
+  }
 }
