@@ -72,8 +72,8 @@ module ActsAsList
   # lower in the list of all chapters. Likewise, <tt>chapter.first?</tt> would return +true+ if that chapter is
   # the first in the list of all chapters.
   module InstanceMethods
-    # Insert the item at the given position (defaults to the top position of 1).
-    def insert_at(position = 1)
+    # Insert the item at the given position (defaults to the top position of 0).
+    def insert_at(position = 0)
       insert_at_position(position)
     end
 
@@ -199,7 +199,7 @@ module ActsAsList
       if self.class.name == 'Cms::SectionNode' && node_type == 'Cms::Attachment'
         self[position_column] = nil
       else
-        self[position_column] = bottom_position_in_list.to_i + 1
+        self[position_column] = next_position_in_list
       end
     end
 
@@ -215,6 +215,13 @@ module ActsAsList
       item ? item.send(position_column) : 0
     end
 
+    # Returns the next available position number in the list.
+    def next_position_in_list(except = nil)
+      item = bottom_item(except)
+      # If an item exists, return the next position. If not, the next position should be 0.
+      item ? (item.send(position_column)).to_i + 1 : 0
+    end
+
     # Returns the bottom item
     def bottom_item(except = nil)
       conditions = scope_condition
@@ -228,14 +235,14 @@ module ActsAsList
 
     # Forces item to assume the bottom position in the list.
     def assume_bottom_position
-      log_update('assume_bottom_position', bottom_position_in_list(self).to_i + 1)
-      update_attribute(position_column, bottom_position_in_list(self).to_i + 1)
+      log_update('assume_bottom_position', next_position_in_list(self))
+      update_attribute(position_column, next_position_in_list(self))
     end
 
     # Forces item to assume the top position in the list.
     def assume_top_position
-      log_update('assume_top_position', 1)
-      update_attribute(position_column, 1)
+      log_update('assume_top_position', 0)
+      update_attribute(position_column, 0)
     end
 
     # This has the effect of moving all the higher items up one.
