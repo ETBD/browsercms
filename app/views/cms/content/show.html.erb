@@ -1,5 +1,5 @@
 <%= content_for :html_head do %>
-    <% if ENV['ENABLE_ADMIN'].to_b && @show_toolbar %>
+    <% if ENV['ENABLE_ADMIN'].try(:to_b) && @show_toolbar %>
         <%= stylesheet_link_tag 'cms/page_content_editing' %>
         <%= csrf_meta_tags %>
         <%= javascript_include_tag 'jquery' %>
