@@ -105,19 +105,12 @@ module Cms
 
     # Build the sitemap hash
     def self.build_sitemap
-      # All pages and links are deletable at any time, because they have no children. Sections
-      # without children are also deletable. Sections with ANY child, including 'hidden'
-      # Cms::Attachment nodes, are NOT deletable. This search for sections to keep is done outside
-      # of the core block to avoid the 'not_of_type' scope which is automatically inserted
-      # into any SectionNode queries inside the block itself.
-      sections_to_keep = ids_of_section_nodes_with_children
-
       SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange_serializable(:order => :position) do |section_node, children|
         node_type = section_node.node_type.split('::').last.downcase.to_sym
 
         {
           id: section_node.id,
-          deletable: node_type == :section && sections_to_keep.include?(section_node.id) ? false : true,
+          deletable: node_type == :section && children.any? ? false : true,
           depth: section_node.depth,
           display_type: section_node.section? ? 'folder' : 'leaf',
           draft: section_node.node.try(:draft?),
@@ -130,19 +123,6 @@ module Cms
           children: children
         }
       end
-    end
-
-    # Returns an array of ids for all section nodes with children. Sections are the only node
-    # type that can have children.
-    def self.ids_of_section_nodes_with_children
-       Cms::SectionNode.select(:ancestry)
-                       .distinct
-                       .pluck(:ancestry)
-                       .compact
-                       .map { |a| a.split('/') }
-                       .flatten
-                       .map(&:to_i)
-                       .uniq
     end
 
     # Queries all tables related to the sitemap view to determine the most recently updated record.
@@ -204,9 +184,16 @@ module Cms
       child_nodes.empty?
     end
 
+    def empty_ignoring_attachments?
+      child_nodes.reject { |cn| cn.node_type == 'Cms::Attachment' }.empty?
+    end
+
     # Callback to determine if this section can be deleted.
+    # A section cannot be deleted if it is the root or if it has any non-attachment children. Upon
+    # deletion, any 'Cms::Attachment' records that are children of this element will be moved to the
+    # parent section using ancestry's 'orphan_strategy' option.
     def deletable?
-      !root? && empty?
+      !root? && empty_ignoring_attachments?
     end
 
     def editable_by_group?(group)

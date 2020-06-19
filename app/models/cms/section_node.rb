@@ -1,7 +1,7 @@
 require 'ancestry'
 
 class Cms::SectionNode < ActiveRecord::Base
-  has_ancestry
+  has_ancestry orphan_strategy: :adopt
 
   validates :slug, uniqueness: { scope: :node_type }, unless: lambda { |sn| sn.slug.blank? }
   # validates :position, uniqueness: { scope: :ancestry }
