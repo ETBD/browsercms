@@ -1,6 +1,7 @@
 require 'ancestry'
 
 class Cms::SectionNode < ActiveRecord::Base
+  # When orphaned, any child nodes will be moved to the next parent in their ancestry.
   has_ancestry orphan_strategy: :adopt
 
   validates :slug, uniqueness: { scope: :node_type }, unless: lambda { |sn| sn.slug.blank? }
