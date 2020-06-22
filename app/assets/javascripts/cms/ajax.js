@@ -65,6 +65,7 @@ jQuery(function ($) {
 
         console.log(errorMessage);
         console.log(status.responseJSON.error)
+        Rollbar.error(errorMessage);
         alert(errorMessage);
     });
 });
