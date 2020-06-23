@@ -55,6 +55,17 @@ jQuery(function ($) {
         beforeSend: $.cms_ajax.asJSON()
     });
     $(document).ajaxError(function (x, status, error) {
-        alert("A " + x.status + " error occurred: " + error);
+        errorMessage = 'AJAX Error (status = ' + status.status + '):\n'
+
+        if (status.responseJSON != 'undefined') {
+          errorMessage += status.responseJSON.message;
+        } else {
+          errorMessage += error;
+        }
+
+        console.log(errorMessage);
+        console.log(status.responseJSON.error)
+        Rollbar.error(errorMessage);
+        alert(errorMessage);
     });
 });

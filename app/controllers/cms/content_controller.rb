@@ -157,7 +157,7 @@ module Cms
     end
 
     def load_page
-      if current_user.able_to?(:edit_content, :publish_content, :administrate) && ENV['ENABLE_ADMIN'].to_b
+      if current_user.able_to?(:edit_content, :publish_content, :administrate) && ENV['ENABLE_ADMIN'].try(:to_b)
         logger.debug "Displaying draft version of page"
         @page = Page.find_draft(@path)
       else

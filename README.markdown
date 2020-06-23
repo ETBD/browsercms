@@ -3,7 +3,8 @@
 
 [![Build Status](https://travis-ci.org/ETBD/browsercms.svg?branch=master)](https://magnum.travis-ci.org/ETBD/browsercms)
 
-BrowserCMS is a general purpose, open source Web Content Management System (CMS) that supports Ruby on Rails v4.0. It can be used as a standalone CMS, added to existing Rails projects or extended using Rails Engines. It is designed to support three distinct groups of users:
+BrowserCMS is a ~~general purpose~~ HEAVILY customized, open source Web Content Management System (CMS) that supports Ruby on Rails v4.0.
+It is not intended to be used with Rails applications other than the RSE CMS.
 
 1. Non-technical web editors who want a humane system to manage their site, without needing to understand what HTML or even Rails is.
 2. Designers who want to create large and elegantly designed websites with no artificial constraints by the CMS.

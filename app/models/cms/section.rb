@@ -8,6 +8,8 @@ module Cms
     after_destroy :destroy_node
     before_destroy :deletable?
 
+    before_validation :ensure_section_node_exists
+
     after_save :touch_self_and_ancestors
     after_destroy :touch_self_and_ancestors
 
@@ -57,8 +59,6 @@ module Cms
       self.node.ancestry
     end
 
-    before_validation :ensure_section_node_exists
-
     def ensure_section_node_exists
       unless node
         self.node = build_section_node
@@ -92,8 +92,51 @@ module Cms
       child_pages.compact
     end
 
+    # Return a serialized hash of everything needed to display the sitemap.
+    # Caching is not necessary, but could shave an additional second or two off the load time at the
+    # cost of increased complexity. Turn it on, if desired.
     def self.sitemap
-      SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange(:order => :position)
+      if ENV['CACHE_SITEMAP']
+        Rails.cache.fetch(["sitemap-#{sitemap_contents_last_updated}"]) { build_sitemap }
+      else
+        build_sitemap
+      end
+    end
+
+    # Build the sitemap hash
+    def self.build_sitemap
+      SectionNode.not_of_type(HIDDEN_NODE_TYPES).fetch_nodes.arrange_serializable(:order => :position) do |section_node, children|
+        node_type = section_node.node_type.split('::').last.downcase.to_sym
+
+        {
+          id: section_node.id,
+          deletable: node_type == :section && children.any? ? false : true,
+          depth: section_node.depth,
+          display_type: section_node.section? ? 'folder' : 'leaf',
+          draft: section_node.node.try(:draft?),
+          icon: section_node.icon_style(children.size),
+          node_id: section_node.node.id,
+          node_type: node_type,
+          name: section_node.node.name,
+          path: "/cms/#{node_type}s/#{section_node.node.id}",
+          position: section_node.position,
+          children: children
+        }
+      end
+    end
+
+    # Queries all tables related to the sitemap view to determine the most recently updated record.
+    # Use that record's updated_at timestamp as the cache key.
+    def self.sitemap_contents_last_updated
+      ActiveRecord::Base.connection.execute(%(
+        SELECT MAX(updated_at) FROM "cms_section_nodes"
+        UNION
+        SELECT MAX(updated_at) FROM "cms_sections"
+        UNION
+        SELECT MAX(updated_at) FROM "cms_links"
+        UNION
+        SELECT MAX(updated_at) FROM "cms_pages"
+      )).values.flatten.map(&:to_datetime).max.to_i
     end
 
     def visible_child_nodes(options={})
@@ -141,9 +184,16 @@ module Cms
       child_nodes.empty?
     end
 
+    def empty_ignoring_attachments?
+      child_nodes.reject { |cn| cn.node_type == 'Cms::Attachment' }.empty?
+    end
+
     # Callback to determine if this section can be deleted.
+    # A section cannot be deleted if it is the root or if it has any non-attachment children. Upon
+    # deletion, any 'Cms::Attachment' records that are children of this element will be moved to the
+    # parent section using ancestry's 'orphan_strategy' option.
     def deletable?
-      !root? && empty?
+      !root? && empty_ignoring_attachments?
     end
 
     def editable_by_group?(group)
