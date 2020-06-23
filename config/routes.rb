@@ -80,7 +80,7 @@ Cms::Engine.routes.draw do
   resources :attachments, :only => [:show, :create, :destroy]
 
   content_blocks :html_blocks
-  # content_blocks :forms
+  content_blocks :forms
   resources :form_fields do
     member do
       get :confirm_delete

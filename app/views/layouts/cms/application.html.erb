@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <% if ENV['ENABLE_ADMIN'].to_b %>
+  <% if ENV['ENABLE_ADMIN'].try(:to_b) %>
     <%= javascript_include_tag "cms/application" %>
     <%= javascript_include_tag cms_content_editor %>
   <% else %>

@@ -173,7 +173,7 @@ HTML
         }
       end
     end
-      
+
     def url_with_mode(url, mode)
       url = "" unless url # Handles cases where request.referrer is nil (see cms/_page_toolbar.html.erb for an example)
       uri = URI.parse(url)

@@ -1,9 +1,11 @@
 require 'ancestry'
 
 class Cms::SectionNode < ActiveRecord::Base
-  has_ancestry
+  # When orphaned, any child nodes will be moved to the next parent in their ancestry.
+  has_ancestry orphan_strategy: :adopt
 
-  validates :slug, uniqueness: { scope: :node_type }, unless: lambda { |sn| sn.slug.blank?}
+  validates :slug, uniqueness: { scope: :node_type }, unless: lambda { |sn| sn.slug.blank? }
+  # validates :position, uniqueness: { scope: :ancestry }
 
   # This is the parent section for this node
   # For backwards compatiblity
@@ -26,7 +28,6 @@ class Cms::SectionNode < ActiveRecord::Base
   def scope_condition
     ancestry ? "ancestry = '#{ancestry}'" : 'ancestry IS NULL'
   end
-
 
   class << self
     def of_type(types)
@@ -87,24 +88,43 @@ class Cms::SectionNode < ActiveRecord::Base
     true
   end
 
+  def icon_style(child_count)
+    if id == 1 # home page
+      'folder-open'
+    elsif home?
+      'house'
+    elsif link?
+     'link'
+    elsif page?
+     'file'
+    elsif section? && child_count == 0
+     'folder-open'
+    elsif section?
+     'folder'
+    else
+     'list' # All other content types.
+    end
+  end
+
   # @param [Section] section
   # @param [Integer] position
   def move_to(section, position)
-    #logger.info "Moving Section Node ##{id} to Section ##{sec.id} Position #{pos}"
+    logger.info "Moving Section Node ##{id} to Section ##{section.id} Position #{position}"
+
     transaction do
       if self.parent != section.node
         remove_from_list
         self.parent = section.node
         save
       end
+
       if position < 0
         position = 0
       else
-        #This helps prevent the position from getting out of whack
-        #If you pass in a really high number for position,
-        #this just corrects it to the right number
-        node_count = Cms::SectionNode.where({:ancestry => ancestry}).not_of_type('Cms::Attachment').count
-        position = node_count if position > node_count
+        # This helps prevent the position from getting out of whack.
+        # If you pass in a really high number for position, this just corrects it to the right number.
+        current_max_position = Cms::SectionNode.where(ancestry: ancestry).not_of_type('Cms::Attachment').maximum(:position) || 0
+        position = (current_max_position + 1) if position > current_max_position
       end
 
       insert_at_position(position)
