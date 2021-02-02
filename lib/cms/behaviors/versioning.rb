@@ -245,7 +245,6 @@ module Cms
             logger.debug { "#{self.class}#update" }
             # Because we are 'skipping' the normal ActiveRecord update here, we must manually call the save callback chain.
             run_callbacks :save do
-              binding.pry
               saved_correctly = @new_version.save
             end
           end
@@ -349,7 +348,6 @@ module Cms
 
         def version_comment=(version_comment)
           @version_comment = version_comment
-          send(:changed_attributes)["version_comment"] = @version_comment
         end
 
         def different_from_last_draft?
