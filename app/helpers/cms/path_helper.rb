@@ -59,7 +59,7 @@ module Cms
 
     # Returns the route proxy (aka engine) for a given resource, which can then have named paths called on it.
     #  I.e. engine(@block).polymorphic_path([@block, :preview])
-    # 
+    #
     # @param [ActiveRecord::Base] resource
     # @return [ActionDispatch::Routing::RoutesProxy]
     def engine(resource)
@@ -106,6 +106,7 @@ module Cms
     private
 
     def build_path_for(model_or_class_or_content_type)
+      # binding.pry
       Cms::EngineAwarePathBuilder.new(model_or_class_or_content_type).build(self)
     end
 

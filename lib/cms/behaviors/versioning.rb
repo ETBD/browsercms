@@ -343,6 +343,14 @@ module Cms
           save
         end
 
+        def version_comment
+          @version_comment
+        end
+
+        def version_comment=(version_comment)
+          @version_comment = version_comment
+          send(:changed_attributes)["version_comment"] = @version_comment
+        end
 
         def different_from_last_draft?
           return true if self.changed?

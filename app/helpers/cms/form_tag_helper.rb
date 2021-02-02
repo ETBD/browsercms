@@ -7,6 +7,7 @@ module Cms
     # This also includes deprecated methods from pre-4.0 form building (like f.cms_text_field) for backwards compatiable
     # support.
     def content_block_form_for(object, *args, &block)
+      # binding.pry
       options = args.extract_options!
       simple_form_for(engine_aware_path(object), *(args << options.merge(builder: Cms::FormBuilder::ContentBlockFormBuilder, wrapper: 'browsercms')), &block)
     end
