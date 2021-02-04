@@ -8,6 +8,7 @@ module Cms
     # support.
     def content_block_form_for(object, *args, &block)
       # binding.pry
+      # return unless engine_aware_path(object)
       options = args.extract_options!
       simple_form_for(engine_aware_path(object), *(args << options.merge(builder: Cms::FormBuilder::ContentBlockFormBuilder, wrapper: 'browsercms')), &block)
     end

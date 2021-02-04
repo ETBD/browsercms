@@ -106,7 +106,8 @@ module Cms
     private
 
     def build_path_for(model_or_class_or_content_type)
-      # binding.pry
+      # return unless model_or_class_or_content_type
+      # Rails.logger.fatal { "Creating Path for #{model_or_class_or_content_type.class} #{model_or_class_or_content_type}"}
       Cms::EngineAwarePathBuilder.new(model_or_class_or_content_type).build(self)
     end
 

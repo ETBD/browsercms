@@ -30,7 +30,6 @@ module Cms
       path << engine(view)
       path << path_subject
       path
-
     end
 
     def main_app_model?
