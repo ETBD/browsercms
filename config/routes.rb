@@ -75,6 +75,9 @@ Cms::Engine.routes.draw do
     member do
       put :move_to_position
     end
+    collection do
+      put :repair_sitemap
+    end
   end
 
   resources :attachments, :only => [:show, :create, :destroy]

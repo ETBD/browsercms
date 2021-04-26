@@ -3,5 +3,17 @@
   <div id="sitemap" data-editable='<%= @sitemap_editable %>'>
     <%= render 'section_node', section_node: @sitemap, root: true %>
   </div>
+
+  <h3>Problems with Duplicate Positions?</h3>
+  <p>
+    If you're seeing pages with duplicate positions, click the 'Repair Sitemap Positioning' button below. Clicking
+    this button will traverse through the entire sitemap correcting any position issues it finds.
+  </p>
+  <p>
+    This should very rarely be necessary, but if you find you are having problems with duplicate
+    positions more often, please contact a developer for additional support.
+  </p>
+  <%= link_to 'Repair Sitemap Positioning', repair_sitemap_section_nodes_path, method: :put, class: 'btn btn-small btn-primary' %>
+  <br>
 </div>
 

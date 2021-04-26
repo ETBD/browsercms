@@ -41,6 +41,11 @@ class Cms::SectionNode < ActiveRecord::Base
     def fetch_nodes
       includes(:node)
     end
+
+    def repair_sitemap
+      Rake::Task['sitemap:repair'].invoke
+    end
+    handle_asynchronously :repair_sitemap
   end
 
   # Return all section nodes which are not of the given type (i.e. class name)
