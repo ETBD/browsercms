@@ -1,3 +1,8 @@
+# 5.0.0 
+
+* Rails 4.2 Support
+* Add sitemap clearing functionality
+
 # 4.2.0
 
 * Refactor sitemap and drag/drop functionality
