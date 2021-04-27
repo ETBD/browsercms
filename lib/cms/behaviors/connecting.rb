@@ -83,8 +83,8 @@ module Cms
 
         def connect_to_page
           unless connect_to_page_id.blank? || connect_to_container.blank?
-            #Note that we are setting connected_page so that page can look at that 
-            #to determine if the page should be published            
+            #Note that we are setting connected_page so that page can look at that
+            #to determine if the page should be published
             self.connected_page = Page.find(connect_to_page_id)
             connected_page.create_connector(self, connect_to_container)
           end

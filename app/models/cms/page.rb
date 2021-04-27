@@ -216,6 +216,7 @@ class Cms::Page < ActiveRecord::Base
       #              connectable.connected_page &&
       #              (connectable.class.publishable? ? connectable.published? : true)
       should_publish = false
+      # binding.pry
       update_attributes(
           :version_comment => "#{connectable} was added to the '#{container}' container",
           :publish_on_save => should_publish

@@ -7,6 +7,7 @@ module Cms
 
     def initialize(model_class_or_content_type_or_model)
       normalize_subject_class(model_class_or_content_type_or_model)
+      # binding.pry
     end
 
     def subject_class
@@ -29,7 +30,6 @@ module Cms
       path << engine(view)
       path << path_subject
       path
-
     end
 
     def main_app_model?
@@ -70,7 +70,7 @@ module Cms
 
     # Allows ContentType, Class, or model to be passed.
     def normalize_subject_class(model_class_or_content_type_or_model)
-      if model_class_or_content_type_or_model.respond_to? :model_class # i.e. ContentType
+      if model_class_or_content_type_or_model.respond_to? :model_class # i.e. ContentType        binding.pry
         @path_subject = model_class_or_content_type_or_model.model_class
       else # Class or Model
         @path_subject = model_class_or_content_type_or_model

@@ -36,9 +36,7 @@ module Cms
         obj.after_as_of_version if obj.respond_to?(:after_as_of_version)
 
         # Last but not least, clear the changed attributes
-        if changed_attrs = obj.send(:changed_attributes)
-          changed_attrs.clear
-        end
+        clear_changes_information
 
         obj
       end
@@ -178,6 +176,8 @@ module Cms
             attrs[col] = send(col)
           end
 
+
+
           attrs[:version_comment] = @version_comment || default_version_comment
           @version_comment = nil
           #puts "Im a '#{self.class}', vc = #{self.class.version_class}"
@@ -198,6 +198,8 @@ module Cms
           if new_record?
             "Created"
           else
+            # This doesn't always seem to properly be applied, or is applying for
+            # ALL fields, not just the changed ones.
             "Changed #{(changes.keys - %w[  version created_by_id updated_by_id  ]).sort.join(', ')}"
           end
         end
@@ -238,7 +240,7 @@ module Cms
             self.version = 1
             # This should call ActiveRecord::Callbacks#create_or_update, which will correctly trigger the :save callback_chain
             saved_correctly = super
-            changed_attributes.clear
+            clear_changes_information
           else
             logger.debug { "#{self.class}#update" }
             # Because we are 'skipping' the normal ActiveRecord update here, we must manually call the save callback chain.
@@ -328,7 +330,7 @@ module Cms
           end
 
           self.after_revert(revert_to_version) if self.respond_to?(:after_revert)
-          self.version_comment = "Reverted to version #{version}"
+          @version_comment = "Reverted to version #{version}"
           self.publish_on_save = false
           self
         end
@@ -346,7 +348,6 @@ module Cms
 
         def version_comment=(version_comment)
           @version_comment = version_comment
-          send(:changed_attributes)["version_comment"] = @version_comment
         end
 
         def different_from_last_draft?

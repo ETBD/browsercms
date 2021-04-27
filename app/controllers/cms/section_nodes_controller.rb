@@ -59,6 +59,12 @@ module Cms
       }, status: 500
     end
 
+    def repair_sitemap
+      SectionNode.repair_sitemap
+      flash[:notice] = 'Repairing sitemap positions. Please refresh in a moment or two to see the results.'
+      redirect_to sitemap_path
+    end
+
     private
 
     # Retrieves all siblings that will need updating on success. This includes all siblings

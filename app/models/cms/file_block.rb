@@ -5,7 +5,7 @@ module Cms
     content_module :core
 
     has_attachment :file
-    validates_attachment_presence :file, :message => "You must upload a file"
+    validates_attachment_presence :file#, :message => "You must upload a file"
 
     def self.display_name
       "File"
