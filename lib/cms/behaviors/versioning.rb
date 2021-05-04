@@ -351,6 +351,7 @@ module Cms
         end
 
         def different_from_last_draft?
+          return true if version_comment.present?
           return true if self.changed?
           return true if self.publish_on_save == true
           last_draft = self.draft
