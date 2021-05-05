@@ -1,3 +1,7 @@
+# 5.0.1
+
+* Fix Version support
+
 # 5.0.0 
 
 * Rails 4.2 Support
