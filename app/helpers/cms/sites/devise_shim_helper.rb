@@ -6,7 +6,7 @@ module Cms
 
       # Shim to ensure main_app. is available for this helper.
       def main_app
-        Rails.application.class.routes.url_helpers
+        # Rails.application.class.routes.url_helpers
       end
 
       include DeviseHelper
