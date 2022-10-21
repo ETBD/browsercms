@@ -1,8 +1,13 @@
+# 5.0.2
+
+* Memory improvements
+* [CMS-289] Fix admin search to be case insensitive
+
 # 5.0.1
 
 * Fix Version support
 
-# 5.0.0 
+# 5.0.0
 
 * Rails 4.2 Support
 * Add sitemap clearing functionality
