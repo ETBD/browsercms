@@ -101,7 +101,10 @@ module Cms
                           :s3_credentials => rail_config(:s3_credentials),
                           :bucket => rail_config(:s3_bucket),
                           :s3_host_name => rail_config(:s3_host_name),
-                          :s3_host_alias => rail_config(:s3_host_alias)
+                          :s3_host_alias => rail_config(:s3_host_alias),
+
+                          # disable validation of content type
+                          :validate_media_type => false
 
       end
 

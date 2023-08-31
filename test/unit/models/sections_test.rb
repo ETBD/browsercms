@@ -276,7 +276,7 @@ module Cms
     end
 
     test "#sitemap should return root_section as key" do
-      assert_equal root_section.node, Section.sitemap.keys.first
+      assert_equal root_section.node, SectionNode.find(Section.sitemap[0][:id])
     end
 
     test "#sitemap should include visible pages" do
@@ -311,7 +311,24 @@ module Cms
 
     # Pages/section/etc in / that is visible in the sitemap
     def content_in_root_section
-      Section.sitemap.first[1].keys.map { |sn| sn.node }
+      # Sitemap doesnt return active record objects anymore
+      # Grab the children node ids and find the objects
+      Section.sitemap.first[:children].map do |sn|
+        case sn[:node_type]
+        when :section
+          Section.find(sn[:node_id])
+        when :file_block
+          FileBlock.find(sn[:node_id])
+        when :page
+          Page.find(sn[:node_id])
+        when :link
+          Link.find(sn[:node_id])
+        when :product
+          Dummy::Product.find(sn[:node_id])
+        else
+          binding.pry
+        end
+      end
     end
   end
 

@@ -205,3 +205,25 @@ def create_testing_table(name)
     create_table(name)
   end
 end
+
+# Monkey patch to fix ThreadError: already initialized in Rails 4.2 and Ruby 2.6
+# https://github.com/rails/rails/issues/34790
+if RUBY_VERSION>='2.6.0'
+  if Rails.version < '5'
+    puts 'Patching ActionController::TestResponse to avoid MonitorMixin double-initialize error'
+    class ActionController::TestResponse < ActionDispatch::TestResponse
+      def recycle!
+        # hack to avoid MonitorMixin double-initialize error:
+        @mon_mutex_owner_object_id = nil
+        @mon_mutex = nil
+        initialize
+      end
+    end
+  else
+    puts "Monkeypatch for ActionController::TestResponse no longer needed"
+  end
+end
+
+# Disable url encoding for Paperclip, it erroneously encodes the '?'
+# between the path and the query string.
+Paperclip::Attachment.default_options[:escape_url] = false

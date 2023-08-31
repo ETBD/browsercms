@@ -41,7 +41,7 @@ module Cms
       image = ImageBlock.new
       assert_equal false, image.valid?
       assert_equal true, image.errors.messages.include?(:attachment)
-      assert_equal ["You must upload a file"], image.errors.messages[:attachment]
+      assert_equal ["Must provide at least one file"], image.errors.messages[:attachment]
     end
 
 
