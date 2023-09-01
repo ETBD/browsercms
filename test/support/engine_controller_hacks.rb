@@ -24,11 +24,13 @@ module EngineControllerHacks
 
   def process_action(action, parameters = nil, session = nil, flash = nil, method = "GET")
     parameters ||= {}
-    merge = { :use_route => :cms }
-    if parameters[:use_route] == false
-      parameters.delete(:use_route)
-      merge = {}
-    end
+    # merge = { :use_route => :cms }
+    # if parameters[:use_route] == false
+    #   parameters.delete(:use_route)
+    #   merge = {}
+    # end
+    merge = {}
+
     process(action, method, parameters.merge!(merge), session, flash)
   end
 end

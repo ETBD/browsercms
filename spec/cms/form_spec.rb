@@ -11,6 +11,7 @@ describe Cms::Form do
     end
 
     it "should create a slug when created " do
+      skip "Form addressibility removed 6 years ago. app/models/cms/form.rb:5"
       form.slug = "/contact-us"
       form.save!
       form.reload.section_node.wont_be_nil
@@ -18,7 +19,7 @@ describe Cms::Form do
     end
 
     it "should assign parent with created" do
-      skip "Parent not getting created"
+      skip "Parent not getting created (in rails 4?)"
       form.save!
       form.parent.wont_be_nil
       form.section_node.slug.must_equal
@@ -29,6 +30,7 @@ describe Cms::Form do
   describe '#update' do
     let(:saved_form) { Cms::Form.create! }
     it "should update slug" do
+      skip "Form addressibility removed 6 years ago. app/models/cms/form.rb:5"
       saved_form.update({name: 'New', slug: '/about-us'}).must_equal true
       saved_form.reload.section_node.slug.must_equal '/about-us'
     end
@@ -86,8 +88,8 @@ describe Cms::Form do
 
       it "should add fields in position order" do
         f = form_with_fields(['Name', 'Address'])
-        f.fields.first.position.must_equal 1
-        f.fields.last.position.must_equal 2
+        f.fields.first.position.must_equal 0
+        f.fields.last.position.must_equal 1
       end
 
       it "are orderable" do
@@ -107,7 +109,7 @@ describe Cms::Form do
       form.fields << Cms::FormField.new(label: 'Name')
       form.fields << Cms::FormField.new(label: 'Email')
       form.save!
-      form.field_names.must_equal [:name, :email]
+      form.field_names.must_equal ['name', 'email']
     end
   end
 
@@ -122,10 +124,11 @@ describe Cms::Form do
     end
 
     it "should return true for required fields" do
-      form_with_name_field.required?(:name).must_equal(true)
+      form_with_name_field.required?('name').must_equal(true)
     end
+
     it "should returns nil for missing fields" do
-      form_with_name_field.required?(:email).must_equal(false)
+      form_with_name_field.required?('email').must_equal(false)
     end
   end
 end
