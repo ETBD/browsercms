@@ -228,3 +228,4 @@ end
 # Disable url encoding for Paperclip, it erroneously encodes the '?'
 # between the path and the query string.
 Paperclip::Attachment.default_options[:escape_url] = false
+Paperclip::Attachment.default_options[:validate_media_type] = false
