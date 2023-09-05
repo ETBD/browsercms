@@ -8,7 +8,7 @@ branches:
   - develop
 
 addons:
-  postgresql: '11' # Match ricksteves-prod
+  postgresql: '9.6' # Match ricksteves-prod
 
 cache:
   bundler: true
