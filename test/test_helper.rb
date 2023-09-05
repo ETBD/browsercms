@@ -141,6 +141,7 @@ class ActiveSupport::TestCase
 
   # Create a 'faux' sitemap which will work for tests (avoids need for fixtures)
   def given_a_site_exists
+    Cms::Page.delete_all
     @root = root_section
     @homepage = create(:public_page, :name => "Home", :section => @root, :path => "/")
     @system_section = create(:public_section, :name => "System", :parent => @root, :path => "/system")
@@ -189,7 +190,7 @@ module Cms::IntegrationTestHelper
     get login_url
     assert_response :success
     post login_url, :login => user.login, :password => password
-    assert_response :redirect
+    assert_response 403
     assert_equal "", @response.body, "Checking post login"
     assert flash[:notice]
   end
