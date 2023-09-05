@@ -31,7 +31,7 @@ Feature: File Blocks
     Then I should see "can't be blank"
     When I fill in "Name" with "Perspective"
     And I Save And Publish
-    Then I should see "You must upload a file"
+    Then I should see "Must provide at least one file"
     When I attach the file "test/fixtures/perspective.pdf" to "File"
     And I Save And Publish
     Then I should see "can't be blank"

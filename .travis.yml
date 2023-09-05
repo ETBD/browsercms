@@ -7,6 +7,9 @@ branches:
   - master
   - develop
 
+addons:
+  postgresql: '11' # Match ricksteves-prod
+
 cache:
   bundler: true
 
@@ -20,6 +23,3 @@ install:
   - bundle install
 
 script: bundle exec rake
-
-addons:
-  postgresql: '9.6' # Match ricksteves-prod

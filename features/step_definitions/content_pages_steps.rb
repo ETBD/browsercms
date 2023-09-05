@@ -205,7 +205,7 @@ When /^I create a new page$/ do
   visit '/cms/sections/1/pages/new'
   fill_in "page_name", with: "New Page"
   fill_in "Path", with: "/new-page"
-  find('.top-buttons').click_on 'Save'
+  find('.top-buttons').click_on 'Publish'
 end
 
 Then /^that page should not be published$/ do
@@ -272,7 +272,7 @@ end
 When /^I change the page name$/ do
   @expected_new_name = "A New Page Name"
   fill_in "page_name", with: @expected_new_name
-  click_save_button
+  click_publish_button
 end
 Then /^I should be returned to that page$/ do
   assert_equal 200, page.status_code

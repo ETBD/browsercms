@@ -10,16 +10,17 @@ Feature: Portlets
     When I visit /cms/portlets
     Then I should be returned to the Assets page for "Portlets"
 
-  Scenario: Login portlet when logged in
-    And there is a LoginPortlet on the homepage
-    And I am editing the page at /
-    Then I should see the login portlet form
-
-  Scenario: Login portlet when logged out
-    Given there is a LoginPortlet on the homepage
-    And I am not logged in
-    And I am on the homepage
-    Then I should see the login portlet form
+# Login/Logout portlets replaced with devise
+#  Scenario: Login portlet when logged in
+#    And there is a LoginPortlet on the homepage
+#    And I am editing the page at /
+#    Then I should see the login portlet form
+#
+#  Scenario: Login portlet when logged out
+#    Given there is a LoginPortlet on the homepage
+#    And I am not logged in
+#    And I am on the homepage
+#    Then I should see the login portlet form
 
   Scenario: Viewing a portlet
     Given there is a "Portlet" with:
