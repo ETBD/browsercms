@@ -7,6 +7,12 @@ branches:
   - master
   - develop
 
+env:
+  global:
+   - PGUSER=postgres
+   - PGPORT=5432
+   - PGHOST=localhost
+
 addons:
   postgresql: '13'
   apt:
