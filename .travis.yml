@@ -7,12 +7,6 @@ branches:
   - master
   - develop
 
-env:
-  global:
-   - PGUSER=postgres
-   - PGPORT=5432
-   - PGHOST=localhost
-
 addons:
   postgresql: '13'
   apt:
@@ -25,8 +19,6 @@ cache:
 bundler_args: --without development
 
 before_install:
-  - pg_lsclusters
-  - sudo cat /etc/postgresql/*/main/postgresql.conf
   - sudo apt-get update
   - sudo sed -i 's/port = 5433/port = 5432/' /etc/postgresql/13/main/postgresql.conf
   - sudo service postgresql restart
