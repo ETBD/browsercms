@@ -26,9 +26,9 @@ bundler_args: --without development
 
 before_install:
   - pg_lsclusters
-  - sudo cat /etc/postgresql/*/main/pg_hba.conf
+  - sudo cat /etc/postgresql/*/main/postgresql.conf
   - sudo apt-get update
-  - sudo sed -i -e '/local.*peer/s/postgres/all/' -e 's/peer\|md5/trust/g' /etc/postgresql/*/main/pg_hba.conf
+  - sudo sed -i 's/port = 5433/port = 5432/' /etc/postgresql/13/main/postgresql.conf
   - sudo service postgresql restart
   - sleep 1
   - postgres --version
