@@ -11,8 +11,7 @@ addons:
   postgresql: '9.6' # Match ricksteves-prod
 
 cache:
-  directories:
-  - vendor/bundle
+  bundler: true
 
 bundler_args: --without development
 
