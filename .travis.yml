@@ -15,7 +15,7 @@ cache:
 
 bundler_args: --without development
 
-before_script:
+before_install:
   - sudo apt-get update
   - sudo apt-get install imagemagick
   - psql -c 'create database browsercms_test;' -U postgres
