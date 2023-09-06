@@ -102,10 +102,9 @@ module Cms
                           :bucket => rail_config(:s3_bucket),
                           :s3_host_name => rail_config(:s3_host_name),
                           :s3_host_alias => rail_config(:s3_host_alias),
-
-                          # disable validation of content type
                           :validate_media_type => false
-
+        do_not_validate_attachment_file_type :data
+        validates_attachment_file_name :data, matches: /.*/
       end
 
       # Looks up a value from Rails config

@@ -81,7 +81,10 @@ end
 
 Given /^a block exists with a single image$/ do
   @block = Dummy::Catalog.create!(:name => "Hello")
-  @block.attachments << create(:attachment_document, :attachment_name => "photos", :attachable_type => "Dummy::Catalog", :attachable_version => @block.version)
+  @block.attachments << create(:attachment_document,
+                               :attachment_name => "photos",
+                               :attachable_type => "Dummy::Catalog",
+                               :attachable_version => @block.version)
   @block.publish_on_save = false
   @block.save!
 
@@ -120,7 +123,10 @@ end
 Given /^an attachment exists in a protected section$/ do
   @protected_section = create(:protected_section)
   @block = Dummy::Catalog.create!(:name => "In Protected Section", :publish_on_save => true)
-  @block.attachments << create(:attachment_document, :attachment_name => "photos", :attachable_type => "Dummy::Catalog", :parent => @protected_section)
+  @block.attachments << create(:attachment_document,
+                               :attachment_name => "photos",
+                               :attachable_type => "Dummy::Catalog",
+                               :parent => @protected_section)
   @block.save!
 end
 
