@@ -8,12 +8,18 @@ branches:
   - develop
 
 addons:
-  postgresql: '9.6' # Match ricksteves-prod
+  postgresql: '13'
+  apt:
+      packages:
+        - postgresql-13
 
 cache:
   bundler: true
 
 bundler_args: --without development
+
+before_install:
+  - postgres --version
 
 install:
   - sudo apt-get update
