@@ -54,6 +54,7 @@ before_install:
   - sleep 1
   # just check the version to make sure it is what we expect
   - pg_lsclusters
+  - sudo cat /var/log/postgresql/postgresql-15-main.log
 
 install:
   - psql -c 'create database browsercms_test;' -U postgres
