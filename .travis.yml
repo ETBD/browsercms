@@ -7,54 +7,28 @@ branches:
   - master
   - develop
 
-# addons:
-#   postgresql: 15
-#   apt:
-#       packages:
-#         - postgresql-14
-
-# services:
-#   - postgresql
-
-env:
-  global:
-    - PGHOST=localhost
-    - PGPORT=5432
-    - PGUSER=postgres
-    - PGPASSWORD=admin
-
 cache:
   bundler: true
 
 bundler_args: --without development
 
 before_install:
-  - pg_lsclusters
-
+  # add postgres 15 repos
   - sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
   - wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc &>/dev/null
   - sudo apt-get update
+  # install postgres 15
   - sudo apt install postgresql postgresql-client -y
-  
-  # fix the postgres port number so that it is the normal default
-  # - sudo sed -i 's/port = 5432/port = 5433/' /etc/postgresql/13/main/postgresql.conf
+  # fix the postgres port number so that it is 5432
   - sudo sed -i 's/port = 5433/port = 5432/' /etc/postgresql/15/main/postgresql.conf
-  # fix postgres authentication
-  - sudo cat /etc/postgresql/15/main/pg_hba.conf
+  # allow all postgres connections without a password - NOT SAFE FOR PRODUCTION
   - sudo sed -i -e 's/peer/trust/g' -e 's/scram-sha-256/trust/g' /etc/postgresql/15/main/pg_hba.conf
-  - sudo cat /etc/postgresql/15/main/pg_hba.conf
   # restart postgres to pickup the config changes
-  # - sudo service postgresql restart
-  # manually start new postgres versions in old distros
-  - pg_lsclusters
-  #- sudo mkdir -p /usr/local/pgsql/data
-  #- sudo initdb -D /usr/local/pgsql/data
   - sudo -u postgres /usr/lib/postgresql/15/bin/pg_ctl restart -l /var/log/postgresql/postgresql-15-main.log -D /var/lib/postgresql/15/main
   # give it a bit of time to run
   - sleep 1
-  # just check the version to make sure it is what we expect
+  # check the state of the installed postgres's
   - pg_lsclusters
-  - sudo cat /var/log/postgresql/postgresql-15-main.log
 
 install:
   - psql -c 'create database browsercms_test;' -U postgres
