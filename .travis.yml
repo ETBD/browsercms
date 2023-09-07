@@ -7,14 +7,14 @@ branches:
   - master
   - develop
 
-addons:
-  postgresql: 15
+# addons:
+#   postgresql: 15
 #   apt:
 #       packages:
 #         - postgresql-14
 
-services:
-  - postgresql
+# services:
+#   - postgresql
 
 env:
   global:
