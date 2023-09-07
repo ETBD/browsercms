@@ -7,14 +7,14 @@ branches:
   - master
   - develop
 
-# addons:
-#   postgresql: 14
+addons:
+  postgresql: 15
 #   apt:
 #       packages:
 #         - postgresql-14
 
-# services:
-#   - postgresql
+services:
+  - postgresql
 
 cache:
   bundler: true
