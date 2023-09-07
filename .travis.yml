@@ -35,7 +35,8 @@ before_install:
   # fix postgres authentication
   - sudo sed -i -e '/local.*peer/s/postgres/all/' -e 's/peer\|md5/trust/g' /etc/postgresql/15/main/pg_hba.conf
   # restart postgres to pickup the config changes
-  - sudo service postgresql restart
+  # - sudo service postgresql restart
+  - pg_ctl start -D /usr/local/var/postgres
   # give it a bit of time to run
   - sleep 1
   # just check the version to make sure it is what we expect
