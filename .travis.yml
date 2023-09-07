@@ -1,5 +1,5 @@
 language: ruby
-dist: jammy
+dist: focal
 os: linux
 
 branches:
