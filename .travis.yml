@@ -21,7 +21,7 @@ env:
     - PGHOST=localhost
     - PGPORT=5432
     - PGUSER=postgres
-    - PGPASSWORD=
+    - PGPASSWORD=''
 
 cache:
   bundler: true
@@ -54,6 +54,7 @@ before_install:
   - pg_lsclusters
 
 install:
+  - echo pg pass:$PGPASSWORD
   - psql -c 'create database browsercms_test;' -U postgres
   - gem install bundler:1.17.3
   - bundle install
