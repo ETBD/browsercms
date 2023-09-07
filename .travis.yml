@@ -8,10 +8,10 @@ branches:
   - develop
 
 addons:
-  postgresql: '15'
+  postgresql: 14
   apt:
       packages:
-        - postgresql-15
+        - postgresql-14
 
 cache:
   bundler: true
