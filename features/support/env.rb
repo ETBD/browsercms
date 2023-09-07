@@ -85,7 +85,3 @@ DatabaseCleaner.clean_with :truncation
 silence_stream(STDOUT) do
   require File.join(File.dirname(__FILE__), '../../db/seeds.rb')
 end
-
-at_exit do
-  system "growlnotify -t 'Cucumber Scenarios' -m 'Finished!'"
-end

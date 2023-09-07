@@ -157,7 +157,7 @@ module ActsAsList
     # Return +true+ if this object is the first in the list.
     def first?
       return false unless in_list?
-      self.send(position_column) == 1
+      self.send(position_column) == 0
     end
 
     # Return +true+ if this object is the last in the list.

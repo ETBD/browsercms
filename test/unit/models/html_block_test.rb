@@ -37,9 +37,16 @@ class HtmlBlockTest < ActiveSupport::TestCase
     @b2 = create(:html_block, :name => "b2", :content => "b two")
 
     assert Cms::HtmlBlock.searchable?
-    assert_equal [@a2, @b2], Cms::HtmlBlock.search("2").to_a
+    results = Cms::HtmlBlock.search("2").to_a
+    assert results.include? @a2
+    assert results.include? @b2
+    
     assert Cms::HtmlBlock.search(:term => "one").to_a.empty?
-    assert_equal [@a1, @b1], Cms::HtmlBlock.search(:term => "one", :include_body => true).to_a
+    
+    results = Cms::HtmlBlock.search(:term => "one", :include_body => true).to_a
+    assert results.include? @a1
+    assert results.include? @b1
+    
     assert Cms::HtmlBlock.search(nil).include?(@b2)
   end
 

@@ -1,5 +1,25 @@
 language: ruby
-rvm:
-  - 2.2.4
-before_script:
+dist: xenial
+os: linux
+
+branches:
+  only:
+  - master
+  - develop
+
+addons:
+  postgresql: '9.6' # Match ricksteves-prod
+
+cache:
+  bundler: true
+
+bundler_args: --without development
+
+install:
+  - sudo apt-get update
+  - sudo apt-get install imagemagick
   - psql -c 'create database browsercms_test;' -U postgres
+  - gem install bundler:1.17.3
+  - bundle install
+
+script: bundle exec rake

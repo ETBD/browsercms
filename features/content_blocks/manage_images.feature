@@ -55,7 +55,7 @@ Feature: Manage Image Blocks
     Given an image exists with two versions
     When I revert the image to version 1
     Then the image should be reverted to version 1
-    Then I should see it's draft mode
+    # Then I should see it's draft mode       --  There is no UI to show draft mode
     And the image should be updated to version 3
 
 # This does not test actual file content, which it probably should

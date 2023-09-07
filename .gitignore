@@ -26,3 +26,4 @@ test/dummy/public/assets/*
 .sass-cache
 .rvmrc
 db/backups
+vendor/bundle

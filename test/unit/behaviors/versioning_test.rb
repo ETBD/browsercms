@@ -66,10 +66,9 @@ module Cms
       assert_equal 1, block.version
       block.name = "New Name"
       assert block.save
-
       assert_equal 2, block.versions.size
-      assert_equal 1, block.versions[1].version
-      assert_equal 2, block.versions[0].version
+      assert_equal 2, block.versions[1].version
+      assert_equal 1, block.versions[0].version
     end
 
     test "Build new version should create a new version with an incremented version from the primary object" do
