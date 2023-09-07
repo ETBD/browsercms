@@ -27,7 +27,7 @@ before_install:
   - sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
   - wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc &>/dev/null
   - sudo apt-get update
-  - sudo apt install postgresql-15 postgresql-15-client -y
+  - sudo apt install postgresql=15 postgresql-client=15 -y
   
   # fix the postgres port number so that it is the normal default
   - sudo sed -i 's/port = 5432/port = 5433/' /etc/postgresql/13/main/postgresql.conf
