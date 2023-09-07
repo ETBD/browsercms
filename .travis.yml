@@ -37,6 +37,7 @@ before_install:
   # restart postgres to pickup the config changes
   # - sudo service postgresql restart
   # manually start new postgres versions in old distros
+  - sudo mkdir -p /usr/local/pgsql/data
   - pg_ctl start -l postgres.log -D /usr/local/pgsql/data
   # give it a bit of time to run
   - sleep 1
