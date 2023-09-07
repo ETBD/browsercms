@@ -16,6 +16,12 @@ addons:
 services:
   - postgresql
 
+env:
+  global:
+    - PGHOST=localhost
+    - PGPORT=5432
+    - PGUSER=postgres
+
 cache:
   bundler: true
 
@@ -40,7 +46,7 @@ before_install:
   - pg_lsclusters
   #- sudo mkdir -p /usr/local/pgsql/data
   #- sudo initdb -D /usr/local/pgsql/data
-  # - su postgres /usr/lib/postgresql/15/bin/pg_ctl restart -l /var/log/postgresql/postgresql-15-main.log -D /var/lib/postgresql/15/main
+  - sudo -u postgres /usr/lib/postgresql/15/bin/pg_ctl restart -l /var/log/postgresql/postgresql-15-main.log -D /var/lib/postgresql/15/main
   # give it a bit of time to run
   - sleep 1
   # just check the version to make sure it is what we expect
