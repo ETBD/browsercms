@@ -21,7 +21,7 @@ env:
     - PGHOST=localhost
     - PGPORT=5432
     - PGUSER=postgres
-    - PGPASSWORD=
+    - PGPASSWORD=admin
 
 cache:
   bundler: true
@@ -42,7 +42,7 @@ before_install:
   # fix postgres authentication
   - sudo cat /etc/postgresql/15/main/pg_hba.conf
   - sudo sed -i -e 's/peer/trust/g' /etc/postgresql/15/main/pg_hba.conf
-  #- sudo cat /etc/postgresql/15/main/pg_hba.conf
+  - sudo cat /etc/postgresql/15/main/pg_hba.conf
   # restart postgres to pickup the config changes
   # - sudo service postgresql restart
   # manually start new postgres versions in old distros
@@ -56,7 +56,6 @@ before_install:
   - pg_lsclusters
 
 install:
-  - echo $PGHOST:$PGPORT:$PGUSER:$PGPASSWORD
   - psql -c 'create database browsercms_test;' -U postgres
   - gem install bundler:1.17.3
   - bundle install
