@@ -32,6 +32,8 @@ before_install:
   # fix the postgres port number so that it is the normal default
   - sudo sed -i 's/port = 5432/port = 5433/' /etc/postgresql/13/main/postgresql.conf
   - sudo sed -i 's/port = 5433/port = 5432/' /etc/postgresql/15/main/postgresql.conf
+  # fix postgres authentication
+  - sudo sed -i -e '/local.*peer/s/postgres/all/' -e 's/peer\|md5/trust/g' /etc/postgresql/15/main/pg_hba.conf
   # restart postgres to pickup the config changes
   - sudo service postgresql restart
   # give it a bit of time to run
