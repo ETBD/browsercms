@@ -6,7 +6,7 @@ ruby '2.7.8'
 gemspec
 # gem 'query_reviewer' # Enable for performance tuning
 
-gem 'puma'
+gem 'puma', '~> 4'
 gem 'railties', '~> 4.2'
 # Uncomment to confirm that older versions work (for compaitiblity with Spree 2.2.4/bcms_spree)
 # gem 'paperclip', '~> 3.4.1'
