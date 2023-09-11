@@ -1,3 +1,6 @@
+# 5.1.0 (2023-09-11)
+* [CMS-327] (https://ricksteves.atlassian.net/browse/CMS-327) Update ruby to 2.7.8
+
 # 5.0.2
 
 * Memory improvements
