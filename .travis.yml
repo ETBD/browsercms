@@ -1,5 +1,38 @@
 language: ruby
-rvm:
-  - 2.2.4
-before_script:
+dist: bionic
+os: linux
+
+branches:
+  only:
+  - master
+  - develop
+
+cache:
+  bundler: true
+
+bundler_args: --without development
+
+before_install:
+  # add postgres 15 repos
+  - sudo sh -c 'echo "deb http://apt.postgresql.org/pub/repos/apt $(lsb_release -cs)-pgdg main" > /etc/apt/sources.list.d/pgdg.list'
+  - wget -qO- https://www.postgresql.org/media/keys/ACCC4CF8.asc | sudo tee /etc/apt/trusted.gpg.d/pgdg.asc &>/dev/null
+  - sudo apt-get update
+  # install postgres 15
+  - sudo apt install postgresql postgresql-client -y
+  # fix the postgres port number so that it is 5432
+  - sudo sed -i 's/port = 5433/port = 5432/' /etc/postgresql/15/main/postgresql.conf
+  # allow all postgres connections without a password - NOT SAFE FOR PRODUCTION
+  - sudo sed -i -e 's/peer/trust/g' -e 's/scram-sha-256/trust/g' /etc/postgresql/15/main/pg_hba.conf
+  # restart postgres to pickup the config changes
+  - sudo -u postgres /usr/lib/postgresql/15/bin/pg_ctl restart -l /var/log/postgresql/postgresql-15-main.log -D /var/lib/postgresql/15/main
+  # give it a bit of time to run
+  - sleep 1
+  # check the state of the installed postgres's
+  - pg_lsclusters
+
+install:
   - psql -c 'create database browsercms_test;' -U postgres
+  - gem install bundler:1.17.3
+  - bundle install
+
+script: bundle exec rake

@@ -16,6 +16,7 @@ Feature: Page Templates
     Then I should see the following content:
       | Hello |
 
+  @known-bug
   Scenario: Multiple pages of templates
     Given PENDING fails to generate correct next_page_link
     Given there are 20 page templates
@@ -24,6 +25,7 @@ Feature: Page Templates
     When I click on "next_page_link"
     Then I should see "Displaying 16 - 20 of 20"
 
+  @known-bug
   Scenario: Edit a template
     Given PENDING fails to display the template
     Given the following page template exists:

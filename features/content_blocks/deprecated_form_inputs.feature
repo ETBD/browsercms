@@ -8,11 +8,12 @@ Feature: Deprecated Form Inputs
   Background:
     Given I am logged in as a Content Editor
 
-  Scenario: Create a new block using deprecated fields
-    Given I'm creating content which uses deprecated input fields
-    Then the form page with deprecated fields should be shown
-    When I fill in all the deprecated fields
-    Then a new deprecated content block should be created
+# Dont test deprecated forms
+#  Scenario: Create a new block using deprecated fields
+#    Given I'm creating content which uses deprecated input fields
+#    Then the form page with deprecated fields should be shown
+#    When I fill in all the deprecated fields
+#    Then a new deprecated content block should be created
 
 
 

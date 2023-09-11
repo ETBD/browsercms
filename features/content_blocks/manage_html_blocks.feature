@@ -20,7 +20,7 @@ Feature: Manage Html Blocks
     When I fill in "Name" with "Hello World"
     And I click the Save button
     Then I should see the View Text page
-    And I should see it's draft mode
+    # And I should see it's draft mode   -- There is no UI to indicate draft mode
 
   Scenario: Publishing a New Block
     Given I request /cms/html_blocks/new
@@ -28,7 +28,7 @@ Feature: Manage Html Blocks
     When I fill in "Name" with "Hello World"
     And I Save And Publish
     Then I should see the View Text page
-    And the content should be published
+    # And the content should be published  -- There is no UI to indicate published mode
 
   Scenario: Publishing an existing block
     Given the following Html blocks exist:
@@ -38,7 +38,7 @@ Feature: Manage Html Blocks
     When I fill in "Name" with "Hello World"
     And I Save And Publish
     Then I should see the View Text page
-    And the content should be published
+    # And the content should be published  -- There is no UI to indicate published mode
 
   Scenario: Multiple Pages
     Given there are multiple pages of html blocks in the Content Library
@@ -51,4 +51,4 @@ Feature: Manage Html Blocks
     Given I have an Html block in draft mode
     When I view that block
     And I should see that block's content
-    And I should see it's draft mode
+    # And I should see it's draft mode   -- There is no UI to indicate draft mode

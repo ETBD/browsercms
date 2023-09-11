@@ -27,7 +27,7 @@ Feature: Image Blocks
     When I fill in "Name" with "Giraffe"
     And I fill in "Path" with "/giraffe.jpg"
     And I Save And Publish
-    Then I should see "You must upload a file"
+    Then I should see "Must provide at least one file"
 
   Scenario: Missing Path
     When I fill in "Name" with "Giraffe"

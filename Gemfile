@@ -1,13 +1,13 @@
 source 'http://rubygems.org'
 
-ruby '2.3.8'
+ruby '2.7.8'
 
 # Load this project as a gem.
 gemspec
 # gem 'query_reviewer' # Enable for performance tuning
 
-gem 'puma'
-
+gem 'puma', '~> 4'
+gem 'railties', '~> 4.2'
 # Uncomment to confirm that older versions work (for compaitiblity with Spree 2.2.4/bcms_spree)
 # gem 'paperclip', '~> 3.4.1'
 # For testing behavior in production
@@ -18,7 +18,7 @@ end
 group :development do
   gem 'rake'
   # gem 'debugger'
-  gem 'quiet_assets'
+  # gem 'quiet_assets'
 end
 group :test, :development do
   gem 'minitest'
@@ -48,5 +48,7 @@ group :test do
   gem 'database_cleaner'
   gem 'launchy'
   gem 'ruby-prof'
-  gem 'aruba'
+  gem 'aruba', '= 0.14.14'
+  gem 'loofah', '= 2.19.1'
+  gem 'delayed_job'
 end

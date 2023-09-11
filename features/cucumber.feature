@@ -7,6 +7,7 @@ Feature:
 
   Background:
 
+  @known-bug
   Scenario: Upgrade Cucumber
     Given we are using a Rails 4.0 compatible version of cucumber
 

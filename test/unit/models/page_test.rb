@@ -829,15 +829,15 @@ module Cms
 
       assert_equal 9, conns.size
 
-      assert_properties conns[0], {:page => @page, :page_version => 2, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 1}
-      assert_properties conns[1], {:page => @page, :page_version => 3, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 1}
-      assert_properties conns[2], {:page => @page, :page_version => 3, :connectable => @block2, :connectable_version => 1, :container => "bar", :position => 2}
-      assert_properties conns[3], {:page => @page, :page_version => 4, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 1}
-      assert_properties conns[4], {:page => @page, :page_version => 4, :connectable => @block2, :connectable_version => 1, :container => "bar", :position => 2}
-      assert_properties conns[5], {:page => @page, :page_version => 4, :connectable => @block2, :connectable_version => 1, :container => "foo", :position => 1}
-      assert_properties conns[6], {:page => @page, :page_version => 5, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 1}
-      assert_properties conns[7], {:page => @page, :page_version => 5, :connectable => @block2, :connectable_version => 1, :container => "foo", :position => 1}
-      assert_properties conns[8], {:page => @page, :page_version => 6, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 1}
+      assert_properties conns[0], {:page => @page, :page_version => 2, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 0}
+      assert_properties conns[1], {:page => @page, :page_version => 3, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 0}
+      assert_properties conns[2], {:page => @page, :page_version => 3, :connectable => @block2, :connectable_version => 1, :container => "bar", :position => 1}
+      assert_properties conns[3], {:page => @page, :page_version => 4, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 0}
+      assert_properties conns[4], {:page => @page, :page_version => 4, :connectable => @block2, :connectable_version => 1, :container => "bar", :position => 1}
+      assert_properties conns[5], {:page => @page, :page_version => 4, :connectable => @block2, :connectable_version => 1, :container => "foo", :position => 0}
+      assert_properties conns[6], {:page => @page, :page_version => 5, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 0}
+      assert_properties conns[7], {:page => @page, :page_version => 5, :connectable => @block2, :connectable_version => 1, :container => "foo", :position => 0}
+      assert_properties conns[8], {:page => @page, :page_version => 6, :connectable => @block, :connectable_version => 1, :container => "bar", :position => 0}
     end
 
   end

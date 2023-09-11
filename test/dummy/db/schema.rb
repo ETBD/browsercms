@@ -16,7 +16,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-  create_table "catalog_versions", force: true do |t|
+  create_table "catalog_versions", force: :cascade do |t|
     t.string   "name"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -30,7 +30,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.integer  "updated_by_id"
   end
 
-  create_table "catalogs", force: true do |t|
+  create_table "catalogs", force: :cascade do |t|
     t.string   "name"
     t.datetime "created_at"
     t.datetime "updated_at"
@@ -43,7 +43,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.integer  "updated_by_id"
   end
 
-  create_table "cms_attachment_versions", force: true do |t|
+  create_table "cms_attachment_versions", force: :cascade do |t|
     t.string   "data_file_name"
     t.string   "data_file_path"
     t.string   "file_location"
@@ -69,7 +69,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_attachment_versions", ["original_record_id"], name: "index_cms_attachment_versions_on_original_record_id", using: :btree
 
-  create_table "cms_attachments", force: true do |t|
+  create_table "cms_attachments", force: :cascade do |t|
     t.string   "data_file_name"
     t.string   "data_file_path"
     t.string   "file_location"
@@ -92,7 +92,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_categories", force: true do |t|
+  create_table "cms_categories", force: :cascade do |t|
     t.integer  "category_type_id"
     t.integer  "parent_id"
     t.string   "name"
@@ -100,13 +100,13 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_category_types", force: true do |t|
+  create_table "cms_category_types", force: :cascade do |t|
     t.string   "name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
-  create_table "cms_connectors", force: true do |t|
+  create_table "cms_connectors", force: :cascade do |t|
     t.integer  "page_id"
     t.integer  "page_version"
     t.integer  "connectable_id"
@@ -123,7 +123,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_connectors", ["page_id"], name: "index_cms_connectors_on_page_id", using: :btree
   add_index "cms_connectors", ["page_version"], name: "index_cms_connectors_on_page_version", using: :btree
 
-  create_table "cms_dynamic_view_versions", force: true do |t|
+  create_table "cms_dynamic_view_versions", force: :cascade do |t|
     t.string   "type"
     t.string   "name"
     t.string   "format"
@@ -144,7 +144,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.boolean  "partial",            default: false
   end
 
-  create_table "cms_dynamic_views", force: true do |t|
+  create_table "cms_dynamic_views", force: :cascade do |t|
     t.string   "type"
     t.string   "name"
     t.string   "format"
@@ -164,7 +164,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.boolean  "partial",       default: false
   end
 
-  create_table "cms_email_messages", force: true do |t|
+  create_table "cms_email_messages", force: :cascade do |t|
     t.string   "sender"
     t.text     "recipients"
     t.text     "subject"
@@ -177,7 +177,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_file_block_versions", force: true do |t|
+  create_table "cms_file_block_versions", force: :cascade do |t|
     t.string   "type"
     t.string   "name"
     t.integer  "attachment_id"
@@ -197,7 +197,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_file_block_versions", ["original_record_id"], name: "index_cms_file_block_versions_on_original_record_id", using: :btree
   add_index "cms_file_block_versions", ["version"], name: "index_cms_file_block_versions_on_version", using: :btree
 
-  create_table "cms_file_blocks", force: true do |t|
+  create_table "cms_file_blocks", force: :cascade do |t|
     t.string   "type"
     t.string   "name"
     t.integer  "attachment_id"
@@ -216,14 +216,14 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_file_blocks", ["deleted"], name: "index_cms_file_blocks_on_deleted", using: :btree
   add_index "cms_file_blocks", ["type"], name: "index_cms_file_blocks_on_type", using: :btree
 
-  create_table "cms_form_entries", force: true do |t|
+  create_table "cms_form_entries", force: :cascade do |t|
     t.text     "data_columns"
     t.integer  "form_id"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
-  create_table "cms_form_fields", force: true do |t|
+  create_table "cms_form_fields", force: :cascade do |t|
     t.integer  "form_id"
     t.string   "label"
     t.string   "name"
@@ -239,7 +239,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_form_fields", ["form_id", "name"], name: "index_cms_form_fields_on_form_id_and_name", unique: true, using: :btree
 
-  create_table "cms_form_versions", force: true do |t|
+  create_table "cms_form_versions", force: :cascade do |t|
     t.string   "name"
     t.text     "description"
     t.string   "confirmation_behavior"
@@ -258,7 +258,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_forms", force: true do |t|
+  create_table "cms_forms", force: :cascade do |t|
     t.string   "name"
     t.text     "description"
     t.string   "confirmation_behavior"
@@ -276,7 +276,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_group_permissions", force: true do |t|
+  create_table "cms_group_permissions", force: :cascade do |t|
     t.integer "group_id"
     t.integer "permission_id"
   end
@@ -285,7 +285,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_group_permissions", ["group_id"], name: "index_cms_group_permissions_on_group_id", using: :btree
   add_index "cms_group_permissions", ["permission_id"], name: "index_cms_group_permissions_on_permission_id", using: :btree
 
-  create_table "cms_group_sections", force: true do |t|
+  create_table "cms_group_sections", force: :cascade do |t|
     t.integer "group_id"
     t.integer "section_id"
   end
@@ -293,12 +293,12 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_group_sections", ["group_id"], name: "index_cms_group_sections_on_group_id", using: :btree
   add_index "cms_group_sections", ["section_id"], name: "index_cms_group_sections_on_section_id", using: :btree
 
-  create_table "cms_group_type_permissions", force: true do |t|
+  create_table "cms_group_type_permissions", force: :cascade do |t|
     t.integer "group_type_id"
     t.integer "permission_id"
   end
 
-  create_table "cms_group_types", force: true do |t|
+  create_table "cms_group_types", force: :cascade do |t|
     t.string   "name"
     t.boolean  "guest",      default: false
     t.boolean  "cms_access", default: false
@@ -308,7 +308,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_group_types", ["cms_access"], name: "index_cms_group_types_on_cms_access", using: :btree
 
-  create_table "cms_groups", force: true do |t|
+  create_table "cms_groups", force: :cascade do |t|
     t.string   "name"
     t.string   "code"
     t.integer  "group_type_id"
@@ -319,7 +319,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_groups", ["code"], name: "index_cms_groups_on_code", using: :btree
   add_index "cms_groups", ["group_type_id"], name: "index_cms_groups_on_group_type_id", using: :btree
 
-  create_table "cms_html_block_versions", force: true do |t|
+  create_table "cms_html_block_versions", force: :cascade do |t|
     t.text     "content"
     t.integer  "original_record_id"
     t.integer  "version"
@@ -337,7 +337,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_html_block_versions", ["original_record_id"], name: "index_cms_html_block_versions_on_original_record_id", using: :btree
   add_index "cms_html_block_versions", ["version"], name: "index_cms_html_block_versions_on_version", using: :btree
 
-  create_table "cms_html_blocks", force: true do |t|
+  create_table "cms_html_blocks", force: :cascade do |t|
     t.text     "content"
     t.integer  "version"
     t.integer  "lock_version",  default: 0
@@ -353,7 +353,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_html_blocks", ["deleted"], name: "index_cms_html_blocks_on_deleted", using: :btree
 
-  create_table "cms_link_versions", force: true do |t|
+  create_table "cms_link_versions", force: :cascade do |t|
     t.string   "name"
     t.string   "url"
     t.boolean  "new_window",         default: false
@@ -369,7 +369,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.integer  "updated_by_id"
   end
 
-  create_table "cms_links", force: true do |t|
+  create_table "cms_links", force: :cascade do |t|
     t.string   "name"
     t.string   "url"
     t.boolean  "new_window",     default: false
@@ -385,7 +385,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.integer  "latest_version"
   end
 
-  create_table "cms_page_route_options", force: true do |t|
+  create_table "cms_page_route_options", force: :cascade do |t|
     t.integer  "page_route_id"
     t.string   "type"
     t.string   "name"
@@ -394,7 +394,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_page_routes", force: true do |t|
+  create_table "cms_page_routes", force: :cascade do |t|
     t.string   "name"
     t.string   "pattern"
     t.integer  "page_id"
@@ -403,7 +403,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_page_versions", force: true do |t|
+  create_table "cms_page_versions", force: :cascade do |t|
     t.string   "name"
     t.string   "title"
     t.string   "path"
@@ -427,7 +427,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_page_versions", ["original_record_id"], name: "index_cms_page_versions_on_original_record_id", using: :btree
 
-  create_table "cms_pages", force: true do |t|
+  create_table "cms_pages", force: :cascade do |t|
     t.string   "name"
     t.string   "title"
     t.string   "path"
@@ -453,7 +453,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_pages", ["path"], name: "index_cms_pages_on_path", using: :btree
   add_index "cms_pages", ["version"], name: "index_cms_pages_on_version", using: :btree
 
-  create_table "cms_permissions", force: true do |t|
+  create_table "cms_permissions", force: :cascade do |t|
     t.string   "name"
     t.string   "full_name"
     t.string   "description"
@@ -462,7 +462,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_portlet_attributes", force: true do |t|
+  create_table "cms_portlet_attributes", force: :cascade do |t|
     t.integer "portlet_id"
     t.string  "name"
     t.text    "value"
@@ -470,7 +470,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_portlet_attributes", ["portlet_id"], name: "index_cms_portlet_attributes_on_portlet_id", using: :btree
 
-  create_table "cms_portlets", force: true do |t|
+  create_table "cms_portlets", force: :cascade do |t|
     t.string   "type"
     t.string   "name"
     t.boolean  "archived",      default: false
@@ -483,7 +483,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_portlets", ["name"], name: "index_cms_portlets_on_name", using: :btree
 
-  create_table "cms_redirects", force: true do |t|
+  create_table "cms_redirects", force: :cascade do |t|
     t.string   "from_path"
     t.string   "to_path"
     t.datetime "created_at"
@@ -492,7 +492,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_redirects", ["from_path"], name: "index_cms_redirects_on_from_path", using: :btree
 
-  create_table "cms_section_nodes", force: true do |t|
+  create_table "cms_section_nodes", force: :cascade do |t|
     t.string   "node_type"
     t.integer  "node_id"
     t.integer  "position"
@@ -505,7 +505,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_section_nodes", ["ancestry"], name: "index_cms_section_nodes_on_ancestry", using: :btree
   add_index "cms_section_nodes", ["node_type"], name: "index_cms_section_nodes_on_node_type", using: :btree
 
-  create_table "cms_sections", force: true do |t|
+  create_table "cms_sections", force: :cascade do |t|
     t.string   "name"
     t.string   "path"
     t.boolean  "root",       default: false
@@ -516,7 +516,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_sections", ["path"], name: "index_cms_sections_on_path", using: :btree
 
-  create_table "cms_sites", force: true do |t|
+  create_table "cms_sites", force: :cascade do |t|
     t.string   "name"
     t.string   "domain"
     t.boolean  "the_default"
@@ -524,7 +524,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_taggings", force: true do |t|
+  create_table "cms_taggings", force: :cascade do |t|
     t.integer  "tag_id"
     t.integer  "taggable_id"
     t.string   "taggable_type"
@@ -533,13 +533,13 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-  create_table "cms_tags", force: true do |t|
+  create_table "cms_tags", force: :cascade do |t|
     t.string   "name"
     t.datetime "created_at"
     t.datetime "updated_at"
   end
 
-  create_table "cms_tasks", force: true do |t|
+  create_table "cms_tasks", force: :cascade do |t|
     t.integer  "assigned_by_id"
     t.integer  "assigned_to_id"
     t.integer  "page_id"
@@ -554,7 +554,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_tasks", ["completed_at"], name: "index_cms_tasks_on_completed_at", using: :btree
   add_index "cms_tasks", ["page_id"], name: "index_cms_tasks_on_page_id", using: :btree
 
-  create_table "cms_user_group_memberships", force: true do |t|
+  create_table "cms_user_group_memberships", force: :cascade do |t|
     t.integer "user_id"
     t.integer "group_id"
   end
@@ -562,7 +562,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_user_group_memberships", ["group_id"], name: "index_cms_user_group_memberships_on_group_id", using: :btree
   add_index "cms_user_group_memberships", ["user_id"], name: "index_cms_user_group_memberships_on_user_id", using: :btree
 
-  create_table "cms_users", force: true do |t|
+  create_table "cms_users", force: :cascade do |t|
     t.string   "login",                  limit: 40
     t.string   "first_name",             limit: 40
     t.string   "last_name",              limit: 40
@@ -585,7 +585,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_users", ["login"], name: "index_cms_users_on_login", unique: true, using: :btree
   add_index "cms_users", ["reset_password_token"], name: "index_cms_users_on_reset_password_token", unique: true, using: :btree
 
-  create_table "deprecated_input_versions", force: true do |t|
+  create_table "deprecated_input_versions", force: :cascade do |t|
     t.string   "name"
     t.text     "content"
     t.text     "template"
@@ -603,7 +603,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.integer  "updated_by_id"
   end
 
-  create_table "deprecated_inputs", force: true do |t|
+  create_table "deprecated_inputs", force: :cascade do |t|
     t.string   "name"
     t.text     "content"
     t.text     "template"
@@ -620,7 +620,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.integer  "updated_by_id"
   end
 
-  create_table "product_versions", force: true do |t|
+  create_table "product_versions", force: :cascade do |t|
     t.string   "name"
     t.integer  "price"
     t.integer  "category_id"
@@ -637,7 +637,7 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.integer  "updated_by_id"
   end
 
-  create_table "products", force: true do |t|
+  create_table "products", force: :cascade do |t|
     t.string   "name"
     t.integer  "price"
     t.integer  "category_id"
