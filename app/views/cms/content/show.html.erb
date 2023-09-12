@@ -1,13 +1,18 @@
 <%= content_for :html_head do %>
     <% if ENV['ENABLE_ADMIN'].try(:to_b) && @show_toolbar %>
         <%= stylesheet_link_tag 'cms/page_content_editing' %>
+        <meta name="generator" content="BrowserCMS <%= Cms.version %>"/>
         <%= csrf_meta_tags %>
+        <%# JQuery is required both for page_editor and cms/user. But it needs to be included only once.  %>
         <%= javascript_include_tag 'jquery' %>
         <%= javascript_include_tag 'cms/page_editor' %>
         <%= javascript_include_tag 'cms/site' %>
     <% end %>
+    <%= javascript_include_tag '/assets/cms/site' %>
 <% end %>
 <% if @show_toolbar %>
+    <%= javascript_include_tag '/assets/cms/page_editor' %>
+    <%= stylesheet_link_tag '/assets/cms/page_content_editing' %>
     <% flash.keep %>
 <% end %>
 

@@ -6,6 +6,7 @@ require "rails/test_help"
 require "minitest/spec"
 require "minitest/unit"
 require "mocha/mini_test"
+$arel_silence_type_casting_deprecation=true
 
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 require File.expand_path("../../test/factories/factories", __FILE__)

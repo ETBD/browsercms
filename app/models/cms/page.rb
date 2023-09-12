@@ -306,11 +306,10 @@ class Cms::Page < ActiveRecord::Base
       self.path = "/#{path}"
     end
   end
-
   # remove trailing slash, unless the path is only a slash.  uses capture and
   # substition because ruby regex engine does not support lookbehind
   def remove_trailing_slash_from_path
-    self.path.sub!(/(.+)\/+$/, '\1')
+    self.path = self.path.sub(/(.+)\/+$/, '\1')
   end
 
   def path_not_reserved
@@ -374,8 +373,8 @@ class Cms::Page < ActiveRecord::Base
   end
 
   def name_with_section_path
-    a = ancestors
-    (a[1..a.size].map { |a| a.name } + [name]).join(" / ")
+    anc = ancestors
+    (anc[1..anc.size].map { |a| a.name } + [name]).join(" / ")
   end
 
   # @return [Boolean] true if this page is the home page of the site.

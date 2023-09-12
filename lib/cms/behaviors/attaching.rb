@@ -76,7 +76,7 @@ module Cms
 
           #options[:unless] = Proc.new {|r| r.a.asset_name != name.to_s}
 
-          validate(options) do |record|
+          validate do |record|
             record.attachments.each do |attachment|
               next unless attachment.attachment_name == name.to_s
               record.errors.add_to_base(message) unless range.include?(attachment.data_file_size)
@@ -97,7 +97,7 @@ module Cms
 
         def validates_attachment_presence(name, options = {})
           message = options[:message] || "Must provide at least one #{name}"
-          validate(options) do |record|
+          validate do |record|
             if !record.deleted?
               unless record.attachments.any? { |a| a.attachment_name == name.to_s }
                 record.errors.add(:attachment, message)
@@ -109,7 +109,7 @@ module Cms
         def validates_attachment_content_type(name, options = {})
           validation_options = options.dup
           allowed_types = [validation_options[:content_type]].flatten
-          validate(validation_options) do |record|
+          validate do |record|
             attachments.each do |a|
               if !allowed_types.any? { |t| t === a.data_content_type } && !(a.data_content_type.nil? || a.data_content_type.blank?)
                 record.add_to_base(options[:message] || "is not one of #{allowed_types.join(', ')}")
@@ -210,7 +210,8 @@ module Cms
         # Otherwise, if the change isn't detected, this record won't save a new version (since updates are rejected if no changes were made)
         def check_for_updated_attachments
           if attachments_changed == "true" || attachments_were_updated?
-            # changed_attributes['attachments'] = "Uploaded new files"
+            attr_name = self.attributes.keys.last
+            self.send("#{attr_name}_will_change!")
           end
         end
 
@@ -229,7 +230,7 @@ module Cms
         end
 
         def after_publish
-          attachments.each &:publish
+          attachments.each(&:publish)
         end
 
         # Locates the attachment with a given name

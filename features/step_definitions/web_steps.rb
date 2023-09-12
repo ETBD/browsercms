@@ -100,7 +100,7 @@ end
 
 
 Then /^(?:|I )should see "([^"]*)"$/ do |text|
-  if respond_to? :expect
+  if page.respond_to? :should
     expect(page).to have_content(text)
   else
     assert page.has_content?(text)
@@ -110,15 +110,15 @@ end
 Then /^(?:|I )should see \/([^\/]*)\/$/ do |regexp|
   regexp = Regexp.new(regexp)
 
-  if respond_to? :expect
-    expect(page).to have_xpath('//*', :text => regexp)
+  if page.respond_to? :should
+    expect(page).to have_xpath(text)
   else
     assert page.has_xpath?('//*', :text => regexp)
   end
 end
 
 Then /^(?:|I )should not see "([^"]*)"$/ do |text|
-  if respond_to? :expect
+  if page.respond_to? :should
     expect(page).to have_no_content(text)
   else
     assert page.has_no_content?(text)
@@ -128,8 +128,8 @@ end
 Then /^(?:|I )should not see \/([^\/]*)\/$/ do |regexp|
   regexp = Regexp.new(regexp)
 
-  if respond_to? :expect
-    expect(page).to have_no_xpath('//*', :text => regexp)
+  if page.respond_to? :should
+    expect(page).to have_no_xpath('//*', :text => regex)
   else
     assert page.has_no_xpath?('//*', :text => regexp)
   end

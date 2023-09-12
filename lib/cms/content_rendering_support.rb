@@ -44,7 +44,6 @@ module Cms
     end
 
     private
-
     # This is the method all error handlers delegate to
     def handle_error_with_cms_page(error_page_path, exception, status, options={})
 
@@ -61,6 +60,11 @@ module Cms
         logger.debug "Rendering Error Page: #{@page.inspect}"
         @mode = "view"
         @show_page_toolbar = false
+        if @template.present?
+          # copy new instance variables to the template
+          %w[page mode show_page_toolbar].each do |v|
+            @template.instance_variable_set("@#{v}", instance_variable_get("@#{v}"))
+          end
 
         if @template
           # copy new instance variables to the template

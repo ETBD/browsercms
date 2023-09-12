@@ -19,6 +19,8 @@ require 'capybara/dsl'
 #Capybara.javascript_driver = :poltergeist
 #Capybara.default_driver = :poltergeist
 
+
+
 Before do
   # Configure where Aruba generates files.
   # You can't generate rails projects within rails projects', so it needs to be parallel to the browsercms project
@@ -70,6 +72,7 @@ Capybara.default_selector = :css
 # recommended as it will mask a lot of errors for you!
 #
 ActionController::Base.allow_rescue = false
+$arel_silence_type_casting_deprecation=true
 
 # Remove/comment out the lines below if your app doesn't have a database.
 # For some databases (like MongoDB and CouchDB) you may need to use :truncation instead.
@@ -85,3 +88,6 @@ DatabaseCleaner.clean_with :truncation
 silence_stream(STDOUT) do
   require File.join(File.dirname(__FILE__), '../../db/seeds.rb')
 end
+
+require 'test/unit/assertions'
+World Test::Unit::Assertions

@@ -168,9 +168,8 @@ module Cms
     end
 
     # methods for loading one or a collection of blocks
-
     def load_blocks
-      @search_filter = SearchFilter.build(params[:search_filter], model_class)
+      @search_filter = SearchFilter.build(search_params, model_class)
 
       order_by = model_class.default_order if model_class.respond_to?(:default_order)
       order_by = params[:order] unless params[:order].blank?
@@ -183,13 +182,14 @@ module Cms
         scope = scope.with_parent_id(params[:section_id])
       end
       @total_number_of_items = scope.count
-      if order_by.nil?
-        @blocks = scope.page(params[:page])
-      else
-        @blocks = scope.page(params[:page]).order(order_by)
-      end
+      @blocks = scope.paginate(:page=>options[:page]).order(options[:order])
+      check_permissions
 
       check_permissions
+    end
+
+    def search_params
+      params[:search_filter].permit(:term) if params[:search_filter].present?
     end
 
     def load_block
@@ -272,7 +272,7 @@ module Cms
     def model_params
       defaults = {"publish_on_save" => false}
       model_params = params[model_form_name]
-      defaults.merge(model_params)
+      defaults.merge(model_params.to_unsafe_h)
     end
 
     def after_update_on_success

@@ -13,6 +13,11 @@ module Cms
   end
 
   class CreateTaskTest < TaskTest
+    test "An email is sent when a task is created" do
+      deliveries_before_task_creation = ActionMailer::Base.deliveries.size
+      create_the_task!
+      assert_equal 1, ActionMailer::Base.deliveries.size - deliveries_before_task_creation
+    end
 
     def test_create_task
       assert_that_you_can_assign_a_task_to_yourself

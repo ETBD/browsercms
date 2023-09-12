@@ -17,7 +17,7 @@ Dummy::Application.configure do
   config.cms.use_single_domain = true
 
   # Disable Rails's static asset server (Apache or nginx will already do this)
-  config.serve_static_assets = true # We are in 'faux' production mode, so we want Rails to serve the assets.
+  config.public_file_server.enabled = true # We are in 'faux' production mode, so we want Rails to serve the assets.
 
   # Compress JavaScripts and CSS
   config.assets.compress = true
@@ -27,6 +27,7 @@ Dummy::Application.configure do
 
   # Generate digests for assets URLs
   config.assets.digest = true
+
 
   # Defaults to Rails.root.join("public/assets")
   # config.assets.manifest = YOUR_PATH

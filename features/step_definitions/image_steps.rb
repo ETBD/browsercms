@@ -44,7 +44,6 @@ Then /^the attachment "([^"]*)" should be in section "([^"]*)"$/ do |asset_name,
   asset = Cms::Attachment.find_by_data_file_name asset_name
   expect(asset.section.name).to eq section_name
 end
-
 Then /^the attachment with path "([^"]*)" should be in section "([^"]*)"$/ do |asset_path, section_name|
   asset = Cms::Attachment.find_by_data_file_path asset_path
   expect(asset.section.name).to eq section_name

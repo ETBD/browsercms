@@ -80,7 +80,7 @@ Cms::Engine.routes.draw do
     end
   end
 
-  resources :attachments, :only => [:show, :create, :destroy]
+  resources :attachments, :only => [:new, :show, :create, :destroy]
 
   content_blocks :html_blocks
   content_blocks :forms

@@ -343,7 +343,7 @@ DEPENDENCIES
   m
   minitest
   minitest-rails
-  minitest-reporters
+  minitest-reporters (~> 1.0.0)
   mocha
   pg
   poltergeist

@@ -42,7 +42,6 @@ module Cms
       module ClassMethods
       end
       module InstanceMethods
-
         # Can specify whether to save this block as a draft using a terser syntax.
         # These two calls behave identically
         #   - Cms::HtmlBlock.create(name: "Shorter", as: :draft)
@@ -131,11 +130,21 @@ module Cms
 
                   d.update_attributes(:published => true)
 
-                  main_record = self.class.unscoped.where("#{self.class.primary_key} = ?", id).first
-                  self.class.versioned_columns.each do |column|
-                    main_record.update_column("#{column}".to_sym, d[column])
+
+                  #the values from the draft MAY have a relation of the versioned module
+                  #as opposed to the actual class itself
+                  #eg Page::Version, and not Page
+                  #so remap to the actual table´
+                  #I haven't figured out why this is, but I know it happens when you call save! on Page
+                  #during seeding of data
+                  my_class = self.class.name.split("::Version").first.constantize
+                  versioned_columns = my_class.versioned_columns
+                  update_params = {}
+                  versioned_columns.each do |c|
+                    update_params[c.to_sym] = d.send(c)
                   end
 
+                  my_class.where(:id=>id).update_all(update_params)
                   did_publish = true
 
                 end

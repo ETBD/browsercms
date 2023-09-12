@@ -9,12 +9,12 @@ class NewFileTest < ActiveSupport::TestCase
 
   test "#valid? requires attached file" do
     refute @file.valid?
-    assert_equal ["Must provide at least one file"], @file.errors.get(:attachment)
+    assert_equal ["Must provide at least one file"], @file.errors[:attachment]
   end
 
   test "#valid? requires Name" do
     refute @file.valid?
-    assert_equal ["can't be blank"], @file.errors.get(:name)
+    assert_equal ["can't be blank"], @file.errors[:name]
   end
 
   test "New FileBlock should have 1 blank attachment" do
@@ -67,7 +67,7 @@ module Cms
       @file_block.save!
       assert_not_nil @file_block.file
 
-      found = Cms::FileBlock.find(@file_block)
+      found = Cms::FileBlock.find(@file_block.id)
       assert_not_nil found.file
     end
 
