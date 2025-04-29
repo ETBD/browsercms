@@ -1,3 +1,8 @@
+# 5.2.0 (2025-04-29)
+
+* Update will_paginate to 3.3.1
+* Unpin bigdecimal
+
 # 5.1.0 (2023-09-11)
 * [CMS-327] (https://ricksteves.atlassian.net/browse/CMS-327) Update ruby to 2.7.8
 
