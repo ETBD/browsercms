@@ -47,6 +47,9 @@ group :test do
   gem 'cucumber-rails', require: false
   gem 'database_cleaner'
   gem 'launchy'
+
+  # ruby-prof needs this config for installation on modern macos
+  # bundle config --global build.ruby-prof --with-cflags="-Wno-incompatible-pointer-types"
   gem 'ruby-prof'
   gem 'aruba', '= 0.14.14'
   gem 'loofah', '= 2.19.1'
