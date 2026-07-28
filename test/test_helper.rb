@@ -30,6 +30,20 @@ $VERBOSE = nil
 
 require 'support/engine_controller_hacks'
 
+# The suite runs two cleaning strategies side by side: ActiveSupport::TestCase
+# rolls each test back in a transaction, while Minitest::Spec truncates via
+# DatabaseCleaner after every example. db:install seeds a Home page and a
+# /system section, and the first truncation permanently removes them -- so a
+# transactional test saw seeded data or an empty table depending purely on
+# where the random test order happened to put the first spec. Tests that assert
+# the exact contents of the root section (Section#master_section_list,
+# #sitemap, #visible_child_nodes) passed or failed on that coin flip.
+#
+# Start every run from the same empty database. The helpers in
+# support/factory_helpers.rb all find_or_create what they need.
+require 'database_cleaner'
+DatabaseCleaner.clean_with(:truncation)
+
 class ActiveSupport::TestCase
 
   include FactoryGirl::Syntax::Methods

@@ -20,7 +20,12 @@ class NamespacesTest < ActiveSupport::TestCase
           klass = klass_name.constantize
           if klass.class == Class
             subclasses << klass
-            subclasses += klass.send(:descendants).collect{|x| x.respond_to?(:constantize) ? x.constantize : x}
+            # Rails 4.2's Class#descendants also yields singleton classes (the
+            # guard for that wasn't added until Rails 5). They are never valid
+            # targets here, and calling respond_to? on the singleton class of a
+            # Railtie instance raises TypeError, so drop them first.
+            descendants = klass.send(:descendants).reject { |x| x.singleton_class? }
+            subclasses += descendants.collect{|x| x.respond_to?(:constantize) ? x.constantize : x}
           else
             subclasses += subclasses_from_module(klass_name)
           end

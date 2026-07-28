@@ -16,17 +16,81 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
 
-# Could not dump table "catalog_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "catalog_versions", force: :cascade do |t|
+    t.string   "name"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+  end
 
-# Could not dump table "catalogs" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "catalogs", force: :cascade do |t|
+    t.string   "name"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "version"
+    t.integer  "lock_version",  default: 0
+    t.boolean  "published",     default: false
+    t.boolean  "deleted",       default: false
+    t.boolean  "archived",      default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+  end
 
-# Could not dump table "cms_attachment_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_attachment_versions", force: :cascade do |t|
+    t.string   "data_file_name"
+    t.string   "data_file_path"
+    t.string   "file_location"
+    t.string   "data_content_type"
+    t.integer  "data_file_size"
+    t.string   "data_fingerprint"
+    t.string   "attachable_type"
+    t.string   "attachment_name"
+    t.integer  "attachable_id"
+    t.integer  "attachable_version"
+    t.string   "cardinality"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
-# Could not dump table "cms_attachments" because of following FrozenError
-#   can't modify frozen String: "false"
+  add_index "cms_attachment_versions", ["original_record_id"], name: "index_cms_attachment_versions_on_original_record_id", using: :btree
+
+  create_table "cms_attachments", force: :cascade do |t|
+    t.string   "data_file_name"
+    t.string   "data_file_path"
+    t.string   "file_location"
+    t.string   "data_content_type"
+    t.integer  "data_file_size"
+    t.string   "data_fingerprint"
+    t.string   "attachable_type"
+    t.string   "attachment_name"
+    t.integer  "attachable_id"
+    t.integer  "attachable_version"
+    t.string   "cardinality"
+    t.integer  "version"
+    t.integer  "lock_version",       default: 0
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "cms_categories", force: :cascade do |t|
     t.integer  "category_type_id"
@@ -59,11 +123,46 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_connectors", ["page_id"], name: "index_cms_connectors_on_page_id", using: :btree
   add_index "cms_connectors", ["page_version"], name: "index_cms_connectors_on_page_version", using: :btree
 
-# Could not dump table "cms_dynamic_view_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_dynamic_view_versions", force: :cascade do |t|
+    t.string   "type"
+    t.string   "name"
+    t.string   "format"
+    t.string   "handler"
+    t.text     "body"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.string   "path"
+    t.string   "locale",             default: "en"
+    t.boolean  "partial",            default: false
+  end
 
-# Could not dump table "cms_dynamic_views" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_dynamic_views", force: :cascade do |t|
+    t.string   "type"
+    t.string   "name"
+    t.string   "format"
+    t.string   "handler"
+    t.text     "body"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "version"
+    t.integer  "lock_version",  default: 0
+    t.boolean  "published",     default: false
+    t.boolean  "deleted",       default: false
+    t.boolean  "archived",      default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.string   "path"
+    t.string   "locale",        default: "en"
+    t.boolean  "partial",       default: false
+  end
 
   create_table "cms_email_messages", force: :cascade do |t|
     t.string   "sender"
@@ -78,11 +177,44 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-# Could not dump table "cms_file_block_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_file_block_versions", force: :cascade do |t|
+    t.string   "type"
+    t.string   "name"
+    t.integer  "attachment_id"
+    t.integer  "attachment_version"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
-# Could not dump table "cms_file_blocks" because of following FrozenError
-#   can't modify frozen String: "false"
+  add_index "cms_file_block_versions", ["original_record_id"], name: "index_cms_file_block_versions_on_original_record_id", using: :btree
+  add_index "cms_file_block_versions", ["version"], name: "index_cms_file_block_versions_on_version", using: :btree
+
+  create_table "cms_file_blocks", force: :cascade do |t|
+    t.string   "type"
+    t.string   "name"
+    t.integer  "attachment_id"
+    t.integer  "attachment_version"
+    t.integer  "version"
+    t.integer  "lock_version",       default: 0
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "cms_file_blocks", ["deleted"], name: "index_cms_file_blocks_on_deleted", using: :btree
+  add_index "cms_file_blocks", ["type"], name: "index_cms_file_blocks_on_type", using: :btree
 
   create_table "cms_form_entries", force: :cascade do |t|
     t.text     "data_columns"
@@ -107,11 +239,42 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_form_fields", ["form_id", "name"], name: "index_cms_form_fields_on_form_id_and_name", unique: true, using: :btree
 
-# Could not dump table "cms_form_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_form_versions", force: :cascade do |t|
+    t.string   "name"
+    t.text     "description"
+    t.string   "confirmation_behavior"
+    t.text     "confirmation_text"
+    t.string   "confirmation_redirect"
+    t.string   "notification_email"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",             default: false
+    t.boolean  "deleted",               default: false
+    t.boolean  "archived",              default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
-# Could not dump table "cms_forms" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_forms", force: :cascade do |t|
+    t.string   "name"
+    t.text     "description"
+    t.string   "confirmation_behavior"
+    t.text     "confirmation_text"
+    t.string   "confirmation_redirect"
+    t.string   "notification_email"
+    t.integer  "version"
+    t.integer  "lock_version",          default: 0
+    t.boolean  "published",             default: false
+    t.boolean  "deleted",               default: false
+    t.boolean  "archived",              default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
   create_table "cms_group_permissions", force: :cascade do |t|
     t.integer "group_id"
@@ -135,8 +298,15 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.integer "permission_id"
   end
 
-# Could not dump table "cms_group_types" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_group_types", force: :cascade do |t|
+    t.string   "name"
+    t.boolean  "guest",      default: false
+    t.boolean  "cms_access", default: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "cms_group_types", ["cms_access"], name: "index_cms_group_types_on_cms_access", using: :btree
 
   create_table "cms_groups", force: :cascade do |t|
     t.string   "name"
@@ -149,17 +319,71 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_groups", ["code"], name: "index_cms_groups_on_code", using: :btree
   add_index "cms_groups", ["group_type_id"], name: "index_cms_groups_on_group_type_id", using: :btree
 
-# Could not dump table "cms_html_block_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_html_block_versions", force: :cascade do |t|
+    t.text     "content"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.string   "name"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
-# Could not dump table "cms_html_blocks" because of following FrozenError
-#   can't modify frozen String: "false"
+  add_index "cms_html_block_versions", ["original_record_id"], name: "index_cms_html_block_versions_on_original_record_id", using: :btree
+  add_index "cms_html_block_versions", ["version"], name: "index_cms_html_block_versions_on_version", using: :btree
 
-# Could not dump table "cms_link_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_html_blocks", force: :cascade do |t|
+    t.text     "content"
+    t.integer  "version"
+    t.integer  "lock_version",  default: 0
+    t.string   "name"
+    t.boolean  "published",     default: false
+    t.boolean  "deleted",       default: false
+    t.boolean  "archived",      default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
-# Could not dump table "cms_links" because of following FrozenError
-#   can't modify frozen String: "false"
+  add_index "cms_html_blocks", ["deleted"], name: "index_cms_html_blocks_on_deleted", using: :btree
+
+  create_table "cms_link_versions", force: :cascade do |t|
+    t.string   "name"
+    t.string   "url"
+    t.boolean  "new_window",         default: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+  end
+
+  create_table "cms_links", force: :cascade do |t|
+    t.string   "name"
+    t.string   "url"
+    t.boolean  "new_window",     default: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "version"
+    t.integer  "lock_version",   default: 0
+    t.boolean  "published",      default: false
+    t.boolean  "deleted",        default: false
+    t.boolean  "archived",       default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.integer  "latest_version"
+  end
 
   create_table "cms_page_route_options", force: :cascade do |t|
     t.integer  "page_route_id"
@@ -179,11 +403,55 @@ ActiveRecord::Schema.define(version: 20130924162315) do
     t.datetime "updated_at"
   end
 
-# Could not dump table "cms_page_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_page_versions", force: :cascade do |t|
+    t.string   "name"
+    t.string   "title"
+    t.string   "path"
+    t.string   "template_file_name"
+    t.text     "description"
+    t.text     "keywords"
+    t.string   "language"
+    t.boolean  "cacheable",          default: false
+    t.boolean  "hidden",             default: false
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
 
-# Could not dump table "cms_pages" because of following FrozenError
-#   can't modify frozen String: "false"
+  add_index "cms_page_versions", ["original_record_id"], name: "index_cms_page_versions_on_original_record_id", using: :btree
+
+  create_table "cms_pages", force: :cascade do |t|
+    t.string   "name"
+    t.string   "title"
+    t.string   "path"
+    t.string   "template_file_name"
+    t.text     "description"
+    t.text     "keywords"
+    t.string   "language"
+    t.boolean  "cacheable",          default: false
+    t.boolean  "hidden",             default: false
+    t.integer  "version"
+    t.integer  "lock_version",       default: 0
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "latest_version"
+  end
+
+  add_index "cms_pages", ["deleted"], name: "index_cms_pages_on_deleted", using: :btree
+  add_index "cms_pages", ["path"], name: "index_cms_pages_on_path", using: :btree
+  add_index "cms_pages", ["version"], name: "index_cms_pages_on_version", using: :btree
 
   create_table "cms_permissions", force: :cascade do |t|
     t.string   "name"
@@ -202,8 +470,18 @@ ActiveRecord::Schema.define(version: 20130924162315) do
 
   add_index "cms_portlet_attributes", ["portlet_id"], name: "index_cms_portlet_attributes_on_portlet_id", using: :btree
 
-# Could not dump table "cms_portlets" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_portlets", force: :cascade do |t|
+    t.string   "type"
+    t.string   "name"
+    t.boolean  "archived",      default: false
+    t.boolean  "deleted",       default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "cms_portlets", ["name"], name: "index_cms_portlets_on_name", using: :btree
 
   create_table "cms_redirects", force: :cascade do |t|
     t.string   "from_path"
@@ -227,8 +505,16 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_section_nodes", ["ancestry"], name: "index_cms_section_nodes_on_ancestry", using: :btree
   add_index "cms_section_nodes", ["node_type"], name: "index_cms_section_nodes_on_node_type", using: :btree
 
-# Could not dump table "cms_sections" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "cms_sections", force: :cascade do |t|
+    t.string   "name"
+    t.string   "path"
+    t.boolean  "root",       default: false
+    t.boolean  "hidden",     default: false
+    t.datetime "created_at"
+    t.datetime "updated_at"
+  end
+
+  add_index "cms_sections", ["path"], name: "index_cms_sections_on_path", using: :btree
 
   create_table "cms_sites", force: :cascade do |t|
     t.string   "name"
@@ -299,16 +585,72 @@ ActiveRecord::Schema.define(version: 20130924162315) do
   add_index "cms_users", ["login"], name: "index_cms_users_on_login", unique: true, using: :btree
   add_index "cms_users", ["reset_password_token"], name: "index_cms_users_on_reset_password_token", unique: true, using: :btree
 
-# Could not dump table "deprecated_input_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "deprecated_input_versions", force: :cascade do |t|
+    t.string   "name"
+    t.text     "content"
+    t.text     "template"
+    t.string   "template_handler"
+    t.integer  "category_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+  end
 
-# Could not dump table "deprecated_inputs" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "deprecated_inputs", force: :cascade do |t|
+    t.string   "name"
+    t.text     "content"
+    t.text     "template"
+    t.string   "template_handler"
+    t.integer  "category_id"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "version"
+    t.integer  "lock_version",     default: 0
+    t.boolean  "published",        default: false
+    t.boolean  "deleted",          default: false
+    t.boolean  "archived",         default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+  end
 
-# Could not dump table "product_versions" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "product_versions", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "price"
+    t.integer  "category_id"
+    t.boolean  "on_special"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "original_record_id"
+    t.integer  "version"
+    t.boolean  "published",          default: false
+    t.boolean  "deleted",            default: false
+    t.boolean  "archived",           default: false
+    t.string   "version_comment"
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+  end
 
-# Could not dump table "products" because of following FrozenError
-#   can't modify frozen String: "false"
+  create_table "products", force: :cascade do |t|
+    t.string   "name"
+    t.integer  "price"
+    t.integer  "category_id"
+    t.boolean  "on_special"
+    t.datetime "created_at"
+    t.datetime "updated_at"
+    t.integer  "version"
+    t.integer  "lock_version",  default: 0
+    t.boolean  "published",     default: false
+    t.boolean  "deleted",       default: false
+    t.boolean  "archived",      default: false
+    t.integer  "created_by_id"
+    t.integer  "updated_by_id"
+  end
 
 end

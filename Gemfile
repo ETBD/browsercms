@@ -27,7 +27,12 @@ group :test, :development do
   gem 'yard'
   gem 'bluecloth'
   gem 'pry'
-  gem 'awesome_print'
+  # Not auto-required: requiring it monkeypatches Array#grep with an
+  # implementation that does `"str" =~ SomeClass`, which floods Ruby 2.7 with
+  # "deprecated Object#=~ is called on Class" warnings from every
+  # ActiveRecord where(hash) call. Run `require 'awesome_print'` in a console
+  # when you actually want `ap`.
+  gem 'awesome_print', require: false
 end
 
 group :test do

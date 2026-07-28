@@ -25,6 +25,10 @@ class SiteTest < ActiveSupport::TestCase
   end
   
   def test_should_make_the_first_the_default
+    # Site#set_default only promotes a site when no default exists yet, so this
+    # test is only meaningful against an empty table. Assert that precondition
+    # rather than inheriting whatever earlier tests happened to leave behind.
+    Cms::Site.delete_all
     @first = create(:site)
     @second = create(:site)
     assert @first.the_default?

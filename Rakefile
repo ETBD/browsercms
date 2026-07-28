@@ -98,6 +98,8 @@ def run_tests(tests_to_run)
   end.compact
 
   if errors.any?
+    errors.each { |e| $stderr.puts "FAILED: #{e[:task]} -- #{e[:exception].message}" }
+    raise "Test failures in: #{errors.collect { |e| e[:task] }.join(', ')}"
   end
 end
 
