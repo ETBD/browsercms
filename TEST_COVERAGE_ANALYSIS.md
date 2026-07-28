@@ -188,7 +188,7 @@ Independent of coverage, the browsercms suite cannot execute on Rails 5+ without
 | `assert_template` | 19 | Rails 5 (extracted to `rails-controller-testing`) |
 | `render :text` in tested controllers | 4 | Rails 5.1 |
 | `assigns(...)` | 11 | Rails 5 (same gem) |
-| `Devise::TestHelpers` | `test/test_helper.rb:185` | Devise 4.2 (→ `Devise::Test::ControllerHelpers`) |
+| `Devise::TestHelpers` | `test/test_helper.rb:199` | Devise 4.2 (→ `Devise::Test::ControllerHelpers`) |
 | `mocha/setup` | `test/test_helper.rb` | Mocha 2 (→ `mocha/minitest`) |
 | `factory_girl` / `FactoryGirl` | throughout both repos | renamed `factory_bot` in 2017 |
 | `MonitorMixin`/`recycle!` monkeypatch | `test/test_helper.rb` (guarded, self-disables on Rails 5+) | benign |
