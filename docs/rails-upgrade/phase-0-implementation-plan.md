@@ -208,7 +208,7 @@ name: CI
 
 on:
   push:
-    branches: [develop, master, 'feature/**', 'release/**']
+    branches: [master, develop]
   pull_request:
 
 concurrency:

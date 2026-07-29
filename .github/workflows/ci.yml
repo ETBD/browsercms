@@ -2,7 +2,7 @@ name: CI
 
 on:
   push:
-    branches: [develop, master, 'feature/**', 'release/**']
+    branches: [master, develop]
   pull_request:
 
 concurrency:
@@ -106,6 +106,17 @@ jobs:
           ruby-version: '2.7.8'
           bundler: '1.17.3'
           bundler-cache: true
+
+      # This job gets its own empty Postgres container. The `test` job only has
+      # a database because ci:test starts with db:drop, db:create:all,
+      # db:install -- the cucumber tasks assume one already exists, and
+      # project:ensure_db_exists only checks that database.yml is present, not
+      # that the database is. The same prefix ci:test uses -- including the
+      # drop, which has nothing to drop on a fresh container but keeps the step
+      # rerunnable: db:seed is not idempotent and fails on an already-seeded
+      # database with "Name has already been taken".
+      - name: Create and seed the test database
+        run: bundle exec rake db:drop db:create:all db:install
 
       - name: Cucumber - @cli features
         run: bundle exec rake features:cli
