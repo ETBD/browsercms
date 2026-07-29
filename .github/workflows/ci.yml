@@ -41,6 +41,12 @@ jobs:
       PGUSER: postgres
       # Rails deprecations print regardless; this adds the Ruby-level ones.
       RUBYOPT: '-W:deprecated'
+      # features/support/open_on_first_failure.rb pops the first failed page
+      # open via Capybara's save_and_open_page -> Launchy -> xdg-open. Useful at
+      # a desk, useless on a headless runner, where it only prints "Couldn't
+      # find a suitable web browser!". Nothing here drives a real browser: there
+      # are no @javascript scenarios and no Capybara driver is ever selected.
+      launch_on_failure: 'false'
 
     steps:
       - uses: actions/checkout@v4
@@ -97,6 +103,10 @@ jobs:
       PGHOST: localhost
       PGPORT: '5432'
       PGUSER: postgres
+      # This job is the one that actually trips it: the After hook is
+      # After('~@cli'), so it fires on the @known-bug failures, not the @cli
+      # ones. See the note in the test job.
+      launch_on_failure: 'false'
 
     steps:
       - uses: actions/checkout@v4
