@@ -1,0 +1,115 @@
+name: CI
+
+on:
+  push:
+    branches: [develop, master, 'feature/**', 'release/**']
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Suite (Ruby 2.7.8, Postgres 15)
+    # Pinned, not ubuntu-latest: ruby/setup-ruby has no prebuilt 2.7.8 for 24.04.
+    # If 22.04 is retired, move to `container: ruby:2.7.8-bullseye` with
+    # PGHOST: postgres rather than chasing runner images.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+
+    env:
+      # test/dummy/config/database.yml defines only `test`. Anything that boots
+      # the dummy app in `development` -- db:migrate and db:seed both do, via
+      # db:install -- aborts with ActiveRecord::AdapterNotSpecified.
+      RAILS_ENV: test
+      # database.yml specifies no host, so libpq falls back to PGHOST. That
+      # points it at the service container instead of a unix socket that does
+      # not exist on the runner, without editing the tracked config.
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      # Rails deprecations print regardless; this adds the Ruby-level ones.
+      RUBYOPT: '-W:deprecated'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.8'
+          bundler: '1.17.3'
+          bundler-cache: true
+
+      # Travis passed --without development. Not carried over: `rake` is
+      # declared in the :development group and the whole chain is rake-driven.
+      #
+      # `rake` alone, deliberately -- not features:all. The default cucumber
+      # profile excludes @cli, @known-bug and @missing-feature, and those
+      # exclusions are the point of the tags. The excluded scenarios are
+      # measured by the non-blocking job below so the number stays visible.
+      # `ci:test` runs coverage:check after the suite.
+      - name: Full suite (units, spec, functionals, orphans, features)
+        run: bundle exec rake
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 30
+
+  excluded-features:
+    name: Cucumber @cli and @known-bug (reporting only)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    # Everything the default profile filters out, measured but not gating.
+    # Phase 0 baseline: @cli is 7/34 -- `rails new` fails inside aruba and 15 of
+    # the 27 failures are downstream of that one command. @known-bug is 2
+    # failing scenarios that are tagged precisely because they are known to
+    # fail. This job exists so both numbers stay visible per-run instead of
+    # living only in docs/rails-upgrade/phase-0-baseline.md. Make it gating
+    # once the numbers reach zero.
+    continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.8'
+          bundler: '1.17.3'
+          bundler-cache: true
+
+      - name: Cucumber - @cli features
+        run: bundle exec rake features:cli
+
+      - name: Cucumber - @known-bug scenarios
+        if: always()
+        run: bundle exec rake features:known-bugs

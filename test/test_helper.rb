@@ -25,8 +25,11 @@ require 'factory_girl'
 require 'factories/factories'
 require 'factories/attachable_factories'
 
-# Silence warnings (hopefully) primarily from HTML parsing in functional tests.
-$VERBOSE = nil
+# A global warning suppression used to sit here, to quiet HTML-parsing noise in
+# the functional tests. It also silenced every Ruby deprecation warning in the
+# suite -- and those are the roadmap for the Rails upgrade, so they are worth
+# the noise. Do not reinstate a blanket suppression: silence a specific warning
+# at a specific call site, with a comment saying why.
 
 require 'support/engine_controller_hacks'
 

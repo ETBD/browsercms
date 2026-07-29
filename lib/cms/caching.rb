@@ -39,7 +39,7 @@ module Cms
     end
 
     def flush_cache_directory(cache)
-      if File.exists?(cache) && not_public_directory?(cache)
+      if File.exist?(cache) && not_public_directory?(cache)
         FileUtils.rm_rf Dir.glob("#{cache}/*")
         Rails.logger.info "Flush cache in '#{cache}'"
       end

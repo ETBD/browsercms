@@ -41,7 +41,7 @@ module Cms
         style = controller.params[:style]
         style = "original" unless style
         path_to_file = attachment.path(style)
-        if File.exists?(path_to_file)
+        if File.exist?(path_to_file)
           Rails.logger.debug "Sending file #{path_to_file}"
           controller.send_file(path_to_file,
                                :filename => attachment.file_name,

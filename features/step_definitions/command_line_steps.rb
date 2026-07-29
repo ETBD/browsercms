@@ -56,7 +56,7 @@ end
 
 Given /^a BrowserCMS project named "([^"]*)" exists$/ do |project_name|
 
-  unless File.exists?("#{@scratch_dir}/#{project_name}")
+  unless File.exist?("#{@scratch_dir}/#{project_name}")
     old_dirs = @dirs
     @dirs = [@scratch_dir]
     create_bcms_project("petstore")
@@ -117,10 +117,10 @@ Then /^the file "([^"]*)" should contain the following content:$/ do |file, tabl
   end
 end
 
-# Opposite of aruba step 'the file "x" should contain:'
-When /^the file "([^"]*)" should not contain:$/ do |file, partial_content|
-  check_file_content(file, partial_content, false)
-end
+# The negated form used to be missing from aruba, so it was defined here. Aruba
+# 0.14 provides it -- `(?:a|the) file(?: named)? "..." should (not )?contain:` --
+# and keeping this one made every use of it a Cucumber::Ambiguous abort, which
+# took down the whole @cli run before a single result was reported.
 
 When /^the correct version of Rails should be added to the Gemfile$/ do
   check_file_content("#{project_name}/Gemfile", "gem 'rails', '#{Rails::VERSION::STRING}'", true)

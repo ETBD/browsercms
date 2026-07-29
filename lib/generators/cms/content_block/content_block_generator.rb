@@ -23,7 +23,7 @@ module Cms
 
       def generate_controller
         application_controller = File.join('app/controllers', class_path, "application_controller.rb")
-        unless File.exists?(application_controller)
+        unless File.exist?(application_controller)
           template 'application_controller.rb.erb', application_controller
         end
       end

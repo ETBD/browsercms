@@ -6,6 +6,20 @@
 
 This is the *how*. The phase file states the goal and the contract; this file states the order of operations, the exact edits, the failures to expect, and the decisions that need a human. Where the two disagree, the divergence is called out explicitly in [§1](#1-pre-flight-findings) — the phase file was written from static reading, and several of its assumptions do not survive contact with the repo.
 
+> ### Status: executed
+> Measured results are in [`phase-0-baseline.md`](phase-0-baseline.md); that file, not this one, is the record. Where execution contradicted the plan:
+>
+> | Plan said | Reality |
+> |---|---|
+> | F4: one file requires a missing `test_helper` | **Two** — `find_category_portlet_test.rb` and `uses_helper_portlet_test.rb`. |
+> | F5: `assumptions_test.rb` will fail once wired in | **It passes.** `app:test:prepare` purges and reloads the schema before any test runs, so `db:install`'s seed data is gone by then. |
+> | Stage G.1: filter with `add_filter %r{…}` | **SimpleCov 0.12 rejects Regexp filters entirely** — `parse_filter` raises `ArgumentError`, and `defaults.rb` rescues it around `load .simplecov`, so a regex filter silently abandons the rest of the config file. Use block filters. The plan's snippet and `TEST_COVERAGE_PLAN.md` §0a were both wrong, in different ways. |
+> | Stage E: flip `t.warning = true` | **Not done.** Removing `$VERBOSE = nil` restores Ruby's default warning level, which is what surfaces the deprecations. `-w` additionally enables the uninitialized-ivar and method-redefined classes, almost all of it from gem internals. `RUBYOPT=-W:deprecated` in CI covers criterion 10 without the noise. |
+> | Stage E: `File.exists?` fixes are mechanical | One of the seven call sites was **stubbed by a test** (`attaching_test.rb:247`), which broke two tests until the stub moved with it. |
+> | Stage B: measure the `@cli` pass rate | Could not be measured at all until a `Cucumber::Ambiguous` step collision was removed — it aborted the run before the first result. |
+>
+> Also unplanned: running the suite rewrites `test/dummy/db/schema.rb`, because the committed version contained 27 ephemeral fixture tables no migration creates. See O2 in the baseline.
+
 ---
 
 ## 1. Pre-flight findings

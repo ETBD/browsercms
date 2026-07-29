@@ -244,7 +244,7 @@ module Cms
     def given_an_attachment_with_file_path(expected_path, options={})
       @attachment = stub(:file_name => "NAME", :file_type => "TYPE")
       expect = @attachment.expects(:path).with(options[:style]).returns(expected_path)
-      File.expects(:exists?).with(expected_path).returns(true)
+      File.expects(:exist?).with(expected_path).returns(true)
     end
 
     def then_controller_should_send_file(expected_path, options={})

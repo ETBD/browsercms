@@ -21,7 +21,17 @@ Bundler::GemHelper.install_tasks
 require 'rake/testtask'
 require 'single_test/tasks'
 
-Rake::TestTask.new('units') do |t|
+# Each suite runs in its own process and merges into coverage/.resultset.json
+# under a name SimpleCov otherwise *guesses*. Two suites that guess alike
+# overwrite each other, so name them explicitly. Returns a task name suitable
+# for use as a prerequisite; the test subprocess inherits the environment.
+def coverage_suite(name)
+  suite_task = "coverage:suite:#{name.downcase.tr(' ', '_')}"
+  task(suite_task) { ENV['COVERAGE_SUITE'] = name }
+  suite_task
+end
+
+Rake::TestTask.new('units' => coverage_suite('Unit Tests')) do |t|
   t.libs << 'lib'
   t.libs << 'test'
   t.pattern = 'test/unit/**/*_test.rb'
@@ -29,14 +39,14 @@ Rake::TestTask.new('units') do |t|
   t.warning = false
 end
 
-Rake::TestTask.new('spec') do |t|
+Rake::TestTask.new('spec' => coverage_suite('RSpec')) do |t|
   t.libs << 'lib'
   t.libs << 'spec'
   t.pattern = 'spec/**/*_spec.rb'
   t.warning = false
 end
 
-Rake::TestTask.new('test:functionals' => ['project:ensure_db_exists', 'app:test:prepare']) do |t|
+Rake::TestTask.new('test:functionals' => ['project:ensure_db_exists', 'app:test:prepare', coverage_suite('Functional Tests')]) do |t|
   t.libs << 'lib'
   t.libs << 'test'
   t.pattern = 'test/functional/**/*_test.rb'
@@ -44,18 +54,38 @@ Rake::TestTask.new('test:functionals' => ['project:ensure_db_exists', 'app:test:
   t.warning = false
 end
 
+# test/*_test.rb, test/helpers/** and the dummy app's own tests under
+# test/dummy/test/** are matched by none of the patterns above, so until this
+# task existed they were in the repo but never run. `rake app:test` looks like
+# the answer and is not -- it exits 0 having run nothing, because Rails 4.2
+# hands it the literal top-level task name ("app:test") and matches no sub-task.
+Rake::TestTask.new('test:orphans' => ['project:ensure_db_exists', 'app:test:prepare', coverage_suite('Orphan Tests')]) do |t|
+  t.libs << 'lib'
+  t.libs << 'test' # so the dummy app's `require "test_helper"` finds the engine's
+  t.test_files = FileList[
+      'test/*_test.rb',
+      'test/helpers/**/*_test.rb',
+      'test/dummy/test/**/*_test.rb'
+  ]
+  t.verbose = false
+  t.warning = false
+end
+
 require 'cucumber'
 require 'cucumber/rake/task'
 
-Cucumber::Rake::Task.new(:features, "Run all (fast) scenarios without known bugs or missing features") do |t|
+Cucumber::Rake::Task.new({:features => coverage_suite('Cucumber Features')}, "Run all (fast) scenarios without known bugs or missing features") do |t|
   t.cucumber_opts = "launch_on_failure=false features --format progress --tags ~@cli -t ~@missing-feature -t ~@known-bug"
 end
 
-Cucumber::Rake::Task.new('features:all', 'Runs all scenarios (including slow/missing/etc') do |t|
+Cucumber::Rake::Task.new({'features:all' => coverage_suite('Cucumber Features (all)')}, 'Runs all scenarios (including slow/missing/etc') do |t|
   t.cucumber_opts = "launch_on_failure=false features --format progress"
 end
 
-Cucumber::Rake::Task.new('features:cli' => ['project:ensure_db_exists', 'app:test:prepare']) do |t|
+# @cli scenarios shell out through aruba, so their coverage is collected in a
+# child process SimpleCov cannot see. Named anyway, so the entry is distinct
+# rather than overwriting the in-process cucumber result with an empty one.
+Cucumber::Rake::Task.new('features:cli' => ['project:ensure_db_exists', 'app:test:prepare', coverage_suite('Cucumber CLI Features')]) do |t|
   t.cucumber_opts = "features --format progress --tags @cli"
 end
 
@@ -83,7 +113,7 @@ end
 
 desc 'Runs all the tests, specs and scenarios.'
 task :test => ['project:ensure_db_exists', 'app:test:prepare'] do
-  tests_to_run =  %w(test:units spec test:functionals features)
+  tests_to_run =  %w(test:units spec test:functionals test:orphans features)
   run_tests(tests_to_run)
 end
 
@@ -105,6 +135,14 @@ end
 
 # Build and run against Postgres.
 task 'ci:test' => ['db:drop', 'db:create:all', 'db:install', 'test']
+
+# Checked once, after the chain, rather than through SimpleCov's own
+# minimum_coverage -- that is enforced in every test process's at_exit, so the
+# first suite would fail the build for not meeting the whole chain's threshold
+# on its own. `test` raises on failure, so a red suite short-circuits this,
+# which is the right order: coverage from a failing run means nothing.
+Rake::Task['ci:test'].enhance { Rake::Task['coverage:check'].invoke }
+
 task :default => 'ci:test'
 
 require 'yard'

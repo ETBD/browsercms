@@ -26,6 +26,28 @@ namespace :db do
   end
 end
 
+namespace :coverage do
+
+  # Not SimpleCov's own `minimum_coverage`: that is enforced in *every* test
+  # process's at_exit, so the units suite alone would fail the build for not
+  # meeting a threshold set for the whole chain. coverage/.last_run.json is
+  # written unconditionally, and the last suite to finish writes the fully
+  # merged figure, so one check after the chain is both correct and enough.
+  desc 'Fail if merged coverage fell below the recorded Phase 0 baseline'
+  task :check do
+    require 'json'
+    threshold = Float(ENV.fetch('COVERAGE_MINIMUM', '75.82'))
+    path = 'coverage/.last_run.json'
+    abort "#{path} is missing -- did the suite run?" unless File.exist?(path)
+
+    actual = JSON.parse(File.read(path)).fetch('result').fetch('covered_percent')
+    if actual < threshold
+      abort format('Coverage %.2f%% is below the %.2f%% baseline.', actual, threshold)
+    end
+    puts format('Coverage %.2f%% (baseline %.2f%%)', actual, threshold)
+  end
+end
+
 # These are tasks for the core browsercms project, and shouldn't be bundled into the distributable gem
 namespace :project do
 
@@ -48,7 +70,7 @@ namespace :project do
   #end
 
   task :ensure_db_exists do
-    unless File.exists?("test/dummy/config/database.yml")
+    unless File.exist?("test/dummy/config/database.yml")
       fail("Need to create a database.yml file before running tests. Run:\n $ rake project:setup[database] to create a sample database.yml for the project.")
     end
   end
