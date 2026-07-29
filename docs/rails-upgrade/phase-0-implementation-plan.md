@@ -6,8 +6,8 @@
 
 This is the *how*. The phase file states the goal and the contract; this file states the order of operations, the exact edits, the failures to expect, and the decisions that need a human. Where the two disagree, the divergence is called out explicitly in [§1](#1-pre-flight-findings) — the phase file was written from static reading, and several of its assumptions do not survive contact with the repo.
 
-> ### Status: executed
-> Measured results are in [`phase-0-baseline.md`](phase-0-baseline.md); that file, not this one, is the record. Where execution contradicted the plan:
+> ### Status: ✅ done — commits `acb51911`…`08ad6574`
+> Measured results are in [`phase-0-baseline.md`](phase-0-baseline.md); that file, not this one, is the record. 8 of 10 exit criteria pass; 1 and 2 want a green run on the default branch and close on merge into `develop`. Where execution contradicted the plan:
 >
 > | Plan said | Reality |
 > |---|---|

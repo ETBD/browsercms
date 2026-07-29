@@ -24,15 +24,19 @@ Every file has the same five sections, in this order:
 
 ## The phases
 
-| # | Phase | Goal in brief | Blocking? |
-|---|---|---|---|
-| **0** | [Baseline and CI](phase-0-baseline-and-ci.md) | Know the true pass rate and get a green button that runs on every push | 🔴 **Yes** — nothing else can start |
-| **1** | [Gem compatibility and dual-boot](phase-1-gem-compatibility-and-dual-boot.md) | Find out which gems actually block Rails 5, and be able to boot both versions | 🔴 **Yes** — its output scopes Phase 2 |
-| **2** | [Harness migration](phase-2-harness-migration.md) | Make the test suite capable of running on Rails 5, while still on 4.2 | 🔴 **Yes** — the suite cannot boot on Rails 5 today |
-| **3** | [Backwards-compatible code fixes](phase-3-backwards-compatible-fixes.md) | Land ~96 mechanical changes that work on 4.2 *and* 5.0+, shrinking the bump diff | 🟡 Strongly recommended |
-| **4** | [Characterization tests](phase-4-characterization-tests.md) | Pin the behaviour that Rails 5 changes *silently*, before it can drift | 🔴 **Yes** for the four 5.0-specific items |
-| **5** | [The 5.0 bump](phase-5-the-5.0-bump.md) | Rails 5.0 green, deployed, with `load_defaults` handled deliberately | — |
-| **6** | [Subsequent hops](phase-6-subsequent-hops.md) | A repeatable checklist for 5.1 → 5.2 → 6.0 → … → 8.0 | — |
+| # | Phase | Goal in brief | Blocking? | Status |
+|---|---|---|---|---|
+| **0** | [Baseline and CI](phase-0-baseline-and-ci.md) | Know the true pass rate and get a green button that runs on every push | 🔴 **Yes** — nothing else can start | ✅ **Done** — [plan](phase-0-implementation-plan.md) · [results](phase-0-baseline.md) |
+| **1** | [Gem compatibility and dual-boot](phase-1-gem-compatibility-and-dual-boot.md) | Find out which gems actually block Rails 5, and be able to boot both versions | 🔴 **Yes** — its output scopes Phase 2 | 📋 Planned — [plan](phase-1-implementation-plan.md) |
+| **2** | [Harness migration](phase-2-harness-migration.md) | Make the test suite capable of running on Rails 5, while still on 4.2 | 🔴 **Yes** — the suite cannot boot on Rails 5 today | ⚠️ **Needs re-scoping** — see below |
+| **3** | [Backwards-compatible code fixes](phase-3-backwards-compatible-fixes.md) | Land ~96 mechanical changes that work on 4.2 *and* 5.0+, shrinking the bump diff | 🟡 Strongly recommended | — |
+| **4** | [Characterization tests](phase-4-characterization-tests.md) | Pin the behaviour that Rails 5 changes *silently*, before it can drift | 🔴 **Yes** for the four 5.0-specific items | — |
+| **5** | [The 5.0 bump](phase-5-the-5.0-bump.md) | Rails 5.0 green, deployed, with `load_defaults` handled deliberately | — | — |
+| **6** | [Subsequent hops](phase-6-subsequent-hops.md) | A repeatable checklist for 5.1 → 5.2 → 6.0 → … → 8.0 | — | — |
+
+**Phase 0 is done with two caveats**, both about the default branch rather than the work: its exit criteria 1 and 2 ask for a green CI run on the *default* branch, and the work currently sits on `feature/cms-420-migrate-tests`. CI triggers are now `master`, `develop` and pull requests, so those two close when this merges into `develop` — not before.
+
+**Phase 2 needs re-scoping before it starts.** Phase 0 established that no Capybara driver is ever selected (zero `@javascript` tags, both assignments commented out), so its Poltergeist migration has nothing to migrate. Phase 1's [pre-flight scan](phase-1-implementation-plan.md#1-pre-flight-findings) further shows most of the gems it plans to move carry no Rails 5 cap at all — making them modernisation by choice, not by force.
 
 **Ordering note:** Phase 1 comes before Phase 2 deliberately. The gem compatibility check determines how much of the harness migration is actually forced, so running it first prevents Phase 2 from being scoped on guesswork.
 
@@ -64,13 +68,15 @@ The methodology behind this plan (FastRuby.io, *The Complete Guide to Upgrade Ra
 
 ---
 
-## Two things that are still unknown
+## Two things that were unknown — now measured
 
-Stated plainly, because most of the estimates downstream depend on them and neither has been measured:
+Both were called out here as the questions the downstream estimates depended on. Phase 0 answered them. Full numbers in [`phase-0-baseline.md`](phase-0-baseline.md).
 
-1. **Whether the suite currently passes.** `git log` shows `[CMS-420] tests are running`. "Running" is not "passing." Phase 0 answers this.
-2. **Whether the 53 Cucumber features are green.** They are the only end-to-end coverage that exists anywhere, and they run on Poltergeist/PhantomJS, abandoned since 2018. Phase 0 answers this too.
+1. **Does the suite pass?** **Yes.** 994 Minitest tests, 0 failures, 0 errors, 19 skips — every skip carrying a stated reason. Coverage 75.82%, enforced by `rake coverage:check`.
+2. **Are the 53 Cucumber features green?** **Mostly, and the exceptions are concentrated.** 154/154 in the default profile. Across all 53 files it is 161/193 — and **27 of the 29 failures are the `@cli` set**, which shares a single root cause: `rails new` failing inside aruba. The remaining two are tagged `@known-bug` and `@missing-feature`.
 
-If a large share of the Cucumber suite is already red, the plan changes shape — so both questions are inside Phase 0 rather than deferred.
+The third answer nobody asked for is the most useful one: **Poltergeist was never in play.** There are no `@javascript` tags anywhere and both Capybara driver assignments are commented out, so the suite is green on a runner with no browser installed. The "abandoned since 2018" driver risk that shaped Phase 2's scope does not exist.
 
-Effort estimates from the source documents were **not** revisited during distillation and are deliberately omitted from these files. Sequence and exit criteria are the useful parts; days-per-phase should be estimated by whoever picks up the work, after Phase 0 reports real numbers.
+So the plan does **not** change shape the way this section feared — with one exception. The `@cli` features are the only coverage `lib/generators` has, and they are 79% red going into a sequence of hops that rewrite generator APIs. That is the gap to close, and it is tracked as O1 in the baseline rather than buried here.
+
+Effort estimates from the source documents were **not** revisited during distillation and are deliberately omitted from these files. Sequence and exit criteria are the useful parts; days-per-phase should be estimated by whoever picks up the work, now that Phase 0 has reported real numbers.

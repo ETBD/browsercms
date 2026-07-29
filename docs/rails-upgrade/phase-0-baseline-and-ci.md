@@ -8,6 +8,17 @@
 **Blocking:** 🔴 Yes — gates every other phase.
 **Rails version at the end of this phase:** 4.2.11.3 (unchanged).
 
+> ## ✅ Done
+>
+> Executed on `feature/cms-420-migrate-tests`, commits `acb51911`…`08ad6574`.
+> **Plan:** [`phase-0-implementation-plan.md`](phase-0-implementation-plan.md) · **Results:** [`phase-0-baseline.md`](phase-0-baseline.md)
+>
+> Suite green: **994 tests, 0 failures, 0 errors**, 19 skips. Cucumber **154/154** on the default profile, **161/193** across all 53 files. Coverage **75.82%**, gated. CI exists and runs.
+>
+> **8 of 10 exit criteria pass.** Criteria 1 and 2 want a green run on the *default* branch; the work is on a feature branch and CI triggers on `master`/`develop`/PRs, so both close on merge into `develop` and not before.
+>
+> Several of this document's assumptions turned out to be wrong — `rake app:test` is a silent no-op, `assumptions_test.rb` does not fail when wired in, and Poltergeist is never used. The corrections are tabulated at the top of the implementation plan.
+
 ---
 
 ## Why this phase exists

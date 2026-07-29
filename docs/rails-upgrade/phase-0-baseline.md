@@ -3,7 +3,7 @@
 > Exit criteria 4, 6 and 7 of [`phase-0-baseline-and-ci.md`](phase-0-baseline-and-ci.md).
 > Measurements, not intentions. The reasoning behind them is in [`phase-0-implementation-plan.md`](phase-0-implementation-plan.md).
 
-**Date:** 2026-07-28 · **Branch:** `feature/cms-420-migrate-tests`
+**Date:** 2026-07-28 · **Branch:** `feature/cms-420-migrate-tests` · **Commits:** `acb51911`…`08ad6574`
 **Ruby:** 2.7.8 · **Rails:** 4.2.11.3 · **Postgres:** 16 (local), 15 (CI)
 **Command:** `RAILS_ENV=test bundle exec rake`, plus `rake features:all` and `rake features:cli`
 
