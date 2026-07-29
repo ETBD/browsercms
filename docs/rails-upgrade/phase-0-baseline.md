@@ -49,9 +49,33 @@ methods. They are in the chain and green; they assert nothing.
 **Pass rate across all 53 feature files: 161 / 193 scenarios = 83.4%.**
 Excluding `@cli`, it is 154 / 159 = 96.9%.
 
-### The two `@known-bug` failures
-- `features/content_pages.feature:25` — View Older Versions
-- `features/portlets/portlets.feature:94` — Portlet errors should not blow up the page
+### The 5 tag-excluded non-`@cli` scenarios
+
+Six scenarios carry `@known-bug` or `@missing-feature`; one of them
+(`generate_module.feature:10`) is also `@cli` and is counted in that set
+instead. The remaining five are what separates 154 from 159:
+
+| Scenario | Tag | Outcome |
+|---|---|---|
+| `features/portlets/portlets.feature:94` — Portlet errors should not blow up the page | `@known-bug` | **fails** |
+| `features/content_pages.feature:25` — View Older Versions | `@missing-feature` | **fails** |
+| `features/cucumber.feature:11` — Upgrade Cucumber | `@known-bug` | pending |
+| `features/page_templates.feature:20` — Multiple pages of templates | `@known-bug` | pending |
+| `features/page_templates.feature:29` — Edit a template | `@known-bug` | pending |
+
+### Reconciliation
+
+A bare `cucumber features` run — every file, every tag — reports
+**193 scenarios: 161 passed, 29 failed, 3 pending**. That decomposes exactly:
+
+```
+154 pass  default profile          + 7 pass  @cli   = 161 passed
+ 27 fail  @cli                     + 2 fail  tagged =  29 failed
+  3 pending (all @known-bug)                        =   3 pending
+154 + 5 + 34                                        = 193 scenarios
+```
+
+Nothing in that run is unaccounted for, and nothing in it is a regression.
 
 ### The 27 `@cli` failures — one dominant root cause
 `rails new petstore --skip-bundle` does not exit cleanly inside aruba. The
