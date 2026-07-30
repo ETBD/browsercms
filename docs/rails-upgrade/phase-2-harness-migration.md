@@ -8,6 +8,22 @@
 **Blocking:** 🔴 Yes.
 **Rails version at the end of this phase:** 4.2.11.3, with the suite green on **both** the default Gemfile and `Gemfile.next`.
 
+> ## ⚠️ Re-scope before starting — Phases 0 and 1 changed the premises
+>
+> **The goal statement above is now wrong on its central claim.** "The suite does not currently *fail* on Rails 5 — it does not boot" is out of date: [Phase 1](phase-1-gem-report.md) got it booting on **5.0.7.2**, and the unit suite runs to completion — 754 tests, 2 failures, **323 errors**. It fails; it does not fail to boot. That is a different and much better problem.
+>
+> Three findings shrink this phase substantially:
+>
+> | Assumption | Measured |
+> |---|---|
+> | §2.4 plans a Poltergeist → cuprite/headless-Chrome driver migration across 53 features | **There is no driver to migrate.** Zero `@javascript` tags; both Capybara driver assignments are commented out at [`features/support/env.rb:16-17`](../../features/support/env.rb#L16-L17); the suite is green in CI with no browser installed. The task is *delete `poltergeist`*, not port off it. |
+> | The gem table implies `mocha`, `factory_girl`, `capybara`, `database_cleaner`, `aruba` must move for Rails 5 | **None of them caps Rails.** All are already compatible at their locked versions. Moving them is modernisation *by choice*, on your own schedule — not forced work with a Rails deadline. |
+> | `cucumber`/`cucumber-rails` must move before Rails 5 | `cucumber-rails 1.4.5` caps `railties < 5.1`. It **clears the 5.0 hop** and is the first blocker of hop 2, so this work can be sequenced *after* the first bump. |
+>
+> And one item this phase now owns, discovered in Phase 1: **`minitest` is pinned to `~> 5.10.3` on the next bundle** as a workaround, not a fix. Rails 5.0's `Rails::TestUnitReporter` calls `result.method`, which predates `Minitest::Result` (minitest 5.11), so on a newer minitest it raises while formatting the *first* failure and takes the whole run down. Revisit at 5.1. See P1-4.
+>
+> Also worth reading before scoping: 320 of the 323 unit errors are **one method signature** ([`versioning.rb:230`](../../lib/cms/behaviors/versioning.rb#L230)), and the fix is backwards-compatible — so it belongs to [Phase 3](phase-3-backwards-compatible-fixes.md), and doing it first will change what this phase is looking at.
+
 ---
 
 ## Why this phase exists

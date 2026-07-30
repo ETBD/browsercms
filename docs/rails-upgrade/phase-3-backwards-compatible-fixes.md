@@ -8,6 +8,19 @@
 **Blocking:** 🟡 Not strictly — but skipping it means debugging these ~96 changes *simultaneously* with the bump.
 **Rails version at the end of this phase:** 4.2.11.3, deployed to production.
 
+> ## Two measured items to do first
+>
+> [Phase 1](phase-1-gem-report.md) ran the unit suite on Rails 5.0.7.2 and got **2 failures and 323 errors**. Both causes are backwards-compatible fixes and therefore belong here — and between them they account for **all but one** of those errors.
+>
+> | Fix | Impact | Detail |
+> |---|---|---|
+> | **`create_or_update` arity** — [`lib/cms/behaviors/versioning.rb:230`](../../lib/cms/behaviors/versioning.rb#L230) | **320 of 323 errors** | Rails 4.2 declares `def create_or_update` (`persistence.rb:502`); Rails 5.0 declares `def create_or_update(*args, &block)` (`persistence.rb:546`). The override still has the old zero-arity signature, so **every save on Rails 5 raises** `ArgumentError: wrong number of arguments`. Accepting `(*args, &block)` and passing through works identically on 4.2. Plausibly the highest-leverage single change in the whole upgrade. |
+> | **`HTML::FullSanitizer`** — [`lib/cms/content_filter.rb:12`](../../lib/cms/content_filter.rb#L12) | 2 failures | The constant comes from `rails-deprecated_sanitizer`, which is only in the bundle because `rails-dom-testing 1.x` depends on it — and 1.x caps `activesupport < 5.0`. On Rails 5 it leaves the bundle and the line raises `NameError`. **Two exits:** fix the call site to `Rails::Html::FullSanitizer`, or declare `rails-deprecated_sanitizer` explicitly (it requires only `activesupport >= 4.2.0.alpha`, no upper bound). The first is where it should end up. |
+>
+> Do the arity fix first and re-measure before scoping the rest of this phase — with 99% of the errors gone, what remains underneath is currently unknown.
+>
+> One caution carried from Phase 1: `content_filter.rb` is **8/8 lines covered and line 12 is hit twice**, and it still breaks. Coverage did not miss it; coverage cannot express version-dependent resolution. Do not use the coverage report to decide which of the ~96 changes are safe.
+
 ---
 
 ## Why this phase exists

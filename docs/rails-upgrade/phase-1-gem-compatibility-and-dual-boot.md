@@ -8,6 +8,16 @@
 **Blocking:** 🔴 Yes — scopes [Phase 2](phase-2-harness-migration.md), and no bump can happen without dual-boot.
 **Rails version at the end of this phase:** 4.2.11.3 still boots and is still the default. `Gemfile.next` resolves to 5.0.
 
+> ## ✅ Done
+>
+> **Plan:** [`phase-1-implementation-plan.md`](phase-1-implementation-plan.md) · **Results:** [`phase-1-gem-report.md`](phase-1-gem-report.md)
+>
+> `Gemfile.next` resolves to **Rails 5.0.7.2** and boots. Default bundle still 4.2.11.3 and green (994 tests, 0 failures, coverage 75.82%). `HTML::FullSanitizer` breakage confirmed. **No hard blockers** — `panoramic` was expected to be one and is not.
+>
+> **The most important finding is not about gems.** `test/dummy/config/boot.rb` reassigned `BUNDLE_GEMFILE` unconditionally, so every spawned test process silently ran on 4.2. Dual-boot did not apply to the test suite at all, and the failure mode was a *false green* — a `Gemfile.next` CI job on top of it would have reported success through Phase 4 while testing the wrong Rails.
+>
+> **§1.2's gem table below overstates the work.** `mocha` is one line, not 109 call sites; `compass-rails`/`sass-rails` cap `sass`, not Rails; `devise` is already at 4.9.4; `cucumber-rails` clears 5.0 and blocks 5.1. Corrections are in the report; the table is left as written so the difference between reasoning and measuring stays visible.
+
 ---
 
 ## Why this phase exists

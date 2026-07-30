@@ -134,3 +134,62 @@ jobs:
       - name: Cucumber - @known-bug scenarios
         if: always()
         run: bundle exec rake features:known-bugs
+
+  next-rails:
+    name: Rails 5.0 (Gemfile.next, reporting only)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    # Expected red for the whole of Phases 1-4. Phase 1's bar is that Rails
+    # *boots*; the suite passing is Phase 5, and this becomes gating there.
+    # Baseline at the end of Phase 1: boots on 5.0.7.2; the unit suite is
+    # 754 tests / 2 failures / 323 errors, of which 320 are one method
+    # signature. See docs/rails-upgrade/phase-1-gem-report.md.
+    continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+
+    env:
+      BUNDLE_GEMFILE: Gemfile.next
+      RAILS_ENV: test
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      launch_on_failure: 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.8'
+          bundler: '1.17.3'
+          bundler-cache: true
+
+      # Assert the version rather than trusting BUNDLE_GEMFILE. test/dummy's
+      # boot.rb used to reassign BUNDLE_GEMFILE unconditionally, which made every
+      # spawned test process silently fall back to 4.2 -- a job like this one
+      # would have reported green while testing the wrong Rails for four phases.
+      # If this step ever fails, dual-boot is broken, not Rails 5.
+      - name: Assert the bundle really is Rails 5.0
+        run: |
+          bundle exec ruby -e '
+            require "./test/dummy/config/environment"
+            v = Rails.version
+            abort "Expected Rails 5.0.x, booted #{v} -- dual-boot is broken" unless v.start_with?("5.0.")
+            puts "Booted Rails #{v}"
+          '
+
+      - name: Create and seed the test database
+        run: bundle exec rake db:drop db:create:all db:install
+
+      - name: Suite (expected red until Phase 5)
+        if: always()
+        run: bundle exec rake

@@ -1,7 +1,19 @@
 # Loads the Gemfile from the root of the project itself, rather than a typical rails app.
 
 require 'rubygems'
-gemfile = File.expand_path('../../../../Gemfile', __FILE__)
+
+# Dual-boot: honour an explicitly-provided BUNDLE_GEMFILE (Gemfile.next) and
+# only fall back to the engine's Gemfile when nothing was set.
+#
+# This used to assign ENV['BUNDLE_GEMFILE'] unconditionally, which quietly broke
+# dual-booting the *test suite*. Rake::TestTask and cucumber each spawn a fresh
+# Ruby process, and in a fresh process this file runs before Bundler is set up --
+# so the hardcoded path won and every suite ran on 4.2 no matter what
+# BUNDLE_GEMFILE said on the command line. It only looked like it worked from
+# `bundle exec ruby -e ...`, where Bundler is already loaded by the time we get
+# here. A Gemfile.next CI job on top of that would have reported a false green.
+default_gemfile = File.expand_path('../../../../Gemfile', __FILE__)
+gemfile = ENV['BUNDLE_GEMFILE'] ? File.expand_path(ENV['BUNDLE_GEMFILE']) : default_gemfile
 
 if File.exist?(gemfile)
   ENV['BUNDLE_GEMFILE'] = gemfile

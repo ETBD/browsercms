@@ -6,6 +6,18 @@
 
 Same shape as the [Phase 0 plan](phase-0-implementation-plan.md): findings first, then an ordered work stream, then the decisions that need a human.
 
+> ### Status: ✅ done
+> Measured results are in [`phase-1-gem-report.md`](phase-1-gem-report.md); that file, not this one, is the record. All 9 exit criteria pass. Where execution contradicted the plan:
+>
+> | Plan said | Reality |
+> |---|---|
+> | `panoramic` is "likely the only true blocker"; test a fork first ([D2](#d2-panoramic)) | **Not a blocker.** Bundler resolved it *down* to 0.0.6, which declares `rails (>= 3.0.7)` with no upper bound — the cap was introduced in 0.0.7. No fork needed. `bundle_report` could not see this: it only searches *forward* for newer compatible versions. |
+> | The blocker list is six gems | Six for resolution, but a **seventh** blocks actually running anything: `minitest`. Rails 5.0's own test reporter predates `Minitest::Result`, so on minitest ≥ 5.11 it raises while formatting the first failure and takes the run down. Declared caps cannot express this; only running it finds it. |
+> | Ruby 2.7 vs Rails 5.0 is a live risk that could re-plan the hop sequence ([§1.5](#15-the-risk-the-phase-doc-does-not-mention)) | **Not fatal.** Boots and executes 754 tests; no failure has a framework-only backtrace. Proceed on 2.7.8. |
+> | `HTML::FullSanitizer` is invisible to coverage because the file is 100% covered | Sharper than that: line 12 **is** hit twice by the units suite, and it **does** fail on Rails 5. Coverage did not miss an unexercised line — it cannot express version-dependent resolution. *A covered line is not a portable line.* |
+>
+> **The plan missed the finding that mattered most.** `test/dummy/config/boot.rb` reassigned `BUNDLE_GEMFILE` unconditionally, so every `Rake::TestTask` and cucumber subprocess silently ran on 4.2. The first Rails 5 probe reported the entire suite passing with numbers identical to the 4.2 baseline — because it *was* the 4.2 baseline. Stage D's verification step (`rake -T` plus an app boot) was not enough; only diffing the boot deprecations between the two versions exposed it. The CI job now asserts `Rails.version` explicitly for that reason.
+
 > ### The useful thing happened before this plan was written
 >
 > `Gemfile.lock` already contains the answer to most of work item 1.2. Every gem
