@@ -20,7 +20,12 @@ class NamespacesTest < ActiveSupport::TestCase
           klass = klass_name.constantize
           if klass.class == Class
             subclasses << klass
-            subclasses += klass.send(:descendants).collect{|x| x.respond_to?(:constantize) ? x.constantize : x}
+            # Use an explicit String check rather than respond_to?(:constantize).
+            # Probing respond_to? on a Railtie subclass reaches
+            # Rails::Railtie.respond_to_missing?, which calls .instance and
+            # raises "can't create instance of singleton class" on Ruby 2.7+ -
+            # aborting the whole `rake units` run at load time.
+            subclasses += klass.send(:descendants).collect { |x| x.is_a?(String) ? x.constantize : x }
           else
             subclasses += subclasses_from_module(klass_name)
           end
