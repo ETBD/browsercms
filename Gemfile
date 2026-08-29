@@ -8,6 +8,12 @@ gemspec
 
 gem 'puma', '~> 4'
 gem 'railties', '~> 4.2'
+
+# Rails 4.2 calls BigDecimal.new, which bigdecimal removed in 2.0. The
+# gemspec leaves bigdecimal unpinned, so a fresh `bundle install` resolves to
+# 4.x and the dummy app cannot boot ("undefined method `new' for
+# BigDecimal:Class") - which is why the test suite would not start at all.
+gem 'bigdecimal', '1.4.4'
 # Uncomment to confirm that older versions work (for compaitiblity with Spree 2.2.4/bcms_spree)
 # gem 'paperclip', '~> 3.4.1'
 # For testing behavior in production
