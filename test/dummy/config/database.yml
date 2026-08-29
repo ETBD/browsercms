@@ -1,7 +1,13 @@
+# Connection details come from the standard PG* environment variables when they
+# are set, so the same file works for a local postgres (peer/trust auth over
+# localhost, no password) and for the CI postgres service, which needs a host,
+# user and password. Previously the blank password was hard-coded, which meant
+# CI could not connect at all.
 test:
   adapter: postgresql
   encoding: unicode
   database: browsercms_test
   pool: 5
-  username: postgres
-  password:
+  host: <%= ENV.fetch('PGHOST', 'localhost') %>
+  username: <%= ENV.fetch('PGUSER', 'postgres') %>
+  password: <%= ENV.fetch('PGPASSWORD', '') %>

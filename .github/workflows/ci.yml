@@ -1,0 +1,69 @@
+name: CI
+
+# Replaces .travis.yml, which no longer runs anywhere. The engine's own suite is
+# the primary regression net for the Rails 4.2 -> 6.1 port (the cms app cannot
+# self-verify a change to a 29k-line rendering engine), so it needs to be green
+# and visible on every push - see "Phase 0 - safety net" in the migration plan.
+
+on:
+  push:
+    branches: ["master", "develop"]
+  pull_request:
+    branches: ["master", "develop"]
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref || github.run_id }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+
+    services:
+      postgres:
+        image: postgres:16-alpine
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: password
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      PGUSER: postgres
+      PGPASSWORD: password
+      PGHOST: localhost
+      RAILS_ENV: test
+      TZ: UTC
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libpq-dev imagemagick
+
+      - name: Setup Ruby
+        uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: 2.7.8
+          bundler-cache: true
+
+      - name: Create database
+        run: psql -h localhost -U postgres -c 'create database browsercms_test;'
+
+      - name: Prepare schema
+        run: bundle exec rake app:db:test:prepare
+
+      - name: Unit tests
+        run: bundle exec rake units
+
+      - name: Functional tests
+        run: bundle exec rake test:functionals
