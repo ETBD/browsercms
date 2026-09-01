@@ -6,7 +6,7 @@ PATH
       ancestry (~> 3.0.0)
       bigdecimal
       bootstrap-sass
-      ckeditor_rails (~> 4.3.0)
+      ckeditor_rails (~> 4.5.10)
       compass-rails
       devise (~> 4.0)
       jquery-rails (~> 4.0)
@@ -14,6 +14,7 @@ PATH
       panoramic
       paperclip (~> 5.0)
       rails (~> 5.0.0)
+      responders
       sass-rails
       simple_form (~> 3.5)
       term-ansicolor
@@ -94,7 +95,7 @@ GEM
       xpath (~> 2.0)
     childprocess (3.0.0)
     chunky_png (1.4.0)
-    ckeditor_rails (4.3.4)
+    ckeditor_rails (4.5.11)
       railties (>= 3.0)
     climate_control (0.2.0)
     coderay (1.1.1)

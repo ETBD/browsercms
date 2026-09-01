@@ -1,7 +1,10 @@
 module Cms
   class PortletController < Cms::ApplicationController
 
-    skip_before_filter :redirect_to_cms_site
+    # There is deliberately no skip of :redirect_to_cms_site here. That callback is
+    # registered only on Cms::BaseController (base_controller.rb:3), which is a
+    # sibling of this class, not an ancestor -- so there has never been anything to
+    # skip. 4.2's skip_callback silently deleted nil; 5.0 raises ArgumentError.
 
     def execute_handler
       @portlet = Portlet.find(params[:id])

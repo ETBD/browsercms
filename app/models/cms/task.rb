@@ -31,7 +31,7 @@ module Cms
     validate :assigned_to_is_able_to_edit_or_publish_content
 
     def mark_as_complete!
-      update_attributes(:completed_at => Time.now)
+      update(:completed_at => Time.now)
     end
 
     def completed?

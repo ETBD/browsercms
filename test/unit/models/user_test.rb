@@ -317,6 +317,47 @@ module Cms
       assert @guest_user.able_to_view?(@protected_section)
     end
 
+    # Cms::GuestUser blocks writes by overriding update_attribute, update_attributes and
+    # save (guest_user.rb:63-73). But `update_attributes` is an alias, not the method:
+    # ActiveRecord::Persistence defines `def update(attributes)` and then
+    # `alias update_attributes update` -- 4.2 at :247/:256, 5.0 at :270/:279. Overriding
+    # the alias name in a subclass leaves `update` bound to the original implementation,
+    # so this call goes to ActiveRecord::Persistence#update and never sees the guard.
+    #
+    # The write still fails, because `save` is separately overridden to return false. So
+    # the hole is not currently exploitable -- but it fails at the wrong place, for the
+    # wrong reason, and only by luck. Anything that changes the save override, or any
+    # subclass that does not inherit it, reopens it.
+    #
+    # Fixing it means renaming the definition to `update` and keeping
+    # `alias update_attributes update` for downstream callers. That is a behaviour change,
+    # and Phase 3's contract is that it contains none, so it was recorded rather than
+    # applied (phase-3-implementation-plan.md D3). Unskip this when the fix lands.
+    test "GuestUser#update should be blocked by the same guard as update_attributes" do
+      skip "Known defect, deliberately not fixed in Phase 3 -- see the comment above and " \
+           "app/models/cms/guest_user.rb. update_attributes is an alias of update, so " \
+           "overriding only the alias leaves update reachable."
+
+      guest = Cms::User.guest
+      assert_equal false, guest.update(:first_name => "Malcolm"),
+                   "GuestUser#update should be refused by the guard, as update_attributes is"
+    end
+
+    # Demonstrates the defect above as it actually stands today, so the skipped test is
+    # not the only record of it. This passes; it is the mechanism that is wrong.
+    test "GuestUser#update currently bypasses the guard and is stopped by save instead" do
+      guest = Cms::User.guest
+      assert_equal false, guest.update_attributes(:first_name => "Malcolm"),
+                   "update_attributes is overridden and returns false at the guard"
+
+      guard = Cms::GuestUser.instance_method(:update_attributes)
+      inherited_update = Cms::GuestUser.instance_method(:update)
+      refute_equal Cms::GuestUser, inherited_update.owner,
+                   "if update is ever defined on GuestUser, the guard is complete and the " \
+                   "skipped test above should be unskipped"
+      assert_equal Cms::GuestUser, guard.owner
+    end
+
     test "GuestUser can't view a nil section" do
       user = Cms::GuestUser.new
 

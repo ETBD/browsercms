@@ -42,7 +42,7 @@ module Cms
         # end
         def check_permissions(*perms)
           opts = Hash === perms.last ? perms.pop : {}
-          before_filter(opts) do |controller|
+          before_action(opts) do |controller|
             raise Cms::Errors::AccessDenied unless controller.send(:current_user).able_to?(*perms)
           end
         end
@@ -89,7 +89,7 @@ module Cms
 
       # Redirect to the URI stored by the most recent store_location call or
       # to the passed default.  Set an appropriately modified
-      #   after_filter :store_location, :only => [:index, :new, :show, :edit]
+      #   after_action :store_location, :only => [:index, :new, :show, :edit]
       # for any controller you want to be bounce-backable.
       def redirect_back_or_default(default)
         redirect_to(session[:return_to] || default)

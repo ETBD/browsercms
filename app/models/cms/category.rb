@@ -1,7 +1,7 @@
 module Cms
   class Category < ActiveRecord::Base
     belongs_to :category_type, :class_name => 'Cms::CategoryType'
-    belongs_to :parent, :class_name => 'Cms::Category'
+    belongs_to :parent, :class_name => 'Cms::Category', :required => false
     has_many :children, :class_name => 'Cms::Category', :foreign_key => "parent_id"
     is_searchable
     has_content_type :module => :categorization

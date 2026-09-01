@@ -112,7 +112,12 @@ module Cms
 
           version_class.versioned_class = self
 
-          version_class.belongs_to(name.demodulize.underscore.to_sym, :foreign_key => version_foreign_key, :class_name => name)
+          # required: false is passed into the options hash rather than written as a
+          # literal, so `grep -rn "required: false" app/ lib/` will not find this site in
+          # the shape the exit criteria expect. A version is routinely built before its
+          # parent is saved (build_new_version_and_add_to_versions_list_for_saving), so
+          # nil here is a normal intermediate state.
+          version_class.belongs_to(name.demodulize.underscore.to_sym, :foreign_key => version_foreign_key, :class_name => name, :required => false)
 
           version_class.is_userstamped if userstamped?
 
@@ -268,8 +273,21 @@ module Cms
           logger.debug { "New version of #{self.class}::Version is #{@new_version.attributes}" }
         end
 
-        def save!(perform_validations=true)
-          save(:validate => perform_validations) || raise(ActiveRecord::RecordNotSaved.new(errors.full_messages))
+        # Rails never calls save! with a positional boolean. 4.2 calls it as
+        # save!(:validate => x) (has_many_association.rb:39) and 5.0 as
+        # save!(validate: x, &block) (collection_association.rb:510) -- so the old
+        # `perform_validations` parameter was being bound to a Hash, which is truthy, and
+        # the override then called save(validate: true) in precisely the path where the
+        # framework had asked for validations to be skipped. Wrong on 4.2 today, silently.
+        #
+        # On 5.0 there is a second half: collection_association.rb:501 passes a block into
+        # insert_record for create_or_update to yield after the insert, and the old
+        # signature dropped it before it could reach the (*args, &block) signature Phase 2
+        # gave create_or_update directly below. Same defect as P1-2, one method up -- and
+        # the Phase 2 fix is what makes this gap reachable at all.
+        # See docs/rails-upgrade/phase-1-gem-report.md.
+        def save!(*args, &block)
+          save(*args, &block) || raise(ActiveRecord::RecordNotSaved.new(errors.full_messages))
         end
 
         # Returns the most recently created Version for this class. Drafts are the most recent change from

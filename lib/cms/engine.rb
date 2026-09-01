@@ -130,6 +130,39 @@ module Cms
 
       # Unsure why jquery isn't getting precompiled.
       app.config.assets.precompile += ['jquery']
+
+      # sprockets-rails 3 raises AssetNotPrecompiled for any asset reached through
+      # image_tag / asset_path that is not in config.assets.precompile. 2.3.3 (the 4.2
+      # bundle) does not enforce that, which is why this has never been needed before.
+      #
+      # Its own default covers loose assets, but only the *host application's*:
+      #
+      #   LOOSE_APP_ASSETS = lambda do |logical_path, filename|
+      #     filename.start_with?(::Rails.root.join("app/assets").to_s) && ...
+      #
+      # (sprockets-rails-3.2.2/lib/sprockets/railtie.rb:85). An engine's app/assets is
+      # never under Rails.root, so every image and font this engine ships is undeclared.
+      # The first one to raise is cms/logo.png from layouts/cms/_main_menu.html.erb:5,
+      # and it is only the first -- the icon helpers build their paths at runtime
+      # (application_helper.rb:66, :70; file_blocks/render.html.erb:2), so the set is
+      # not enumerable by reading the views.
+      #
+      # So declare the class rather than the instances: the same rule sprockets-rails
+      # applies to the application, rooted at this engine instead. Enumerating filenames
+      # would book another discovery round at every later hop.
+      #
+      # This belongs here and not in test/dummy: a consuming application hits exactly
+      # this wall on 5.0, and a dummy-app fix does not travel to it.
+      #
+      # Note that app/assets/config/manifest.js -- the Rails 5+ idiom -- would be inert
+      # on this bundle. sprockets-rails only honours a manifest when sprockets 4 is
+      # loaded (railtie.rb:104-110, `if using_sprockets4?`), and both locks resolve
+      # sprockets 3.7.x. Revisit when the sprockets 4 hop makes it live.
+      engine_assets = "#{self.root}/app/assets"
+      app.config.assets.precompile += [lambda { |logical_path, filename|
+        filename.start_with?(engine_assets) &&
+          !['.js', '.css', ''].include?(File.extname(logical_path))
+      }]
     end
   end
 end

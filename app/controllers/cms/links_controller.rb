@@ -1,9 +1,9 @@
 module Cms
   class LinksController < Cms::BaseController
 
-    before_filter :load_section, :only => [:new, :create, :move_to]
-    before_filter :load_link, :only => [:destroy, :update]
-    before_filter :load_draft_link, :only => [:edit]
+    before_action :load_section, :only => [:new, :create, :move_to]
+    before_action :load_link, :only => [:destroy, :update]
+    before_action :load_draft_link, :only => [:edit]
 
     include Cms::PublishWorkflow
 
@@ -35,7 +35,7 @@ module Cms
     end
 
     def update
-      if @link.update_attributes(link_params)
+      if @link.update(link_params)
         flash[:notice] = "Link '#{@link.name}' was updated"
         redirect_to @link.section
       else

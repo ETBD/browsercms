@@ -8,15 +8,19 @@ module Cms
     include Cms::MobileAware
     helper MobileHelper
 
-    skip_before_filter :redirect_to_cms_site
-    before_filter :redirect_non_cms_users_to_public_site, :only => [:show, :show_page_route]
-    before_filter :construct_path, :only => [:show]
-    before_filter :construct_path_from_route, :only => [:show_page_route]
-    before_filter :try_to_redirect, :only => [:show]
-    before_filter :try_to_stream_file, :only => [:show]
-    before_filter :load_page, :only => [:show, :show_page_route]
-    before_filter :check_access_to_page, :except => [:edit, :preview]
-    before_filter :select_cache_directory
+    # There is deliberately no skip of :redirect_to_cms_site here. That callback is
+    # registered only on Cms::BaseController (base_controller.rb:3), which is a
+    # sibling of this class, not an ancestor -- so there has never been anything to
+    # skip. 4.2's skip_callback silently deleted nil; 5.0 raises ArgumentError.
+
+    before_action :redirect_non_cms_users_to_public_site, :only => [:show, :show_page_route]
+    before_action :construct_path, :only => [:show]
+    before_action :construct_path_from_route, :only => [:show_page_route]
+    before_action :try_to_redirect, :only => [:show]
+    before_action :try_to_stream_file, :only => [:show]
+    before_action :load_page, :only => [:show, :show_page_route]
+    before_action :check_access_to_page, :except => [:edit, :preview]
+    before_action :select_cache_directory
 
     self.responder = Cms::ContentResponder
 

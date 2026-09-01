@@ -13,8 +13,16 @@ module Cms
           extend ClassMethods
           include InstanceMethods
         
-          belongs_to :created_by, :class_name => "Cms::User"
-          belongs_to :updated_by, :class_name => "Cms::User"
+          # required: false, not optional: true -- :optional is not a valid belongs_to
+          # option on Rails 4.2 (ArgumentError at class-definition time); :required is
+          # valid on both, and 5.0 normalises it to optional = !required.
+          #
+          # These two are nil for anything created outside a request -- seeds, rake
+          # tasks, migrations, console. This behaviour is injected into every model
+          # that stamps users, here and in every downstream project, so a host app
+          # turning on load_defaults 5.0 would otherwise start rejecting all of them.
+          belongs_to :created_by, :class_name => "Cms::User", :required => false
+          belongs_to :updated_by, :class_name => "Cms::User", :required => false
         
           before_save :set_userstamps
         

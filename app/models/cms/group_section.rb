@@ -3,7 +3,7 @@ module Cms
 
     extend DefaultAccessible
 
-    belongs_to :group, :class_name => 'Cms::Group'
-    belongs_to :section, :class_name => 'Cms::Section'
+    belongs_to :group, :class_name => 'Cms::Group', :required => false
+    belongs_to :section, :class_name => 'Cms::Section', :required => false
   end
 end

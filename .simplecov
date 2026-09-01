@@ -6,9 +6,9 @@
 SimpleCov.start 'rails' do
   merge_timeout 3600
 
-  # Reported, not gated -- coverage:check prints the branch figure but has no
-  # branch floor to compare it against. Phase 3 sets one once there is a
-  # measured number to set it from.
+  # Gated as of Phase 3: coverage:check compares this against COVERAGE_MINIMUM_BRANCH,
+  # which defaults to the 70.83% measured on a cleared resultset once the Phase 3 diff
+  # had landed. See lib/tasks/core_tasks.rake.
   enable_coverage :branch
 
   # Each suite must name itself. Left to CommandGuesser, two suites can guess the

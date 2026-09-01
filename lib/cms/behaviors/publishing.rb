@@ -129,7 +129,7 @@ module Cms
                 # or the draft version is greater than the live version
                 if !self.published? || d.version > self.version
 
-                  d.update_attributes(:published => true)
+                  d.update(:published => true)
 
                   main_record = self.class.unscoped.where("#{self.class.primary_key} = ?", id).first
                   self.class.versioned_columns.each do |column|

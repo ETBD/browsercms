@@ -1,8 +1,8 @@
 module Cms
 class PageRouteOptionsController < Cms::BaseController
 
-  before_filter :load_page_route
-  before_filter :load_model, :only => [:edit, :update, :destroy]
+  before_action :load_page_route
+  before_action :load_model, :only => [:edit, :update, :destroy]
   
   def new
     @model = resource.new
@@ -19,7 +19,7 @@ class PageRouteOptionsController < Cms::BaseController
   end
   
   def update
-    if @model.update_attributes(params[object_name])
+    if @model.update(params[object_name])
       flash[:notice] = "#{object_name.titleize} updated"
       redirect_to cms_page_route_url(@page_route)
     else

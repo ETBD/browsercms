@@ -11,11 +11,15 @@ class Tests::PretendController < ApplicationController
   RESTRICTED_H1 = "Restricted"
 
   def restricted
-    render :text =>"<h1>#{RESTRICTED_H1}</h1> You can see this restricted page."
+    # html:, not plain: -- these two actions are cucumber-covered
+    # (acts_as_content_page.feature:25 and :49) and emit markup, so plain: would change
+    # the Content-Type of a passing feature from text/html to text/plain. .html_safe is
+    # load-bearing: render html: escapes its argument otherwise.
+    render :html => "<h1>#{RESTRICTED_H1}</h1> You can see this restricted page.".html_safe
   end
 
   def open
-    render :text =>"<h1>Open Page</h1> You can see this public page."   
+    render :html => "<h1>Open Page</h1> You can see this public page.".html_safe
   end
 
   def error

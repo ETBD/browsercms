@@ -54,14 +54,35 @@ namespace :coverage do
     actual = result['line'] || result['covered_percent']
     abort "#{path} has no line-coverage key (got #{result.keys.inspect})" if actual.nil?
 
-    # Reported, not gated: there is no committed branch baseline, and inventing a
-    # floor in the same commit that first measures the number would be gating on
-    # something nobody has looked at. Phase 3 sets the floor.
-    puts format('Branch coverage %.2f%%', result['branch']) if result['branch']
-    if actual < threshold
-      abort format('Coverage %.2f%% is below the %.2f%% baseline.', actual, threshold)
-    end
+    # Phase 3 sets the branch floor Phase 2 deferred for want of a measured number.
+    # 70.83 is that number: a full 4.2 chain on a *cleared* resultset, after the Phase 3
+    # diff landed. Phase 2 reported 70.79 on the same instrument, so the phase moved
+    # branch coverage +0.04 and this records where it now stands.
+    #
+    # Set at the measured value, exactly as COVERAGE_MINIMUM was. That leaves no slack,
+    # which is the point -- a floor with headroom silently absorbs the first regression.
+    # If it turns out to flap, lower it once with a reason in the commit rather than
+    # padding it pre-emptively.
+    #
+    # Clear coverage/.resultset.json before trusting either number. The five suites merge
+    # through it with a 3600s timeout and both bundles use the same suite names, so a
+    # partial or cross-bundle run leaves entries that shift the merged percentage.
+    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.83'))
+    branch = result['branch']
+
+    # Print both figures before aborting, so a run that fails one gate still tells you
+    # where the other stands.
     puts format('Coverage %.2f%% (baseline %.2f%%)', actual, threshold)
+    puts format('Branch coverage %.2f%% (baseline %.2f%%)', branch, branch_threshold) if branch
+
+    failures = []
+    if actual < threshold
+      failures << format('Coverage %.2f%% is below the %.2f%% baseline.', actual, threshold)
+    end
+    if branch && branch < branch_threshold
+      failures << format('Branch coverage %.2f%% is below the %.2f%% baseline.', branch, branch_threshold)
+    end
+    abort failures.join("\n") unless failures.empty?
   end
 end
 

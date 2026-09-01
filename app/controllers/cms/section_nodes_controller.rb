@@ -70,9 +70,16 @@ module Cms
     # Retrieves all siblings that will need updating on success. This includes all siblings
     # from the node's previous location as well as siblings from the node's new/target location. Also
     # includes the node itself.
+    # TODO(Phase 4): the dedupe below is on the wrong side of the parenthesis. `.distinct`
+    # binds to the *second* relation only, so it becomes SELECT DISTINCT within that half
+    # and does nothing about duplicates *between* the two halves -- which is the only kind
+    # this method can plausibly produce, since a node can be a sibling in both the previous
+    # and the target parent. The code reads like a union dedupe and is not one. Hoisting it
+    # outside the parens would fix that, and is a behaviour change rather than a rename, so
+    # it belongs with the characterization test Phase 4 already owns for move_to_position.
     def nodes_to_update_on_success(previous_parent, target_parent)
       (previous_parent.children.not_of_type(Cms::Section::HIDDEN_NODE_TYPES) +
-      target_parent.children.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).uniq).map { |n| [n.id, n.position, n.depth] }
+      target_parent.children.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).distinct).map { |n| [n.id, n.position, n.depth] }
     end
   end
 end

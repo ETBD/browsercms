@@ -16,7 +16,7 @@ module Cms
     before_save :set_section, :sanitized_file_path_and_name
     before_create :setup_attachment
 
-    belongs_to :attachable, :polymorphic => true
+    belongs_to :attachable, :polymorphic => true, :required => false
 
     extend DefaultAccessible
 

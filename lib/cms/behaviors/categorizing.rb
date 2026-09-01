@@ -13,7 +13,10 @@ module Cms
           extend ClassMethods
           include InstanceMethods
           
-          belongs_to :category, :class_name => 'Cms::Category'
+          # Categorising is opt-in per instance -- nil is the normal state. required: false
+          # rather than optional: true because :optional is not valid on 4.2. See
+          # test/unit/belongs_to_optionality_test.rb.
+          belongs_to :category, :class_name => 'Cms::Category', :required => false
           
           scope :in_category, lambda{|cat| {:conditions => ["category_id = ?", cat.id]}}
           

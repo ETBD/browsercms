@@ -165,7 +165,10 @@ module Cms
           attribute_class = options[:class_name].constantize
           base_class = self.name.underscore.to_sym
           attribute_class.class_eval do
-            belongs_to base_class, :foreign_key => options[:base_foreign_key]
+            # Dynamic declaration -- like versioning.rb:115, grep will not find this in the
+            # shape the exit criteria expect. required: false rather than optional: true
+            # because :optional is not a valid belongs_to option on Rails 4.2.
+            belongs_to base_class, :foreign_key => options[:base_foreign_key], :required => false
             alias_method :base, base_class # For generic access
            #attr_accessible :name, :value, "#{base_class.to_s}_id".to_sym
           end

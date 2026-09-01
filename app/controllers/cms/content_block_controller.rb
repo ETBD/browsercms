@@ -135,7 +135,7 @@ module Cms
       if model_class.versioned?
         load_block
       else
-        render :text => "Not Implemented", :status => :not_implemented
+        render :plain => "Not Implemented", :status => :not_implemented
       end
     end
 
@@ -264,7 +264,7 @@ module Cms
     # update related methods
     def update_block
       load_block
-      @block.update_attributes(model_params())
+      @block.update(model_params())
     end
 
     # Returns the parameters for the block to be saved.

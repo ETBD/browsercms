@@ -2,7 +2,7 @@ module Cms
   class FormEntry < ActiveRecord::Base
 
     store :data_columns
-    belongs_to :form, class_name: 'Cms::Form'
+    belongs_to :form, class_name: 'Cms::Form', required: false
 
     after_initialize :add_field_accessors
 
