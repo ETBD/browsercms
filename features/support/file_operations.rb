@@ -3,7 +3,7 @@ require 'cms/data_loader'
 require File.expand_path(File.join(__FILE__, "..", "..", "..", "test", "mock_file"))
 module FileOperations
 
-  # @deprecated Use FactoryGirl.create(:file_block) directly instead of this whereever possible.
+  # @deprecated Use FactoryBot.create(:file_block) directly instead of this whereever possible.
   #
   # Creates an 'uploaded' file block at a given relative path
   # @param [String] relative_file_path A relative file path (i.e. /test.txt) for the uploaded block.
@@ -12,7 +12,7 @@ module FileOperations
     file_name, upload_file = text_file(relative_file_path, text)
     options = {:attachment_file => upload_file, :attachment_file_path => file_name}
     options[:parent] = section if section
-    FactoryGirl.create(:file_block, options)
+    FactoryBot.create(:file_block, options)
   end
 
   def text_file(relative_file_path, text)

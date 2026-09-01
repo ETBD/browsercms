@@ -28,7 +28,7 @@ Every file has the same five sections, in this order:
 |---|---|---|---|---|
 | **0** | [Baseline and CI](phase-0-baseline-and-ci.md) | Know the true pass rate and get a green button that runs on every push | 🔴 **Yes** — nothing else can start | ✅ **Done** — [plan](phase-0-implementation-plan.md) · [results](phase-0-baseline.md) |
 | **1** | [Gem compatibility and dual-boot](phase-1-gem-compatibility-and-dual-boot.md) | Find out which gems actually block Rails 5, and be able to boot both versions | 🔴 **Yes** — its output scopes Phase 2 | ✅ **Done** — [plan](phase-1-implementation-plan.md) · [results](phase-1-gem-report.md) |
-| **2** | [Harness migration](phase-2-harness-migration.md) | Make the test suite capable of running on Rails 5, while still on 4.2 | 🔴 **Yes** — the suite cannot boot on Rails 5 today | ⚠️ **Needs re-scoping** — see below |
+| **2** | [Harness migration](phase-2-harness-migration.md) | Make the test suite capable of running on Rails 5, while still on 4.2 | 🔴 **Yes** — the suite cannot boot on Rails 5 today | ⚠️ **Done, 11 of 12 criteria** — [plan](phase-2-implementation-plan.md) · [results](phase-2-harness-report.md) |
 | **3** | [Backwards-compatible code fixes](phase-3-backwards-compatible-fixes.md) | Land ~96 mechanical changes that work on 4.2 *and* 5.0+, shrinking the bump diff | 🟡 Strongly recommended | — |
 | **4** | [Characterization tests](phase-4-characterization-tests.md) | Pin the behaviour that Rails 5 changes *silently*, before it can drift | 🔴 **Yes** for the four 5.0-specific items | — |
 | **5** | [The 5.0 bump](phase-5-the-5.0-bump.md) | Rails 5.0 green, deployed, with `load_defaults` handled deliberately | — | — |
@@ -36,7 +36,9 @@ Every file has the same five sections, in this order:
 
 **Phase 0 is done with two caveats**, both about the default branch rather than the work: its exit criteria 1 and 2 ask for a green CI run on the *default* branch, and the work currently sits on `feature/cms-420-migrate-tests`. CI triggers are now `master`, `develop` and pull requests, so those two close when this merges into `develop` — not before.
 
-**Phase 2 needs re-scoping before it starts.** Phase 0 established that no Capybara driver is ever selected (zero `@javascript` tags, both assignments commented out), so its Poltergeist migration has nothing to migrate. Phase 1's [pre-flight scan](phase-1-implementation-plan.md#1-pre-flight-findings) further shows most of the gems it plans to move carry no Rails 5 cap at all — making them modernisation by choice, not by force.
+**Phase 2 is done, with criterion 3 unmet and knowingly so.** The harness migration itself is complete: the 4.2 suite is green at 78.35% (the number moved because simplecov moved, not because coverage did — see the [report](phase-2-harness-report.md)), and on Rails 5 the unit suite went from 323 errors to 3 while cucumber went from "does not load" to 154 scenarios collected. What remains red on Rails 5 is five *application* defects that no harness work can reach, and they belong to Phase 3. The `next-rails` CI job was made gating anyway, deliberately, so **CI is red on every PR until Phase 3 lands** — the job's comment names all five.
+
+Phase 2's original Poltergeist migration had nothing to migrate (Phase 0 established that no Capybara driver is ever selected), and Phase 1 showed most of the gems it planned to move carry no Rails 5 cap. Both were dropped. The report also records six places the plan was wrong, including two that broke the 4.2 suite before being caught.
 
 **Ordering note:** Phase 1 comes before Phase 2 deliberately. The gem compatibility check determines how much of the harness migration is actually forced, so running it first prevents Phase 2 from being scoped on guesswork.
 

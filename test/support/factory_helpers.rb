@@ -8,7 +8,7 @@ module FactoryHelpers
         :attachment_name => name}}
   end
 
-  # Nested Attributes are pretty messy to build directly in code, and FactoryGirl isn't really appropriate since we need to
+  # Nested Attributes are pretty messy to build directly in code, and FactoryBot isn't really appropriate since we need to
   #  test mass assignment.
   # Create a single Attachment with some default values.
   #
@@ -35,7 +35,7 @@ module FactoryHelpers
     root = Cms::Section.root.first
     unless root
       # This constructor matches how seed data is set up.
-      root = FactoryGirl.create(:root_section)
+      root = FactoryBot.create(:root_section)
     end
     root
   end
@@ -74,7 +74,7 @@ module FactoryHelpers
   end
 
   def create_or_find_permission_named(name)
-    Cms::Permission.named(name).first || FactoryGirl.create(:permission, :name => name)
+    Cms::Permission.named(name).first || FactoryBot.create(:permission, :name => name)
   end
 
   # Creates a TempFile attached to an uploaded file. Used to test attachments
@@ -84,7 +84,7 @@ module FactoryHelpers
 
   def create_admin_user(attrs={})
     unless Cms::User.find_by_login('cmsadmin')
-      FactoryGirl.create(:cms_admin, {:login => "cmsadmin"}.merge(attrs))
+      FactoryBot.create(:cms_admin, {:login => "cmsadmin"}.merge(attrs))
     end
   end
 

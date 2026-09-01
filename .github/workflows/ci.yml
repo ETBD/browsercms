@@ -136,15 +136,26 @@ jobs:
         run: bundle exec rake features:known-bugs
 
   next-rails:
-    name: Rails 5.0 (Gemfile.next, reporting only)
+    name: Rails 5.0 (Gemfile.next)
     runs-on: ubuntu-22.04
     timeout-minutes: 45
-    # Expected red for the whole of Phases 1-4. Phase 1's bar is that Rails
-    # *boots*; the suite passing is Phase 5, and this becomes gating there.
-    # Baseline at the end of Phase 1: boots on 5.0.7.2; the unit suite is
-    # 754 tests / 2 failures / 323 errors, of which 320 are one method
-    # signature. See docs/rails-upgrade/phase-1-gem-report.md.
-    continue-on-error: true
+    # GATING as of Phase 2, and currently RED on purpose.
+    #
+    # Phase 2 took this job from "754 unit tests / 2 failures / 323 errors" down
+    # to five named application defects by borrowing two Phase 3 fixes; the
+    # harness itself is done. What is left is not harness work and no amount of
+    # it will help:
+    #   - 2x ActiveRecord::StaleObjectError on Cms::Page
+    #   - skip_callback :redirect_to_cms_site (content_controller.rb:11) -- 5.0
+    #     raises when the callback is not defined, and this one is a *load*
+    #     error, so it takes the whole functional suite down with it
+    #   - PublishableTestCase#test_publish_on_save
+    #   - PortletTest#test_.blacklist
+    #
+    # Those belong to Phase 3. This job was made gating anyway, deliberately, so
+    # the red is visible in the merge path rather than filed away in a report.
+    # It goes green when Phase 3 lands, not before.
+    # See docs/rails-upgrade/phase-2-harness-report.md.
 
     services:
       postgres:
@@ -190,6 +201,8 @@ jobs:
       - name: Create and seed the test database
         run: bundle exec rake db:drop db:create:all db:install
 
-      - name: Suite (expected red until Phase 5)
-        if: always()
+      # `if: always()` went with continue-on-error: with the job gating, a step
+      # that runs regardless of whether the database step succeeded only turns
+      # one clear failure into two confusing ones.
+      - name: Suite
         run: bundle exec rake

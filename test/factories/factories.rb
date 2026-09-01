@@ -1,16 +1,26 @@
 require File.join(File.dirname(__FILE__), '../support/factory_helpers')
 include FactoryHelpers
 
-FactoryGirl.define do
+# The predecessor gem, at 4.7, always used the :create strategy for
+# `association`, whatever
+# strategy the parent factory was run with. factory_bot 5.0 flipped the default
+# to use_parent_strategy = true, so `build(:page)` started *building* its
+# section instead of creating it -- an unsaved Section, which SectionNode#section=
+# hands to ancestry's parent=, which raises "No child ancestry for new record".
+# 21 unit errors, on both bundles. Restore the 4.7 behaviour: this phase is a
+# port, and changing association strategy is a behaviour change, not a rename.
+FactoryBot.use_parent_strategy = false
+
+FactoryBot.define do
   factory :category, :class => Cms::Category do |m|
     m.association :category_type
     m.sequence(:name) { |n| "TestCategory#{n}" }
   end
 
   factory :root_section, :class => Cms::Section do |m|
-    m.name "My Site"
-    m.path "/"
-    m.root true
+    m.name { "My Site" }
+    m.path { "/" }
+    m.root { true }
     m.groups { Cms::Group.all }
   end
 
@@ -20,10 +30,10 @@ FactoryGirl.define do
 
   factory :connector, :class => Cms::Connector do |m|
     m.association :page
-    m.page_version 1
-    m.container "main"
+    m.page_version { 1 }
+    m.container { "main" }
     m.association :connectable, :factory => :html_block
-    m.connectable_version 1
+    m.connectable_version { 1 }
   end
 
 # Duplication between :file_block and :image_block
@@ -42,7 +52,7 @@ FactoryGirl.define do
       )
       f.attachments.first.attachable = f
     }
-    m.publish_on_save true
+    m.publish_on_save { true }
   end
 
   factory :file_block, :class => Cms::FileBlock do |m|
@@ -57,7 +67,7 @@ FactoryGirl.define do
       f.attachments.first.attachable = f
 
     }
-    m.publish_on_save true
+    m.publish_on_save { true }
 
   end
 
@@ -83,12 +93,12 @@ FactoryGirl.define do
   end
 
   factory :cms_group_type, :class => Cms::GroupType do |m|
-    m.name "CMS User"
-    m.cms_access true
+    m.name { "CMS User" }
+    m.cms_access { true }
   end
 
   factory :portlet, :class => DynamicPortlet do |m|
-    m.name "Sample Portlet"
+    m.name { "Sample Portlet" }
   end
 
 # Portlets happen to be Non-versioned right now, but this abstracts that in case it changes later.
@@ -96,29 +106,29 @@ FactoryGirl.define do
   end
 
   factory :html_block, :class => Cms::HtmlBlock do |m|
-    m.name "About Us"
-    m.content "<h1>About Us</h1>\n<p>Lorem ipsum dolor sit amet...</p>"
+    m.name { "About Us" }
+    m.content { "<h1>About Us</h1>\n<p>Lorem ipsum dolor sit amet...</p>" }
   end
 
   factory :link, :class => Cms::Link do |m|
     m.association :section
     m.sequence(:name) { |n| "Link #{n}" }
-    m.publish_on_save true
+    m.publish_on_save { true }
   end
 
   factory :page, :class => Cms::Page do |m|
     m.sequence(:name) { |n| "Page #{n}" }
     m.path { |a| "/#{a.name.gsub(/\s/, '_').downcase}" }
-    m.template_file_name "default.html.erb"
+    m.template_file_name { "default.html.erb" }
     m.association :section
   end
 
 
   factory :page_partial, :class => Cms::PagePartial do |m|
     m.sequence(:name) { |n| "_page_partial_#{n}" }
-    m.format "html"
-    m.handler "erb"
-    m.body "Nonblank"
+    m.format { "html" }
+    m.handler { "erb" }
+    m.body { "Nonblank" }
   end
 
   factory :page_route, :class => Cms::PageRoute do |m|
@@ -129,9 +139,9 @@ FactoryGirl.define do
 
   factory :page_template, :class => Cms::PageTemplate do |m|
     m.sequence(:name) { |n| "page_template_#{n}" }
-    m.format "html"
-    m.handler "erb"
-    m.body %q{<html>
+    m.format { "html" }
+    m.handler { "erb" }
+    m.body { %q{<html>
   <head>
     <title>
       <%= page_title %>
@@ -141,19 +151,24 @@ FactoryGirl.define do
   <body>
     <%= container :main %>
   </body>
-</html>}
+</html>} }
   end
 
   Cms::Authoring::PERMISSIONS.each do |p|
     perm_name = "#{p.to_s}_permission".to_sym
     factory perm_name, :class => Cms::Permission do |m|
-      m.name p
+      # `p` is the block parameter of the enclosing PERMISSIONS.each, not
+      # Kernel#p: inside an attribute block `self` is the evaluator, so the bare
+      # name resolves to the local only because the local is in lexical scope.
+      # Each iteration closes over its own binding, so every permission factory
+      # still gets its own name.
+      m.name { p }
     end
   end
 
   factory :section, :class => Cms::Section do |m|
-    m.name "Test"
-    m.path "/test"
+    m.name { "Test" }
+    m.path { "/test" }
     m.parent { find_or_create_root_section }
   end
 
@@ -162,14 +177,14 @@ FactoryGirl.define do
   factory :public_page, :class => Cms::Page do |m|
     m.sequence(:name) { |n| "Page #{n}" }
     m.path { |a| "/#{a.name.gsub(/\s/, '_').downcase}" }
-    m.template_file_name "default.html.erb"
+    m.template_file_name { "default.html.erb" }
     m.association :section, :factory => :public_section
-    m.publish_on_save true
+    m.publish_on_save { true }
   end
 
   factory :public_section, :class => Cms::Section do |m|
-    m.name "Test"
-    m.path "/test"
+    m.name { "Test" }
+    m.path { "/test" }
     m.parent { find_or_create_root_section }
     m.after(:create) { |section|
       section.allow_groups = :all
@@ -177,13 +192,13 @@ FactoryGirl.define do
   end
 
   factory :protected_section, :class => Cms::Section do |m|
-    m.name "Protected Section"
-    m.path "/protected-section"
+    m.name { "Protected Section" }
+    m.path { "/protected-section" }
     m.parent { find_or_create_root_section }
     m.after(:create) { |protected_section|
-      secret_group = FactoryGirl.create(:group, :name => "Secret")
+      secret_group = FactoryBot.create(:group, :name => "Secret")
       secret_group.sections << protected_section
-      privileged_user = FactoryGirl.create(:user, :login => "privileged")
+      privileged_user = FactoryBot.create(:user, :login => "privileged")
       privileged_user.groups << secret_group
     }
 
@@ -205,11 +220,11 @@ FactoryGirl.define do
   end
 
   factory :user, :class => Cms::User do |m|
-    m.first_name "Test"
-    m.last_name "User"
+    m.first_name { "Test" }
+    m.last_name { "User" }
     m.sequence(:login) { |n| "test_#{n}" }
     m.email { |a| "#{a.login}@example.com" }
-    m.password "password"
+    m.password { "password" }
     m.password_confirmation { |a| a.password }
   end
 
@@ -228,7 +243,7 @@ FactoryGirl.define do
 
   factory :cms_admin, :parent => :user do |m|
     m.after(:create) { |user|
-      group = FactoryGirl.create(:group, :group_type => FactoryGirl.create(:group_type, :cms_access => true))
+      group = FactoryBot.create(:group, :group_type => FactoryBot.create(:group_type, :cms_access => true))
       Cms::Authoring::PERMISSIONS.each do |p|
         group.permissions << create_or_find_permission_named(p)
       end
@@ -238,7 +253,7 @@ FactoryGirl.define do
 
   factory :content_editor, :parent => :user do |m|
     m.after(:create) { |user|
-      group = FactoryGirl.create(:group, :group_type => FactoryGirl.create(:group_type, :cms_access => true))
+      group = FactoryBot.create(:group, :group_type => FactoryBot.create(:group_type, :cms_access => true))
       Cms::Authoring::EDITOR_PERMISSIONS.each do |p|
         group.permissions << create_or_find_permission_named(p)
       end
@@ -249,23 +264,23 @@ FactoryGirl.define do
   # This is just for CMS testing
   factory :portlet_with_helper, :class => UsesHelperPortlet do |portlet|
     transient do
-      page_path "/random"
+      page_path { "/random" }
     end
-    portlet.name "ProductCatalog"
+    portlet.name { "ProductCatalog" }
     portlet.after(:create) do |content, evaluator|
-      page = FactoryGirl.create(:public_page, path: evaluator.page_path)
+      page = FactoryBot.create(:public_page, path: evaluator.page_path)
       page.add_content(content)
       page.publish!
     end
   end
 
   factory :product, :class => Dummy::Product do |product|
-    product.name "Product"
+    product.name { "Product" }
     product.sequence(:slug) { |n| "/product-#{n}" }
   end
 
   factory :form, :class => Cms::Form do |form|
-    form.name "Form"
+    form.name { "Form" }
     form.sequence(:slug) { |n| "/form-#{n}" }
   end
 end

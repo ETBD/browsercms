@@ -6,8 +6,8 @@ When /^I add content to the main area of the page$/ do
 end
 
 Given /^a product "([^"]*)" has been added to a page$/ do |name|
-  @product = FactoryGirl.create(:product, :name => name)
-  page = FactoryGirl.create(:public_page)
+  @product = FactoryBot.create(:product, :name => name)
+  page = FactoryBot.create(:public_page)
   page.add_content(@product)
   page.publish!
 end
@@ -17,29 +17,29 @@ When /^I view that product$/ do
 end
 
 Given /^html with "([^"]*)" has been added to a page$/ do |body|
-  @block = FactoryGirl.create(:html_block, :content => body)
-  page = FactoryGirl.create(:public_page)
+  @block = FactoryBot.create(:html_block, :content => body)
+  page = FactoryBot.create(:public_page)
   page.add_content(@block)
   page.publish!
 end
 
 Given /^portlet named "([^"]*)" has been added to a page$/ do |name|
-  @subject = FactoryGirl.create(:portlet, :name=>name)
-  page = FactoryGirl.create(:public_page)
+  @subject = FactoryBot.create(:portlet, :name=>name)
+  page = FactoryBot.create(:public_page)
   page.add_content(@subject)
   page.publish!
 end
 
 Given /^there is a page route for viewing a product$/ do
-  page = FactoryGirl.create(:public_page, :name=>"View Product", :path=>"/products/view")
+  page = FactoryBot.create(:public_page, :name=>"View Product", :path=>"/products/view")
   route = page.page_routes.build(:name=>"Product", :pattern=>"/products/view/:id", :code=>"# Non-blank code")
   route.save!
 
-  portlet_page = FactoryGirl.create(:public_page, :name=>"Product Catalog", :path=>"/products")
+  portlet_page = FactoryBot.create(:public_page, :name=>"Product Catalog", :path=>"/products")
   portlet_page.add_content(ProductCatalogPortlet.create!(:name=>"Catalog"))
   portlet_page.publish!
 
-  FactoryGirl.create(:product, name: "A Widget", slug: "/widget")
+  FactoryBot.create(:product, name: "A Widget", slug: "/widget")
 end
 
 When /^I view a page that lists products$/ do
@@ -56,7 +56,7 @@ end
 EXPECTED_PRODUCT_NAME = "About Us"
 
 Given(/^a product with a slug "(.*?)" exists$/) do |slug|
-  FactoryGirl.create(:product, name: EXPECTED_PRODUCT_NAME, slug: slug)
+  FactoryBot.create(:product, name: EXPECTED_PRODUCT_NAME, slug: slug)
   expect(Dummy::Product.with_slug(slug)).not_to eq(nil)
 end
 
@@ -73,7 +73,7 @@ Then /^I should see that product's page$/ do
 end
 
 Given(/^a product exists with two versions$/) do
-  @product = FactoryGirl.create(:product, name: "Version 1")
+  @product = FactoryBot.create(:product, name: "Version 1")
   @product.name = "Version 2"
   @product.save!
   expect(@product.versions.size).to eq(2)

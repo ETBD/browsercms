@@ -2,14 +2,33 @@
 
 **Implements:** [`phase-2-harness-migration.md`](phase-2-harness-migration.md)
 **Entry condition:** Phase 1 complete — `Gemfile.next` resolves to 5.0.7.2 and boots; the 4.2 bundle is green at 75.82% ([`phase-1-gem-report.md`](phase-1-gem-report.md)).
-**Rails at the end of this phase:** `Gemfile` still 4.2.11.3 and still green. The suite runs *and passes* on `Gemfile.next`, and its CI job stops being allowed to fail.
+**Rails at the end of this phase:** `Gemfile` still 4.2.11.3 and still green. The suite runs *and passes* on `Gemfile.next`, and its CI job stops being allowed to fail. *(Outcome: the first half held; the suite runs on `Gemfile.next` but does not yet pass. See the status block below.)*
 
 Same shape as the [Phase 0](phase-0-implementation-plan.md) and [Phase 1](phase-1-implementation-plan.md) plans: findings first, then an ordered work stream, then the decisions that need a human.
 
-> ### Status: not started — plan only
-> **Nothing in this document has been applied.** The working tree is unchanged at `29b7f92e`. Every edit Phase 2 needs is specified here, as code where the exact text matters ([A.1](#a1--the-two-fixes), [C.1](#c1--the-shim), [C.3](#c3--rails-controller-testing), [F.2](#f--coverage-21-alone)) and as a located, counted change list where it does not.
+> ### Status: applied — 11 of 12 exit criteria met
+> **All seven stages have been implemented.** The 4.2 suite is green at exit 0 with
+> 996 tests and cucumber 154/154; on Rails 5 the unit suite went from 323 errors to 3
+> and cucumber from "does not load" to 154 scenarios collected.
 >
-> Measured results go in [`phase-2-harness-report.md`](phase-2-harness-report.md); that file, not this one, is the record.
+> **Criterion 3 is not met and could not have been** — five *application* defects
+> remain on Rails 5, and no harness work reaches them ([1.4](#14-exit-criterion-3-is-unreachable-inside-this-phases-own-scope)
+> said as much before any code was written). The `next-rails` CI job was made gating
+> anyway, deliberately, so it is **red until Phase 3 lands**.
+>
+> **This document is the plan as it was written, and it was wrong in six places** —
+> two of which broke the 4.2 suite before being caught. Do not read the sections below
+> as a description of what was built. In particular:
+> [B.2](#b2--requires-and-constants)'s instruction to drop `require 'minitest/unit'`
+> is unimplementable as stated; [B.3](#b3--static-attributes-50-sites-reviewed-not-sedd)
+> undercounts by two and misses factory_bot 5's association-strategy change;
+> [C](#c--controller-test-api-22) does not know that `EngineControllerHacks` exists,
+> which is why the shim did not fire on the first attempt; and stage
+> [E](#e--cucumber-stack-and-housekeeping-24--25) misses that Rails 5.0 removed
+> `Kernel#silence_stream`, which was the single thing stopping cucumber from loading.
+>
+> **[`phase-2-harness-report.md`](phase-2-harness-report.md) is the record** — the
+> measurements, the six corrections, and the five remaining defects by name.
 
 ---
 

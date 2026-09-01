@@ -7,9 +7,12 @@ Dummy::Application.configure do
   # and recreated between test runs. Don't rely on the data there!
   config.cache_classes = true
 
-  # Configure static asset server for tests with Cache-Control for performance
-  config.serve_static_assets = true
-  config.static_cache_control = "public, max-age=3600"
+  # The two static-asset config keys that used to sit here were deleted, not
+  # renamed. 4.2 spells them serve_static_files / static_cache_control; 5.0
+  # spells them public_file_server.enabled / .headers and removed the older
+  # names, so no spelling works on both. But both frameworks already default
+  # the file server to true, so those lines only ever set the default -- and a
+  # max-age header on static assets in the *test* environment buys nothing.
 
   config.eager_load = false
 

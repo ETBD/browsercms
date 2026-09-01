@@ -5,7 +5,7 @@ class DesignControllerTest < ActionController::TestCase
   # route (/design/:page) always supplies one. Calling it bare rendered nil,
   # which fell through to a design/show template that has never existed.
   test "should get show" do
-    get :show, page: "dashboard"
+    get :show, params: {page: "dashboard"}
     assert_response :success
   end
 

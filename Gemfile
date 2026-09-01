@@ -62,14 +62,22 @@ end
 group :test do
   gem 'pg'
   gem 'sass-rails'
-  gem 'simplecov', require: false
+  gem 'simplecov', '~> 0.22.0', require: false
 
-  gem 'poltergeist'
   gem 'm'
 
   gem 'single_test'
-  gem 'factory_girl_rails'
-  gem 'mocha', require: false
+  # 4.2 has assert_template and assigns built in; 5.0 extracted them. The gem
+  # cannot resolve on 4.2 (it needs actionpack >= 5.0.1.rc1), so this is one of
+  # the few places a next? branch is not a smell -- it is the only expressible
+  # form. Criterion 12 is about test *code*, not the Gemfile.
+  gem 'rails-controller-testing' if next?
+  gem 'factory_bot_rails', '~> 5.2'
+  # 1.x, not 2.x: `mocha/minitest` exists from 1.5.0, so 1.x satisfies the Rails 5
+  # requirement in full. Mocha 2.0 removes the legacy entry points *and* changes
+  # any_instance and configuration behaviour across 109 call sites -- a
+  # modernisation with no Rails deadline. See phase-2-implementation-plan.md D4.
+  gem 'mocha', '~> 1.16', require: false
 
   # Cucumber and dependencies
   gem 'capybara'

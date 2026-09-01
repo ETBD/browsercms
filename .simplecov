@@ -6,6 +6,11 @@
 SimpleCov.start 'rails' do
   merge_timeout 3600
 
+  # Reported, not gated -- coverage:check prints the branch figure but has no
+  # branch floor to compare it against. Phase 3 sets one once there is a
+  # measured number to set it from.
+  enable_coverage :branch
+
   # Each suite must name itself. Left to CommandGuesser, two suites can guess the
   # same name and overwrite each other's entry in the resultset. Set by the
   # Rakefile, one prerequisite task per suite.
@@ -15,11 +20,13 @@ SimpleCov.start 'rails' do
   # here. demo.seeds.rb alone is 249 counted lines -- 13.5% of every missed line
   # in the report -- and it is a seed script: loading it would run it.
   #
-  # Block filters, not regexes: SimpleCov 0.12's parse_filter accepts only a
-  # String, an Array, a Filter or a block, and raises ArgumentError on a Regexp.
-  # defaults.rb rescues that around `load .simplecov`, so a regex filter does
-  # not fail loudly -- it abandons the rest of this file with one line on
-  # stderr. Match on the absolute path; that is what #filename returns.
+  # Block filters, not regexes. This was once a hard constraint: SimpleCov 0.12's
+  # parse_filter accepted only a String, an Array, a Filter or a block and raised
+  # ArgumentError on a Regexp, which defaults.rb rescued around `load .simplecov`
+  # -- so a regex filter did not fail loudly, it abandoned the rest of this file
+  # with one line on stderr. 0.22 accepts regexes and the constraint is gone; the
+  # block form is kept because it works and rewriting it would buy nothing.
+  # Match on the absolute path; that is what #filename returns.
   add_filter { |src| src.filename.include?("/lib/generators/") && src.filename.include?("/templates/") }
   add_filter { |src| src.filename.include?("/lib/templates/") }
 

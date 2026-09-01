@@ -9,8 +9,15 @@ class ActiveRecord::BaseTest < ActiveSupport::TestCase
   end
 end
 
-# Must use vanilla TestCase to avoid ActiveRecord setup conflicts
-class TestExtensions < MiniTest::Unit
+# Must use vanilla TestCase to avoid ActiveRecord setup conflicts.
+#
+# This said `MiniTest::Unit`, which is not a TestCase at all -- it is the
+# deprecated compatibility shim class from minitest's legacy unit file, so
+# minitest never
+# collected these two tests and they have not run in years. The 4.x name the
+# author wanted, MiniTest::Unit::TestCase, is Minitest::Test on minitest 5.
+# Naming it correctly is what makes them run. See phase-2-harness-report.md.
+class TestExtensions < Minitest::Test
 
   #"If a connection throws an error when established, then we consider the database to not exist."
   def test_throws_error

@@ -227,7 +227,14 @@ module Cms
         # 1. If the record is unchanged, no save is performed, but true is returned. (Skipping after_save callbacks)
         # 2. If its an update, a new version is created and that is saved.
         # 3. If new record, its version is set to 1, and its published if needed.
-        def create_or_update
+        #
+        # Rails 4.2 declares `def create_or_update` (persistence.rb:502) and Rails 5.0
+        # declares `def create_or_update(*args, &block)` (persistence.rb:546). Accept and
+        # forward whatever the framework passes: on 4.2 nothing is passed, so *args is
+        # empty and this behaves exactly as the zero-arity version did. Without it, every
+        # save on Rails 5 raises ArgumentError -- 320 of the 323 unit errors Phase 1
+        # measured. See docs/rails-upgrade/phase-1-gem-report.md, P1-2.
+        def create_or_update(*args, &block)
           logger.debug { "#{self.class}#create_or_update called. Published = #{!!publish_on_save}" }
           self.skip_callbacks = false
           unless different_from_last_draft?

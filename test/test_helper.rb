@@ -6,11 +6,18 @@ require "rails/test_help"
 
 Rails.backtrace_cleaner.remove_silencers!
 
-require 'minitest/unit'
 # Load support files
 Dir["#{File.dirname(__FILE__)}/support/**/*.rb"].each { |f| require f }
 
-require 'mocha/setup'
+# mocha 1.x's minitest adapter assigns ::MiniTest::Assertion
+# (mocha/integration/mini_test/adapter.rb:26). That camelCase alias is defined
+# in exactly one place -- the deprecated legacy shim file this phase stopped
+# requiring -- and
+# which also drags in the deprecated Minitest::Unit::TestCase shim. Alias the
+# one constant mocha needs instead of requiring the whole deprecated file.
+# Delete this when mocha goes to 2.x, which dropped the legacy reference.
+MiniTest = Minitest unless defined?(MiniTest)
+require 'mocha/minitest'
 require 'action_view/test_case'
 
 # Allows Generators to be unit tested
@@ -20,8 +27,8 @@ require 'mock_file'
 require 'support/factory_helpers'
 require 'support/database_helpers'
 
-# I'm not sure why ANY of these FactoryGirl requires are necessary at all.
-require 'factory_girl'
+# I'm not sure why ANY of these FactoryBot requires are necessary at all.
+require 'factory_bot'
 require 'factories/factories'
 require 'factories/attachable_factories'
 
@@ -49,7 +56,7 @@ DatabaseCleaner.clean_with(:truncation)
 
 class ActiveSupport::TestCase
 
-  include FactoryGirl::Syntax::Methods
+  include FactoryBot::Syntax::Methods
   include FactoryHelpers
 
   # Add more helper methods to be used by all tests here...
@@ -65,7 +72,7 @@ class ActiveSupport::TestCase
       fields = options[factory_name]
       fields.each do |f|
         define_method("test_validates_presence_of_#{f}") do
-          model = FactoryGirl.build(factory_name, f => nil)
+          model = FactoryBot.build(factory_name, f => nil)
           assert !model.valid?
           assert_has_error_on model, f, "can't be blank"
         end
@@ -77,8 +84,8 @@ class ActiveSupport::TestCase
       fields = options[class_name]
       fields.each do |f|
         define_method("test_validates_uniqueness_of_#{f}") do
-          existing_model = FactoryGirl.create(class_name)
-          model = FactoryGirl.build(class_name, f => existing_model.send(f))
+          existing_model = FactoryBot.create(class_name)
+          model = FactoryBot.build(class_name, f => existing_model.send(f))
           assert !model.valid?
           assert_has_error_on model, f, "has already been taken"
         end
@@ -199,14 +206,23 @@ module Cms::ControllerTestHelper
 end
 
 class ActionController::TestCase
-  include Devise::TestHelpers
+  include Devise::Test::ControllerHelpers
 end
 
+# Defined here and included nowhere -- and login_as asserts 403 immediately
+# after a successful login, so it could not have passed in years. Converted
+# rather than deleted: this phase is a port, and "no tests were lost" is easier
+# to defend if nothing was removed. Flagged for Phase 3's dead-code item.
+#
+# Note this call is NOT covered by the KeywordControllerArgs shim above: that
+# prepends to ActionController::TestCase, and integration tests go through
+# ActionDispatch::IntegrationTest#process, which has a different signature
+# entirely. If this module is ever revived it will break on the 4.2 bundle.
 module Cms::IntegrationTestHelper
   def login_as(user, password = "password")
     get login_url
     assert_response :success
-    post login_url, :login => user.login, :password => password
+    post login_url, params: {:login => user.login, :password => password}
     assert_response 403
     assert_equal "", @response.body, "Checking post login"
     assert flash[:notice]
@@ -245,6 +261,45 @@ if Gem::Version.new(RUBY_VERSION)>=Gem::Version.new('2.6.0')
   else
     puts "Monkeypatch for ActionController::TestResponse no longer needed"
   end
+end
+
+# Rails 4.2's ActionController::TestCase#process has three positional slots and
+# no keyword handling: `def process(action, http_method = 'GET', *args)` then
+# `parameters, session, flash = args` (actionpack-4.2.11.3 test_case.rb:595).
+# So `get :show, params: {id: 5}` arrives as params[:params][:id] and the
+# controller never sees :id -- a silently wrong answer, not an error. Rails 5.0
+# accepts both forms; 5.1 accepts only the keyword form. No single form works on
+# both, so the call sites are written the 5.x way and translated back here, once,
+# for the 4.2 bundle only. Delete this whole block in Phase 5.
+if Gem::Version.new(Rails.version) < Gem::Version.new('5.0.0')
+  module KeywordControllerArgs
+    TRANSLATABLE = [:params, :session, :flash].freeze
+
+    # 4.2 has no positional slot for any of these. Zero call sites use one today
+    # (no xhr / xml_http_request / as: / format: anywhere in test/functional).
+    # Raise rather than drop: a dropped keyword is a test that passes for the
+    # wrong reason, which is the one failure mode this shim must not have.
+    UNTRANSLATABLE = [:xhr, :as, :format, :body, :env, :headers].freeze
+
+    def process(action, http_method = 'GET', *args)
+      kwargs = args.first
+      keyword_form = args.length == 1 && kwargs.is_a?(Hash) && kwargs.any? &&
+        kwargs.keys.all? { |k| TRANSLATABLE.include?(k) || UNTRANSLATABLE.include?(k) }
+      return super unless keyword_form
+
+      unsupported = kwargs.keys & UNTRANSLATABLE
+      unless unsupported.empty?
+        raise ArgumentError, "Rails 4.2 cannot express #{unsupported.inspect} in a " \
+                             "controller test. Rewrite the call, or extend the shim " \
+                             "in test/test_helper.rb -- do not drop the keyword."
+      end
+
+      super(action, http_method, kwargs[:params], kwargs[:session], kwargs[:flash])
+    end
+  end
+
+  ActionController::TestCase.prepend(KeywordControllerArgs)
+  puts 'Translating keyword controller-test args back to Rails 4.2 positional form'
 end
 
 # Disable url encoding for Paperclip, it erroneously encodes the '?'

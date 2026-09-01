@@ -16,8 +16,12 @@ Dummy::Application.configure do
   # Allows the CMS to use a single domain (with no caching or redirects).
   config.cms.use_single_domain = true
 
-  # Disable Rails's static asset server (Apache or nginx will already do this)
-  config.serve_static_assets = true # We are in 'faux' production mode, so we want Rails to serve the assets.
+  # The static-asset config key that used to sit here was deleted rather than
+  # renamed -- it has no cross-version spelling (see test.rb). This is the one
+  # place serving static assets is load-bearing rather than incidental, because
+  # the dummy app runs in 'faux' production mode; both 4.2 and 5.0 default it
+  # to true and nothing in the chain sets it false, so deleting the line
+  # preserves the behaviour.
 
   # Compress JavaScripts and CSS
   config.assets.compress = true

@@ -45,7 +45,7 @@ class PermissionsForContentBlockControllerTest < ActionController::TestCase
 
   test "GET show allows any user" do
     expect_success
-    get :show, :id => 5
+    get :show, params: {:id => 5}
   end
 
   test "GET new allows any user" do
@@ -60,12 +60,12 @@ class PermissionsForContentBlockControllerTest < ActionController::TestCase
 
   test "GET version allows any user" do
     expect_success
-    get :version, :id => 5, :version => 3
+    get :version, params: {:id => 5, :version => 3}
   end
 
   test "GET versions allows any user" do
     expect_success
-    get :versions, :id => 5
+    get :versions, params: {:id => 5}
   end
 
 end

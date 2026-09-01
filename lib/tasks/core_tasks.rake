@@ -36,11 +36,28 @@ namespace :coverage do
   desc 'Fail if merged coverage fell below the recorded Phase 0 baseline'
   task :check do
     require 'json'
-    threshold = Float(ENV.fetch('COVERAGE_MINIMUM', '75.82'))
+    # 78.35, not the 75.82 Phase 0 recorded: the simplecov 0.12 -> 0.22 bump
+    # changed the instrument, not the tests. Measured across that bump on
+    # identical code, the covered-line count was identical at 4901 and only the
+    # denominator moved, 6460 -> 6255, because 0.18+ narrowed what counts as a
+    # relevant line. See docs/rails-upgrade/phase-2-harness-report.md.
+    threshold = Float(ENV.fetch('COVERAGE_MINIMUM', '78.35'))
     path = 'coverage/.last_run.json'
     abort "#{path} is missing -- did the suite run?" unless File.exist?(path)
 
-    actual = JSON.parse(File.read(path)).fetch('result').fetch('covered_percent')
+    result = JSON.parse(File.read(path)).fetch('result')
+
+    # simplecov < 0.18 wrote {"result": {"covered_percent": 75.82}}. From 0.18 that
+    # key is gone and the shape is {"result": {"line": 75.82}}, plus "branch" once
+    # enable_coverage :branch is on. Accept either, so the gate keeps working across
+    # the bump -- and abort on neither, rather than comparing nil to a Float.
+    actual = result['line'] || result['covered_percent']
+    abort "#{path} has no line-coverage key (got #{result.keys.inspect})" if actual.nil?
+
+    # Reported, not gated: there is no committed branch baseline, and inventing a
+    # floor in the same commit that first measures the number would be gating on
+    # something nobody has looked at. Phase 3 sets the floor.
+    puts format('Branch coverage %.2f%%', result['branch']) if result['branch']
     if actual < threshold
       abort format('Coverage %.2f%% is below the %.2f%% baseline.', actual, threshold)
     end

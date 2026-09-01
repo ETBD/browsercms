@@ -5,19 +5,19 @@ require 'simplecov'
 require File.expand_path("../../../test/dummy/config/environment.rb", __FILE__)
 ENV["RAILS_ROOT"] ||= File.dirname(__FILE__) + "../../../test/dummy"
 
-require 'factory_girl'
-# require 'factory_girl/step_definitions'
+require 'factory_bot'
+# require 'factory_bot/step_definitions'
 require File.join(File.dirname(__FILE__), '../../test/factories/factories')
 require File.join(File.dirname(__FILE__), '../../test/factories/attachable_factories')
-World(FactoryGirl::Syntax::Methods)
+World(FactoryBot::Syntax::Methods)
 
 require 'aruba/cucumber'
 
-require 'capybara/poltergeist'
-
 require 'capybara/dsl'
-#Capybara.javascript_driver = :poltergeist
-#Capybara.default_driver = :poltergeist
+# poltergeist deleted: it drives PhantomJS, which was abandoned in 2018, and
+# nothing here ever selected it. There are no @javascript scenarios and no
+# Capybara driver is assigned anywhere, so the require and its two commented-out
+# driver assignments were the whole of its presence. Phase 1, P1-7.
 
 Before do
   # Configure where Aruba generates files.
@@ -82,6 +82,25 @@ end
 # Load the seed data once at the start of the test run.
 # By doing this here, and using transaction strategy, we ensure the fastest possible tests.
 DatabaseCleaner.clean_with :truncation
-silence_stream(STDOUT) do
+# Seeding is noisy and the output tells you nothing. This used to call
+# Kernel#silence_stream, which Rails 4.2 deprecated and 5.0 removed outright --
+# on the next bundle it raised NoMethodError right here and took the whole
+# cucumber run down before a single scenario was collected.
+#
+# 5.0 keeps the implementation, but as a private instance method on
+# ActiveSupport::Testing::Stream, a module meant to be mixed into test cases and
+# one that does not exist at all on 4.2. So there is no name that resolves on
+# both. It is six lines; define it locally and neither version matters.
+def without_output_from(stream)
+  original = stream.dup
+  stream.reopen(IO::NULL)
+  stream.sync = true
+  yield
+ensure
+  stream.reopen(original)
+  original.close
+end
+
+without_output_from(STDOUT) do
   require File.join(File.dirname(__FILE__), '../../db/seeds.rb')
 end
