@@ -15,6 +15,20 @@ Same shape as the [Phase 0](phase-0-implementation-plan.md), [Phase 1](phase-1-i
 >
 > Net: the doc's "~96 mechanical changes" is **~89 edits**, they are not all mechanical,
 > and the ordering matters more than the doc implies.
+>
+> **Three items were added after this plan's first draft**, from a second reading of
+> Phase 2's residue. Two of them are the Rails 5 asset chain
+> ([1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration-says-so),
+> [1.15](#115-sprockets-rails-3-requires-every-referenced-asset-to-be-declared)) — **132
+> of the 148 cucumber failures, and the last thing standing between this phase and
+> criterion 16.** The first draft named the symptom in a contingency and said "scope it
+> as its own item"; **stage D′** is that item. The third is a second signature override
+> of exactly the kind Phase 2 fixed
+> ([1.16](#116-save-is-the-same-signature-override-that-p1-2-was)). None of the three is
+> a mechanical rename and the first is not strictly backwards-compatible, so all three
+> are argued in [D6](#d6--how-far-to-move-ckeditor_rails),
+> [D7](#d7--how-to-satisfy-sprockets-rails-3) and
+> [D8](#d8--the-save-override-forwards-and-that-changes-behaviour).
 
 ---
 
@@ -226,6 +240,74 @@ Worth knowing before you start: the codebase already mixes both spellings — 9 
 
 Four further sites live in `test/`; they are outside every exit criterion's scope and outside this phase.
 
+### 1.14 `ckeditor_rails` 4.3.4 is Rails-4-only at runtime, and no declaration says so
+
+Phase 2's report lists `couldn't find file 'ckeditor-jquery'` among five remaining defects and attributes **132 of the 148 cucumber failures** to it. It is not in the phase document's work items, and this plan's first draft said only *"scope it as its own item rather than letting it hold the phase open."* This is that item.
+
+The cause is a `case` statement in the gem's entry point — [`ckeditor_rails-4.3.4/lib/ckeditor-rails.rb`](../../vendor/bundle/gems/ckeditor_rails-4.3.4/lib/ckeditor-rails.rb):
+
+```ruby
+module Ckeditor
+  module Rails
+    case ::Rails.version.to_s
+    when /^4/       then require 'ckeditor-rails/engine'
+    when /^3\.[12]/ then require 'ckeditor-rails/engine3'
+    when /^3\.[0]/  then require 'ckeditor-rails/railtie'
+    end
+  end
+end
+```
+
+On Rails 5 **no branch matches**, so `Ckeditor::Rails::Engine` — the `::Rails::Engine` subclass declared in `lib/ckeditor-rails/engine.rb` — is never defined. That class is the only thing that puts the gem's directories on the asset load path, and the file the CMS layout needs is at `lib/assets/javascripts/ckeditor-jquery.js`, under the engine's default `lib/assets` path. With no engine, that directory is invisible to sprockets, and `//= require ckeditor-jquery` at [`app/assets/javascripts/bcms/ckeditor.js:5`](../../app/assets/javascripts/bcms/ckeditor.js#L5) cannot resolve. Every page that renders the CMS layout then raises `ActionView::Template::Error`.
+
+**No instrument in Phase 1 or Phase 2 could have caught this.** [`browsercms.gemspec:51`](../../browsercms.gemspec#L51) declares `ckeditor_rails ~> 4.3.0` with no Rails constraint, and Phase 1's offline scan reads declared requirements — there are none to read. `bundle_report` searches for newer *compatible* versions, and 4.3.4 is compatible by every declaration it makes. Phase 1's boot smoke test booted; it just never rendered a view. Both locks resolve 4.3.4 today ([`Gemfile.lock:93`](../../Gemfile.lock#L93), [`Gemfile.next.lock:97`](../../Gemfile.next.lock#L97)). The lesson is `panoramic`'s, from the opposite direction: **a declared requirement is not a compatibility claim, and a boot is not a render.**
+
+The gem's `when` clause widens to `/^[45]/` at **4.5.10** and to `/^[4567]/` by 4.17.0. Only 4.3.4 is vendored here, so confirm the exact first-working release against rubygems at implementation time rather than trusting that number.
+
+**The catch is that this gem's version *is* CKEditor's version.** 4.3.4 → 4.5.10 moves the bundled editor two minor versions; 4.16+ also changes the default skin from `moono` to `moono-lisa`. This is the WYSIWYG editor in a CMS, and the cucumber suite has **zero `@javascript` scenarios** — so no test in this repository can tell you the editor still works after the bump. See [D6](#d6--how-far-to-move-ckeditor_rails).
+
+### 1.15 sprockets-rails 3 requires every referenced asset to be declared
+
+This one is in no phase document at all, and it is the next failure sitting *behind* [1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration-says-so).
+
+The two locks differ: [`Gemfile.lock:291`](../../Gemfile.lock#L291) has **sprockets-rails 2.3.3**, [`Gemfile.next.lock:301`](../../Gemfile.next.lock#L301) has **3.2.2**. Version 3 raises `Sprockets::Rails::Helper::AssetNotPrecompiled` for any asset referenced through `image_tag` / `asset_path` that is not reachable from `config.assets.precompile` or an `app/assets/config/manifest.js`. This engine has neither for images: [`lib/cms/engine.rb:122-133`](../../lib/cms/engine.rb#L122) lists eight named JS/CSS files plus `jquery`, and `app/assets/config/` does not exist in this repository.
+
+The first asset that trips it is `cms/logo.png`, from [`app/views/layouts/cms/_main_menu.html.erb:5`](../../app/views/layouts/cms/_main_menu.html.erb#L5):
+
+```erb
+<%= link_to image_tag('cms/logo.png', class: 'main-logo'), "/" %>
+```
+
+The file is real and on disk. It is simply undeclared, which 2.3.3 tolerated and 3.2.2 does not.
+
+**It is the first, not the only one.** This is the single item in the phase with no measured upper bound: fix, re-run, read the next asset name, repeat. Budget stage D′ accordingly and re-scope out loud if it goes deep, rather than absorbing it silently. [D7](#d7--how-to-satisfy-sprockets-rails-3) picks the exit that closes the whole class instead of the instances — and whichever is chosen, **it belongs in the engine, not in `test/dummy/`.** A consuming application hits exactly this wall at [Phase 5](phase-5-the-5.0-bump.md), and a dummy-app fix does not travel to it.
+
+### 1.16 `save!` is the same signature override that P1-2 was
+
+[`lib/cms/behaviors/versioning.rb:271`](../../lib/cms/behaviors/versioning.rb#L271), in `Versioning::InstanceMethods`:
+
+```ruby
+def save!(perform_validations=true)
+  save(:validate => perform_validations) || raise(ActiveRecord::RecordNotSaved.new(errors.full_messages))
+end
+```
+
+Nothing in Rails calls `save!` with a positional boolean. Both frameworks call it with an **options hash**, from the collection-association insert path:
+
+| | Framework call site | Signature it is calling into |
+|---|---|---|
+| 4.2 | [`has_many_association.rb:39`](../../vendor/bundle/gems/activerecord-4.2.11.3/lib/active_record/associations/has_many_association.rb#L39) — `record.save!(:validate => validate)` | `validations.rb:42` — `save!(options={})` |
+| 5.0 | [`collection_association.rb:510`](../../vendor/bundle/gems/activerecord-5.0.7.2/lib/active_record/associations/collection_association.rb#L510) — `record.save!(validate: validate, &block)` | `persistence.rb:159` — `save!(*args, &block)` |
+
+Two consequences, one per bundle:
+
+- **On both**, `perform_validations` is bound to `{validate: false}` — a Hash, and therefore truthy — so the override calls `save(validate: true)` and validations run in precisely the path where the framework asked for them to be skipped. Silently wrong on 4.2 today.
+- **On 5.0 additionally, the block is dropped.** `collection_association.rb:501` passes `{ @_was_loaded = loaded? }` into `insert_record`, and 5.0's `save!(*args, &block)` forwards it to `create_or_update(*args, &block)`, which yields it after the insert. Phase 2 taught `create_or_update` to accept and forward that block ([P1-2](phase-1-gem-report.md#open-items)); this override sits *above* it in the chain and throws the block away before it ever gets there.
+
+So it is the same defect Phase 2 fixed, one method up — and the Phase 2 fix is what makes the gap reachable. It does not raise, which is why nothing has caught it. The remedy has the same shape as P1-2's, and it is a behaviour change: [D8](#d8--the-save-override-forwards-and-that-changes-behaviour).
+
+Distinguish it from the sibling already flagged in [D3](#d3--guestuserupdate_attributes-becomes-an-alias): [`guest_user.rb:52`](../../app/models/cms/guest_user.rb#L52)'s `def save(perform_validation=true)` returns `false` unconditionally, so its arity genuinely does not matter. That one is a guard. This one is not.
+
 ---
 
 ## 2. Execution order
@@ -236,7 +318,8 @@ Four further sites live in `test/`; they are outside every exit criterion's scop
 | **A′** | — | Re-measure both bundles. The residue is what actually scopes C. | S |
 | **B** | *prereq* ([1.11](#111-criterion-2-is-not-verifiable-inside-this-phases-own-scope)) | The forced-flag test borrowed from Phase 4 — the oracle for stage C | S |
 | **C** | 3.1 | The `belongs_to` audit, 29 sites, verified against B | **L — the only stage requiring judgement** |
-| **D** | 3.1 | `deliver_now` ×1; `responders` in the gemspec | S |
+| **D** | 3.1 | `deliver_now` ×1; `responders` in the gemspec; the `save!` override forwards ([1.16](#116-save-is-the-same-signature-override-that-p1-2-was)) | S |
+| **D′** | *new* 3.5 ([1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration-says-so), [1.15](#115-sprockets-rails-3-requires-every-referenced-asset-to-be-declared)) | `ckeditor_rails` on a release that loads under Rails 5; the engine's images declared to sprockets 3; a cucumber number that means something | **M, with an unbounded tail** |
 | **E** | 3.2 / 3.3 / 3.4 | `_filter`→`_action` ×34; `update_attributes`→`update` ×14 + the guard; `render text:` ×4; `.uniq`→`.distinct` ×1; `HashWithIndifferentAccess` ×2 | M |
 | **F** | 3.4 | `to_version400.rb` deleted; the two non-deletions recorded | XS |
 | **G** | exit | Both bundles measured; branch-coverage floor set; `next-rails` green; report | S |
@@ -245,7 +328,9 @@ Four further sites live in `test/`; they are outside every exit criterion's scop
 
 **B before C** because C is 29 judgement calls with no oracle otherwise ([1.10](#110-two-of-the-docs-four-near-certain-optional-true-candidates-are-already-validated-as-required), [1.11](#111-criterion-2-is-not-verifiable-inside-this-phases-own-scope)).
 
-**D before E** because D is the last of the 5.0-breaking set; once it lands, everything remaining is a 5.1-or-later concern and the phase can be cut short without leaving the bump blocked.
+**D and D′ are the last of the 5.0-breaking set**; once they land, everything remaining is a 5.1-or-later concern and the phase can be cut short without leaving the bump blocked.
+
+**D′ is placed here rather than earlier** because nothing in B or C depends on it — but **pull it forward ahead of B if A′'s cucumber number is still dominated by the asset error**, which is the likely outcome: [1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration-says-so) alone is 132 of 148 failures. Until it clears, cucumber cannot tell you anything about the other four defects in Phase 2's §5, and stage G has to close them.
 
 **After every stage: the 4.2 suite must still be green at 78.35% with cucumber 154/154.** Same rule as Phase 2, same reason — checking once at the end tells you a test was lost without telling you which stage lost it.
 
@@ -334,6 +419,60 @@ Commit the 24 model sites and the 5 behavior sites separately. The behavior site
 
 **`responders` in the gemspec, unconstrained** — [1.12](#112-responders-must-be-declared-without-a-version-constraint). Add near the other `add_dependency` lines with a one-line comment saying it is currently transitive via devise and that the six `respond_with`/`respond_to` sites should not depend on that. Re-run `bundle install` (`bundle lock` is enough) on **both** Gemfiles and confirm the locks do not move — if either does, the constraint was wrong.
 
+**The `save!` override forwards** — [1.16](#116-save-is-the-same-signature-override-that-p1-2-was), decided by [D8](#d8--the-save-override-forwards-and-that-changes-behaviour). Own commit; it is the only change in stage D that alters behaviour. [`versioning.rb:271`](../../lib/cms/behaviors/versioning.rb#L271) takes the same shape Phase 2 gave `create_or_update` one method below it, with a comment that names the call sites so the splat does not read as unused:
+
+```ruby
+        # Rails never calls save! with a positional boolean. 4.2 calls it as
+        # save!(:validate => x) (has_many_association.rb:39) and 5.0 as
+        # save!(validate: x, &block) (collection_association.rb:510) -- so the old
+        # `perform_validations` parameter was being handed a truthy Hash, and on 5.0 the
+        # block that create_or_update yields after insert was being dropped here before
+        # it could reach the (*args, &block) signature Phase 2 gave that method. Same
+        # defect as P1-2, one method up. See docs/rails-upgrade/phase-1-gem-report.md.
+        def save!(*args, &block)
+          save(*args, &block) || raise(ActiveRecord::RecordNotSaved.new(errors.full_messages))
+        end
+```
+
+`save` with no arguments already defaults to validating, so a bare `record.save!` is unchanged. The behaviour that *does* change is the autosave path, where validations will now correctly be skipped — run the full suite on **both** bundles after this commit and read the diff in failures carefully, because a test that was passing on accidental validation will surface here and that is the fix working, not the fix breaking.
+
+### D′ — The Rails 5 asset chain (new work item 3.5)
+
+Two changes, in this order, because the second is invisible until the first lands. **Neither is a code fix and neither is a rename** — this is the one stage whose work the phase document's "backwards-compatible mechanical change" contract does not describe. Do not start it until [D6](#d6--how-far-to-move-ckeditor_rails) and [D7](#d7--how-to-satisfy-sprockets-rails-3) are answered.
+
+#### D′.1 — `ckeditor_rails` onto a release that loads under Rails 5
+
+The constraint is at [`browsercms.gemspec:51`](../../browsercms.gemspec#L51), and the gemspec already carries the `NEXT_BOOT` pattern for three other gems ([`:45`](../../browsercms.gemspec#L45), [`:54`](../../browsercms.gemspec#L54), [`:62`](../../browsercms.gemspec#L62)), so whichever way [D6](#d6--how-far-to-move-ckeditor_rails) goes there is a shape to follow:
+
+```ruby
+  # 4.3.4 dispatches its Railtie on `case ::Rails.version` and has no Rails 5 branch, so
+  # under 5.0 the gem defines no Rails::Engine at all, its lib/assets never joins the
+  # asset load path, and `//= require ckeditor-jquery` (bcms/ckeditor.js:5) cannot
+  # resolve -- which takes down every page rendering the CMS layout. The version tracks
+  # CKEditor itself, so this is an editor upgrade as well as a gem bump. See D6.
+  s.add_dependency("ckeditor_rails", NEXT_BOOT ? "~> 4.5" : "~> 4.3.0")
+```
+
+- [ ] `couldn't find file 'ckeditor-jquery'` gone from the Rails 5 functional and cucumber logs
+- [ ] `Gemfile.lock` unchanged — inspect the diff; this must not move the 4.2 bundle
+- [ ] **Open the editor by hand on Rails 5 and edit a block.** Zero `@javascript` scenarios means no test here can do it for you ([1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration-says-so))
+
+#### D′.2 — Declare the engine's assets to sprockets 3
+
+[1.15](#115-sprockets-rails-3-requires-every-referenced-asset-to-be-declared), decided by [D7](#d7--how-to-satisfy-sprockets-rails-3). Iterate: run, read the raised asset name, declare it, run again. `cms/logo.png` is the first and will not be the last.
+
+Wherever the declaration goes, it goes in **the engine** — [`lib/cms/engine.rb`](../../lib/cms/engine.rb) or a new `app/assets/config/manifest.js` — and **not** in `test/dummy/`. A dummy-app fix turns this phase's suite green and leaves every consuming application to hit the identical wall at [Phase 5](phase-5-the-5.0-bump.md), where it is far more expensive to diagnose.
+
+- [ ] No `AssetNotPrecompiled` and no `couldn't find file` in the Rails 5 logs
+- [ ] The declaration is in the engine — `git diff` for this stage shows nothing under `test/dummy/`
+- [ ] 4.2 still green at 78.35% with cucumber 154/154. sprockets-rails 2.3.3 does not enforce the declaration, so it must be a no-op on the default bundle
+
+#### D′.3 — Read the cucumber number
+
+This is the first point in the phase at which the Rails 5 cucumber figure means anything. Record it in the report against Phase 0's baseline (154/154, default profile) and against the four remaining defects from Phase 2's §5 — some of those have been sitting behind *this* stage rather than behind stage A, and A′ could not have told them apart.
+
+If the sprockets iteration goes deeper than a handful of assets, **stop and re-scope out loud** ([§6](#6-contingencies)). It is the only item in the phase with no measured upper bound, and it is a better contingency than a surprise.
+
 ### E — The renames (3.2 / 3.3 / 3.4)
 
 Five independent changes; one commit each, so a bisect lands on one of them.
@@ -401,6 +540,36 @@ Per [1.7](#17-two-of-the-three-dead-code-deletions-are-not-dead). Relocating `Cm
 
 `test/` has four `_filter` sites. They are outside criterion 3's grep (`app/ lib/`) and outside this phase. They break at 5.1 exactly like the production ones, so they will be picked up by the 5.1 hop's detection run. Not doing them here keeps stage E's commit reviewable as one mechanical change to one tree.
 
+### D6 — How far to move `ckeditor_rails`
+
+Per [1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration-says-so). The gem's version *is* CKEditor's version, so this is an editor upgrade wearing a dependency bump's clothes, and no test in this repository can see the difference.
+
+**(a)** `NEXT_BOOT ? "~> 4.5" : "~> 4.3.0"` — the next bundle gets a modern editor, 4.2 is untouched. The two bundles then run two different WYSIWYG editors, which is a real divergence in the thing users actually touch.
+**(b)** `"~> 4.5"` unconditionally — both bundles get the same editor, so anything the upgrade breaks in the CMS UI is caught by the 4.2 suite as well, which is the suite that is currently green. Costs a change to a bundle Phase 0 baselined, and moves `Gemfile.lock`.
+**(c)** Pin the oldest release that works on Rails 5 (reported as 4.5.10) for the next bundle — the smallest possible editor jump, and it keeps the `moono` default skin that 4.16+ replaces with `moono-lisa`.
+
+**Recommendation: (c) now, (b) at [Phase 5](phase-5-the-5.0-bump.md).** A default-skin change is a visible, user-facing difference in a CMS's editor; taking it during an upgrade means a UI regression and a Rails regression land in the same commit and get diagnosed as each other. Whichever is chosen, the by-hand editor check in D′.1 is not optional — it is the only oracle that exists.
+
+**This needs a human** for the same reason [D1](#d1--the-migration-item-leaves-the-phase) does: it changes what the phase document says the phase contains, and it is the phase's first gem bump.
+
+### D7 — How to satisfy sprockets-rails 3
+
+Per [1.15](#115-sprockets-rails-3-requires-every-referenced-asset-to-be-declared).
+
+**(a)** Add `app/assets/config/manifest.js` to the engine with `link_tree ../images` — the Rails 5+ idiom, declares the whole class at once, and it is what the engine needs at every subsequent hop anyway.
+**(b)** Extend `config.assets.precompile` in [`lib/cms/engine.rb:122`](../../lib/cms/engine.rb#L122) — consistent with the eight entries already there, and it grows by one line per asset discovered.
+**(c)** Set `config.assets.check_precompiled_asset = false` in the dummy app's `test.rb` — makes the suite pass today and guarantees the same failure reappears inside a consuming application at Phase 5.
+
+**Recommendation: (a).** It is the destination, it is one file, and it fixes the class rather than the instances — which also bounds the one unbounded item in this phase. **(c) is the trap**: it converts a loud test failure into a silent production one, which is exactly the failure mode [`RAILS_UPGRADE_TEST_PRIORITY.md`](../../RAILS_UPGRADE_TEST_PRIORITY.md) ranks the whole plan by. (b) works and is more in keeping with the file, but it books another discovery round at every later hop.
+
+### D8 — The `save!` override forwards, and that changes behaviour
+
+Per [1.16](#116-save-is-the-same-signature-override-that-p1-2-was). Taking `(*args, &block)` and forwarding is the only signature that matches what both frameworks actually call, and it is what Phase 2 already did to `create_or_update` directly beneath it.
+
+But it is a **behaviour change in a phase whose contract is that there are none**: autosaved children of a versioned record are validated today, in a path where Rails asked for `validate: false`, and after the fix they will not be. If any test depends on that accidental validation it will go red, and the red will be correct.
+
+**Flagging rather than deciding.** The alternative is to leave it, note it beside the `guest_user.rb:52` sibling already recorded in [D3](#d3--guestuserupdate_attributes-becomes-an-alias), and hand both to [Phase 4](phase-4-characterization-tests.md) to characterise before either is touched — which is the more conservative reading of this phase's contract, and defensible. What is *not* defensible is leaving it undocumented: it is a live defect on the bundle that is in production today, not a Rails 5 concern.
+
 ---
 
 ## 5. Risks
@@ -414,6 +583,8 @@ Per [1.7](#17-two-of-the-three-dead-code-deletions-are-not-dead). Relocating `Cm
 | R5 | **`render html:` without `html_safe`** escapes the markup, changing the two cucumber-covered responses in a way `plain:` would not have. | The instruction in [E](#e--the-renames-32--33--34) is explicit, and `acts_as_content_page.feature` asserts on the rendered content. Run cucumber, not just the unit suite, after that commit. |
 | R6 | **Coverage moves and nobody can say why.** 34 renamed callbacks and 14 renamed calls do not change line counts, but the deleted file and the deleted skip lines do. | Same discipline as Phase 2's stage F: measure on a cleared resultset, immediately before and after the commits that delete code, so an instrument change is distinguishable from a lost test. |
 | R7 | **`responders` in the gemspec moves a lock.** | Check both locks after `bundle lock`. If either moves, the constraint was wrong — remove it rather than accepting the drift ([1.12](#112-responders-must-be-declared-without-a-version-constraint)). |
+| R8 | **The `ckeditor_rails` bump breaks the CMS editor** and nothing notices. Zero `@javascript` scenarios means the suite cannot see a WYSIWYG regression; a green cucumber run proves the *asset resolves*, not that the editor works. | [D6](#d6--how-far-to-move-ckeditor_rails)'s recommendation minimises the editor jump, and D′.1 requires a by-hand check. If (b) is chosen instead, the 4.2 suite becomes a second detector — which is the main argument for it. |
+| R9 | **The sprockets chain is deeper than a handful of assets** and stage D′ becomes the phase. It has no measured upper bound; only the first failure has been observed. | [D7](#d7--how-to-satisfy-sprockets-rails-3)(a) closes the whole class in one file rather than one asset at a time. If it still runs long, [§6](#6-contingencies) says to re-scope out loud rather than absorb it — the phase can ship A–D and hand D′ on. |
 
 ---
 
@@ -423,11 +594,13 @@ Per [1.7](#17-two-of-the-three-dead-code-deletions-are-not-dead). Relocating `Cm
 
 - `StaleObjectError` on `Cms::Page` ×2 and `PublishableTestCase#test_publish_on_save` are plausibly downstream of the `create_or_update` arity change interacting with optimistic locking — application behaviour, in scope, but they need diagnosis before they can be scoped.
 - `PortletTest#test_.blacklist` is one expectation diff. Small.
-- **`couldn't find file 'ckeditor-jquery'`** is asset-pipeline resolution under 5.0, not a code fix, and it accounted for 132 of the 148 cucumber failures. It is a gem-and-pipeline problem in the shape of [Phase 1](phase-1-gem-report.md)'s work. **If it is still there after stage A, it is the thing standing between this phase and a green `next-rails` job, and it does not belong to any of this phase's 89 edits.** Scope it as its own item rather than letting it hold the phase open.
+- **`couldn't find file 'ckeditor-jquery'` is now scoped** — it is [1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration-says-so), it is a gem bump rather than a code fix, and it owns **stage D′** together with the sprockets-rails 3 problem sitting behind it ([1.15](#115-sprockets-rails-3-requires-every-referenced-asset-to-be-declared)). It accounted for 132 of the 148 cucumber failures, so **expect A′'s cucumber number to still be dominated by it**; that is not evidence stage A failed. Read the functional suite, not cucumber, to judge stage A.
+
+**If stage D′ runs long**, it is still this phase's — the `next-rails` job cannot go green without it, and criterion 16 is the phase's purpose. But it is the one item here with no measured upper bound, so re-scope out loud rather than letting it hold the phase open silently. A–D unblock the bump on their own; D′ can be handed to [Phase 5](phase-5-the-5.0-bump.md) with an honest gap recorded, at the cost of leaving the CI job red and Phase 2's gating decision looking wrong.
 
 **`use_route`** ([`test/support/engine_controller_hacks.rb`](../../test/support/engine_controller_hacks.rb), Phase 2 §5) is removed in 5.0 and now arrives at controllers as an ordinary request parameter. Phase 2 measured that the obvious replacement produces 16 `UrlGenerationError`s and left the finding in the module's comment. It is test-harness work, it needs a per-test-class decision about engine versus application route sets, and it has no backwards-compatible form. **Not this phase.** It will surface in stage A′; expect it and do not chase it.
 
-**If the phase has to be cut short**, stages A through D are the part that unblocks the bump. E and F break at 5.1 and 6.0 and can slip to [Phase 6](phase-6-subsequent-hops.md) without blocking anything — at the cost the phase document names: debugging them simultaneously with a version change.
+**If the phase has to be cut short**, stages A through D′ are the part that unblocks the bump. E and F break at 5.1 and 6.0 and can slip to [Phase 6](phase-6-subsequent-hops.md) without blocking anything — at the cost the phase document names: debugging them simultaneously with a version change.
 
 ---
 
@@ -453,8 +626,11 @@ Per [1.7](#17-two-of-the-three-dead-code-deletions-are-not-dead). Relocating `Cm
 
 **Two criteria pass before the phase begins** (7 and 9), **one is struck** (12), and **one cannot be verified without borrowed work** (2, via [D2](#d2--borrowing-the-forced-flag-test-from-phase-4)).
 
-**Add a sixteenth, because it is the phase's actual purpose and nothing above measures it:**
+**Add two more.** The first is the phase's actual purpose and nothing above measures it; the second is what now stands in the first's way, and it has a failure mode that passes silently.
 
-| # | Criterion | Verification |
-|---|---|---|
-| **16** | **The `next-rails` CI job is green** | It was made gating in Phase 2 with the explicit statement that *"CI is red on every PR until Phase 3 lands."* Turning that red green is what this phase is for, and criterion 1's "suite green on both Gemfiles" is the same claim stated less directly. If the `ckeditor-jquery` asset problem ([§6](#6-contingencies)) is what stands in the way, say so explicitly in the report and scope it — do not let it quietly redefine "done." |
+| # | Criterion | Stage | Verification |
+|---|---|---|---|
+| **16** | **The `next-rails` CI job is green** | G | It was made gating in Phase 2 with the explicit statement that *"CI is red on every PR until Phase 3 lands."* Turning that red green is what this phase is for, and criterion 1's "suite green on both Gemfiles" is the same claim stated less directly. The `ckeditor-jquery` asset problem is no longer an excuse for missing it — it is scoped as stage D′ |
+| **17** | **The Rails 5 asset chain is clear, and the fix is in the engine** | D′ | Two halves. First: no `couldn't find file` and no `AssetNotPrecompiled` in the `Gemfile.next` functional and cucumber logs. Second, and the one that can pass wrongly: `git diff` for stage D′ touches [`lib/cms/engine.rb`](../../lib/cms/engine.rb), `app/assets/config/manifest.js` or [`browsercms.gemspec`](../../browsercms.gemspec) and **nothing under `test/dummy/`** — a dummy-app fix satisfies the first half and hands every consuming application the same failure at [Phase 5](phase-5-the-5.0-bump.md) ([D7](#d7--how-to-satisfy-sprockets-rails-3)) |
+
+Neither is a grep over `app/` and `lib/`, and criterion 14 is not endangered by either: the `NEXT_BOOT` conditional D′.1 needs lives in the gemspec, which [1.12](#112-responders-must-be-declared-without-a-version-constraint) already establishes is outside criterion 14's scope.
