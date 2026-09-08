@@ -13,8 +13,9 @@
 `Gemfile.next` went from **"the functional suite does not load and 148 of 154 cucumber
 scenarios fail"** to **85 of 88 functional and 150 of 154 cucumber passing.**
 
-**Criterion 16 is not met.** Nine failures/errors remain on 5.0, so the `next-rails` job is
-still red. None of them is a work item of this phase, and none is caused by it: seven are one
+**Criterion 16 is not met, and has moved to [Phase 4](phase-4-characterization-tests.md).**
+Ten failures/errors remain on 5.0, so the `next-rails` job is still red — and stays gating,
+deliberately. None of them is a work item of this phase, and none is caused by it: seven are one
 pre-existing optimistic-locking cluster (ruled out against this phase's only behaviour change
 by a control run — §6), and three are singletons. They need characterization before they can
 be fixed, which is [Phase 4](phase-4-characterization-tests.md)'s job. **The honest summary is
@@ -401,12 +402,16 @@ that changes is autosave.
 
 ## 6. Rails 5 residue
 
-Nine failures/errors across four suites, and they are **essentially one cluster plus three
-singletons.**
+Ten failures/errors across three suites, and they are **essentially one cluster plus three
+singletons** — seven plus three.
+
+They reconcile against §2 per-suite: unit `1F/2E` = 2 `StaleObjectError` + `test_publish_on_save`;
+functional `0F/3E` = 2 missing-partial + `test_complete_no_tasks`; cucumber 4 failed = 2
+`manage_images` + 1 `sitemap/pages` + 1 `portlets_with_params`.
 
 ### The cluster: content updates do not persist on 5.0
 
-Seven of the nine are one problem wearing four different masks:
+Seven of the ten are one problem wearing four different masks:
 
 | Where | Symptom |
 |---|---|
@@ -503,7 +508,7 @@ record shows they were checked rather than assumed.
 
 | # | Criterion | Verification | Result |
 |---|---|---|---|
-| 1 | Suite green on both Gemfiles | both jobs | 4.2 ✅ green (1007, 0F/0E, cucumber 154/154); 5.0 ❌ — 9 remaining, §6 |
+| 1 | Suite green on the `Gemfile` (4.2) bundle | `test` job | ✅ **green** — 1007 tests, 0F/0E, cucumber 154/154, line 78.37% / branch 70.83%. ⚠️ Criterion **amended**: it originally read "both Gemfiles", and the 5.0 half moved to [Phase 4](phase-4-characterization-tests.md) alongside criterion 16 (5.0 is at **10** remaining, §6) |
 | 2 | All 29 `belongs_to` audited | `grep -rnE "belongs_to.*required(:\| =>) *false" app/ lib/` | ✅ **22** declarations + **7** left bare = 29. Two of the 22 are dynamic (§4, C) and are asserted through the reflection in stage B instead |
 | 3 | No `*_filter` callbacks | `grep -rnE "\b(before\|after\|around\|skip_before\|skip_after)_filter\b" app/ lib/` | ✅ **0** (also 0 across `test/ spec/ features/`) |
 | 4 | No `update_attributes` calls | `grep -rn "update_attributes" app/ lib/` | ✅ **0 calls.** Survivors: the definition at [`guest_user.rb:66`](../../app/models/cms/guest_user.rb#L66) (kept by [D3](phase-3-implementation-plan.md#d3--guestuserupdate_attributes-becomes-an-alias)), plus 3 comment lines that name the Rails API. The criterion anticipates 1–2 |
@@ -517,32 +522,50 @@ record shows they were checked rather than assumed.
 | 12 | ~~Migrations version-qualified~~ | — | **Struck** ([D1](phase-3-implementation-plan.md#d1--the-migration-item-leaves-the-phase)). Moved to Phase 5 / the 5.1 hop |
 | 13 | `find_by_*` untouched | `git diff` for `find_by_login\|path\|code\|from_path` | ✅ **0 changed lines** |
 | 14 | Zero `NextRails` branches | `grep -rn "NextRails" app/ lib/` | ✅ **0**. The one conditional the phase needed (`NEXT_BOOT`, D′.1) is in the gemspec, which is outside this criterion's scope |
-| 15 | Deployed to production on 4.2 | — | ❌ **not done** — §9 |
-| 16 | The `next-rails` CI job is green | both jobs | ❌ **not yet** — 9 failures/errors remain across the 5.0 suites, down from "the functional suite does not load and 148 of 154 cucumber scenarios fail". §6 shows they are one pre-existing cluster plus three singletons, none of them a Phase 3 work item and none caused by this phase |
+| 15 | ~~Deployed to production on 4.2~~ | — | **Struck — does not apply to an engine.** browsercms ships as a gem; there is no production to deploy it to. The equivalent (release, then upgrade the consuming `cms` app) happens once, after the last hop. See the README's note on engine-vs-application criteria |
+| 16 | ~~The `next-rails` CI job is green~~ | both jobs | **Moved to [Phase 4](phase-4-characterization-tests.md), work item 4.0.** ❌ **not met** — **10** failures/errors remain across the 5.0 suites, down from "the functional suite does not load and 148 of 154 cucumber scenarios fail". §6 shows they are one pre-existing cluster plus three singletons, none of them a Phase 3 work item and none caused by this phase. The job **stays gating and red** in the meantime — see [`ci.yml`](../../.github/workflows/ci.yml) |
 | 17 | Rails 5 asset chain clear, fix in the engine | logs + `git diff` | ✅ **both halves.** No `couldn't find file` and no `AssetNotPrecompiled` anywhere in the 5.0 logs; `git diff --name-only -- test/dummy/` is **empty**, so the fix is in [`lib/cms/engine.rb`](../../lib/cms/engine.rb) and [`browsercms.gemspec`](../../browsercms.gemspec) where a consuming application will inherit it |
 
 ---
 
 ## 9. Open items
 
-- **Commits.** Every change below is in the working tree; the per-stage commits the plan calls
-  for were not made because `git commit` was refused by the environment's permission layer.
-  The stage boundaries are clean and the intended commit split is in §4.
+- ~~**Commits.**~~ ✅ Resolved, with a caveat. The work is committed as `70b22bdf`
+  ("[CMS-420] phase 3 mostly done", 61 files) and pushed to
+  `origin/feature/cms-420-migrate-tests`. What did *not* happen is the per-stage split the plan
+  calls for in §4 — `git commit` was refused by the environment's permission layer during
+  execution, so it landed as one tree. **Decision: leave it.** The branch is already pushed, and
+  re-splitting means rewriting shared history for bisect value that the stage-by-stage record in
+  §4 already provides in prose.
 - ~~**Coverage.**~~ ✅ Resolved. Measured on a cleared resultset: line **78.37%**, branch
   **70.83%**, and `COVERAGE_MINIMUM_BRANCH` is now set and gating (§4, G.2).
 - **The by-hand CKEditor check (D′.1) has not been done.** The gem moved 4.3.4 → 4.5.11, which
   is two minor versions of CKEditor itself, and there are zero `@javascript` scenarios — a green
   cucumber run proves the asset *resolves*, not that the editor *works*. This is the only oracle
   that exists and it is a human's to run.
-- **Criterion 15 (deployed to production on 4.2)** — not done.
+  **It requires the next bundle.** The bump is gated behind `NEXT_BOOT` at
+  [`browsercms.gemspec:64`](../../browsercms.gemspec#L64), which is true only when
+  `BUNDLE_GEMFILE` ends with `Gemfile.next`; `Gemfile.lock` still resolves **4.3.4** and
+  `Gemfile.next.lock` resolves **4.5.11**. So pointing a downstream `cms` app at this branch
+  exercises the *old* editor — that app sets its own `BUNDLE_GEMFILE`, so `NEXT_BOOT` is false.
+  Check it via the dummy app under `BUNDLE_GEMFILE=Gemfile.next`, or with `ckeditor_rails
+  4.5.11` forced in the consuming app's own Gemfile. Also still open: the default-skin decision
+  at [the plan's D′.1 recommendation](phase-3-implementation-plan.md#L551).
+- ~~**Criterion 15 (deployed to production on 4.2)**~~ — **struck.** It assumes an
+  application; browsercms is an engine. See §8 and the README's note on engine-vs-application
+  criteria. The same objection applies to Phase 5's criterion 12 and Phase 6's criteria 10 and
+  B, which are recorded but not yet amended.
 - **Watch `test/dummy/db/schema.rb`.** Running the suite regenerates it from the live database:
   `app:test:prepare` rewrote it during this phase, dropping ~500 lines of dynamically-created
   test tables and reformatting it in 5.0's style. It was reverted, and criterion 17's
   "nothing under `test/dummy/`" check is clean — but it will come back on the next run, and
   committing it would be a silent, large, and entirely accidental change. Check
   `git status` for it before every commit.
-- **Criterion 16 is not met and the `next-rails` job stays red.** §6 is the argument for why
-  that is the right place to stop rather than a reason to keep going: what remains needs
-  characterization, which is [Phase 4](phase-4-characterization-tests.md)'s scope, and the
+- **Criterion 16 is not met, and has moved to [Phase 4](phase-4-characterization-tests.md) as
+  work item 4.0.** §6 is the argument for why this is the right place to stop rather than a
+  reason to keep going: what remains needs characterization, which is Phase 4's method, and the
   gating decision made in Phase 2 assumed Phase 3 would clear items that were in Phase 3's
-  scope. All of those are cleared.
+  scope. All of those are cleared. **The job stays gating and red** — a decision re-made
+  deliberately after this phase closed, so the red stays in the merge path. Two consequences to
+  carry: every PR is red until Phase 4 lands, and Phase 0's criteria 1–2 (a green run on the
+  default branch) cannot close until then either.

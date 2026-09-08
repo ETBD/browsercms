@@ -177,6 +177,12 @@ documented. The argument for it: a red job in the merge path is visible, and a
 missed. The cost: **CI is red on every PR until Phase 3 lands.** The job's comment
 block names all five defects so the red is legible rather than mysterious.
 
+> **Update after Phase 3.** All five were cleared and the job stayed red on ten
+> different failures, so the "until Phase 3" estimate above was wrong — though the
+> gating decision itself was re-made and kept. Turning the job green is now
+> [Phase 4](phase-4-characterization-tests.md)'s work item 4.0. See
+> [`phase-3-report.md` §6](phase-3-report.md).
+
 ### Newly found, deferred: `use_route`
 
 `EngineControllerHacks` injects `:use_route => :cms` into every functional request.

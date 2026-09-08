@@ -2,7 +2,9 @@
 
 **Implements:** [`phase-3-backwards-compatible-fixes.md`](phase-3-backwards-compatible-fixes.md)
 **Entry condition:** Phase 2 complete at 11 of 12 criteria — the 4.2 suite is green at **78.35%** with cucumber 154/154, and on `Gemfile.next` the unit suite runs at 756 tests / 2F / 3E while cucumber collects 154 scenarios and passes 6 ([`phase-2-harness-report.md`](phase-2-harness-report.md)).
-**Rails at the end of this phase:** `Gemfile` still 4.2.11.3, green, deployed. `Gemfile.next` green too — this is the phase where the `next-rails` job stops being red.
+**Rails at the end of this phase:** `Gemfile` still 4.2.11.3, green. `Gemfile.next` green too — this is the phase where the `next-rails` job stops being red.
+
+> ⚠️ **Both of those closing claims turned out to be wrong, and [`phase-3-report.md`](phase-3-report.md) — not this file — is the record.** "Deployed" does not apply to an engine (criterion 15 is struck; see the [README](README.md)), and the `next-rails` job did **not** go green: Phase 3 cleared all five defects it inherited and ten others remained, so criterion 16 moved to [Phase 4](phase-4-characterization-tests.md) as work item 4.0 and the job stays gating and red. The traceability row for criterion 16 below is left as written, because it records what the plan expected.
 
 Same shape as the [Phase 0](phase-0-implementation-plan.md), [Phase 1](phase-1-implementation-plan.md) and [Phase 2](phase-2-implementation-plan.md) plans: findings first, then an ordered work stream, then the decisions that need a human.
 

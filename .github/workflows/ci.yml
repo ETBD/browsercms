@@ -139,23 +139,46 @@ jobs:
     name: Rails 5.0 (Gemfile.next)
     runs-on: ubuntu-22.04
     timeout-minutes: 45
-    # GATING as of Phase 2, and currently RED on purpose.
+    # GATING, and RED until Phase 4.
     #
-    # Phase 2 took this job from "754 unit tests / 2 failures / 323 errors" down
-    # to five named application defects by borrowing two Phase 3 fixes; the
-    # harness itself is done. What is left is not harness work and no amount of
-    # it will help:
-    #   - 2x ActiveRecord::StaleObjectError on Cms::Page
-    #   - skip_callback :redirect_to_cms_site (content_controller.rb:11) -- 5.0
-    #     raises when the callback is not defined, and this one is a *load*
-    #     error, so it takes the whole functional suite down with it
-    #   - PublishableTestCase#test_publish_on_save
-    #   - PortletTest#test_.blacklist
+    # This is the dual-boot early-warning job. The `test` job above answers
+    # "did we break 4.2, which is what ships?"; this one answers "how close is
+    # Rails 5?" Every phase before the bump (Phase 5) is meant to be
+    # backwards-compatible, and this job is what proves the 5.0 half of that
+    # claim on every push rather than at bump time.
     #
-    # Those belong to Phase 3. This job was made gating anyway, deliberately, so
-    # the red is visible in the merge path rather than filed away in a report.
-    # It goes green when Phase 3 lands, not before.
-    # See docs/rails-upgrade/phase-2-harness-report.md.
+    # Phase 2 made it gating while it still held five defects that were all in
+    # Phase 3's scope. Phase 3 cleared every one of them and the job stayed
+    # red: ten failures remain across the 5.0 suites, none of them a Phase 3
+    # work item and none caused by it. They are a different kind of problem --
+    # they need characterization before they can be fixed.
+    #
+    #   - 7x ONE CLUSTER: content updates do not persist on 5.0. It wears four
+    #     masks: 2x ActiveRecord::StaleObjectError on Cms::Page (unit), 2x
+    #     "Missing partial cms/shared/_version_conflict_error" (functional),
+    #     2x manage_images.feature and 1x sitemap/pages.feature (cucumber).
+    #     The missing partial is a symptom of a symptom -- the update fails, the
+    #     controller re-renders the form, and that partial reference is broken
+    #     on 4.2 too; 4.2 simply never takes the branch. Ruled out against
+    #     Phase 3's single behaviour change by a control run.
+    #   - PublishableTestCase#test_publish_on_save (unit)
+    #   - Cms::TasksControllerTest#test_complete_no_tasks (functional) -- 5.0
+    #     stopped coercing "" to nil on integer casts
+    #   - features/portlets/portlets_with_params.feature (cucumber) -- renders
+    #     the page layout instead of the portlet's own content
+    #
+    # Also watch PortletTest#test_.blacklist: it passes, but it compares a
+    # class list whose order depends on load order, so treat it as flaky rather
+    # than fixed.
+    #
+    # Turning this job green is a Phase 4 exit criterion. It stays gating
+    # deliberately -- the red belongs in the merge path, not filed away in a
+    # report. Consequence to keep in mind: this also holds Phase 0's criteria
+    # 1-2 open, because the default branch cannot show a green run while this
+    # job gates red.
+    #
+    # See docs/rails-upgrade/phase-3-report.md section 6 for the failures, and
+    # phase-4-characterization-tests.md for who owns them.
 
     services:
       postgres:
