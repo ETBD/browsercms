@@ -53,7 +53,7 @@ authoritative ones. (The earlier run against a stale resultset also read 78.37% 
 contamination turned out not to have distorted anything, but that is now verified rather than
 assumed.)
 
-767 unit tests, up from 756: **+9** from the stage-B oracle, **+2** from the `GuestUser`
+767 unit tests, up from 756: **+9** from the stage-B audit test, **+2** from the `GuestUser`
 characterization pair (one of which is the deliberate skip, taking skips 3 → 4).
 
 ### Rails 5.0 (`Gemfile.next`)
@@ -237,7 +237,7 @@ Rails 5 functional errors went **30 → 3**, with no `AssetNotPrecompiled` and n
 `couldn't find file` anywhere in the logs. The change is in the engine; `git diff` for this
 stage touches nothing under `test/dummy/` (criterion 17, second half).
 
-### B — The oracle ✅
+### B — The audit test ✅
 
 [`test/unit/belongs_to_optionality_test.rb`](../../test/unit/belongs_to_optionality_test.rb),
 9 tests. Redesigned per §3.2; passes on both bundles.
@@ -541,7 +541,7 @@ record shows they were checked rather than assumed.
   **70.83%**, and `COVERAGE_MINIMUM_BRANCH` is now set and gating (§4, G.2).
 - **The by-hand CKEditor check (D′.1) has not been done.** The gem moved 4.3.4 → 4.5.11, which
   is two minor versions of CKEditor itself, and there are zero `@javascript` scenarios — a green
-  cucumber run proves the asset *resolves*, not that the editor *works*. This is the only oracle
+  cucumber run proves the asset *resolves*, not that the editor *works*. This is the only check
   that exists and it is a human's to run.
   **It requires the next bundle.** The bump is gated behind `NEXT_BOOT` at
   [`browsercms.gemspec:64`](../../browsercms.gemspec#L64), which is true only when

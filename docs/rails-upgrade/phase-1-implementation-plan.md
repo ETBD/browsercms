@@ -1,6 +1,7 @@
 # Phase 1 — Implementation Plan
 
 **Implements:** [`phase-1-gem-compatibility-and-dual-boot.md`](phase-1-gem-compatibility-and-dual-boot.md)
+**Exit criteria:** all **9** live in [`phase-1-gem-compatibility-and-dual-boot.md` § Exit criteria](phase-1-gem-compatibility-and-dual-boot.md#exit-criteria), not in this file. This plan references them by number throughout.
 **Entry condition:** Phase 0 complete — suite green, CI running, baseline committed ([`phase-0-baseline.md`](phase-0-baseline.md)).
 **Rails at the end of this phase:** `Gemfile` still 4.2.11.3 and still green. `Gemfile.next` resolves to 5.0.x and **boots**. The suite does not pass there, and is not expected to.
 

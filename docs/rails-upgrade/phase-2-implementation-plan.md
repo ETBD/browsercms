@@ -1,6 +1,7 @@
 # Phase 2 — Implementation Plan
 
 **Implements:** [`phase-2-harness-migration.md`](phase-2-harness-migration.md)
+**Exit criteria:** all **12** live in [`phase-2-harness-migration.md` § Exit criteria](phase-2-harness-migration.md#exit-criteria), not in this file. This plan references them by number throughout.
 **Entry condition:** Phase 1 complete — `Gemfile.next` resolves to 5.0.7.2 and boots; the 4.2 bundle is green at 75.82% ([`phase-1-gem-report.md`](phase-1-gem-report.md)).
 **Rails at the end of this phase:** `Gemfile` still 4.2.11.3 and still green. The suite runs *and passes* on `Gemfile.next`, and its CI job stops being allowed to fail. *(Outcome: the first half held; the suite runs on `Gemfile.next` but does not yet pass. See the status block below.)*
 

@@ -6,6 +6,24 @@
 
 ---
 
+## How these documents fit together
+
+Each phase has up to three files, and they have different jobs. Knowing which is which saves the most common confusion in this directory — *"where are the criteria?"*
+
+| File | Job | Authority |
+|---|---|---|
+| `phase-N-<name>.md` — **the phase file** | The **contract**. Goal, work items, and the numbered **exit criteria** | Owns the criteria. Every "criterion 8" anywhere in this directory means row 8 of *this* file's table |
+| `phase-N-implementation-plan.md` — **the plan** | The **approach**. Pre-flight findings, stage-by-stage order, decisions needing a human | Written *before* the work. Where a plan and its phase file disagree, the plan says so explicitly in its findings |
+| `phase-N-<report\|baseline\|gem-report>.md` — **the report** | The **record**. What was actually measured, which criteria passed, where the plan was wrong | **Supersedes the plan.** Each plan says so in its own header |
+
+Three rules that follow from the split, and are worth stating because each has already caught someone out:
+
+1. **Criteria are always numbered from the phase file**, never from the plan or the report. The plan's traceability table and the report's results table both reuse those numbers, abbreviated. If a number is referenced with no table in sight, the phase file is where it lives.
+2. **The count of criteria can change after a phase runs.** Rows get struck (they turn out to be impossible or inapplicable) or moved to another phase, and are marked in place rather than deleted so the numbering stays stable. So "14 of 14" and "17 rows" can both be true of the same table — read the struck rows before concluding a phase skipped something. Phase 3 is the worked example.
+3. **A plan is a hypothesis.** These were written from static reading; measurement has moved work items, struck criteria, and reversed conclusions in every phase so far. That is the process working. The report is where the truth ends up.
+
+---
+
 ## How to read a phase file
 
 Every file has the same five sections, in this order:

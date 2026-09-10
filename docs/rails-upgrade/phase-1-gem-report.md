@@ -16,7 +16,7 @@
 | `Gemfile.next` resolves | ✅ Rails **5.0.7.2**, zero remaining resolution blockers |
 | Rails **boots** under `Gemfile.next` | ✅ `rake -T` exits 0; the dummy app loads and prints `5.0.7.2` |
 | Default bundle still 4.2 and green | ✅ 994 tests, 0 failures, 0 errors; cucumber 154/154; coverage gate 75.82% |
-| `HTML::FullSanitizer` breakage | ✅ Confirmed — see [below](#the-htmlfullsanitizer-confirmation) |
+| `HTML::FullSanitizer` breakage | ✅ Confirmed — see [below](#the-htmlfullsanitizer-confirmation--criterion-7) |
 | Hard blockers with no path | **none** — `panoramic` was expected to be one and is not |
 | Suite under Rails 5.0 | ❌ Not expected to pass, and does not. **754 unit tests → 2 failures, 323 errors** — but see the shape of that number. |
 

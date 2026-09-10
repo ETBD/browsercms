@@ -1,6 +1,7 @@
 # Phase 3 — Implementation Plan
 
 **Implements:** [`phase-3-backwards-compatible-fixes.md`](phase-3-backwards-compatible-fixes.md)
+**Exit criteria:** all **17 rows (14 live)** live in [`phase-3-backwards-compatible-fixes.md` § Exit criteria](phase-3-backwards-compatible-fixes.md#exit-criteria), not in this file. This plan references them by number throughout. 12 and 15 are struck and 16 moved to Phase 4 — the table says which and why.
 **Entry condition:** Phase 2 complete at 11 of 12 criteria — the 4.2 suite is green at **78.35%** with cucumber 154/154, and on `Gemfile.next` the unit suite runs at 756 tests / 2F / 3E while cucumber collects 154 scenarios and passes 6 ([`phase-2-harness-report.md`](phase-2-harness-report.md)).
 **Rails at the end of this phase:** `Gemfile` still 4.2.11.3, green. `Gemfile.next` green too — this is the phase where the `next-rails` job stops being red.
 
@@ -318,7 +319,7 @@ Distinguish it from the sibling already flagged in [D3](#d3--guestuserupdate_att
 |---|---|---|---|
 | **A** | *new* ([1.3](#13-the-rails-5-load-error-is-a-deletion-and-it-is-the-highest-leverage-change-in-the-phase)) | Two orphan `skip_before_filter` lines deleted; a Rails 5 functional suite that loads | **XS, do first** |
 | **A′** | — | Re-measure both bundles. The residue is what actually scopes C. | S |
-| **B** | *prereq* ([1.11](#111-criterion-2-is-not-verifiable-inside-this-phases-own-scope)) | The forced-flag test borrowed from Phase 4 — the oracle for stage C | S |
+| **B** | *prereq* ([1.11](#111-criterion-2-is-not-verifiable-inside-this-phases-own-scope)) | The forced-flag test borrowed from Phase 4 — the audit test for stage C | S |
 | **C** | 3.1 | The `belongs_to` audit, 29 sites, verified against B | **L — the only stage requiring judgement** |
 | **D** | 3.1 | `deliver_now` ×1; `responders` in the gemspec; the `save!` override forwards ([1.16](#116-save-is-the-same-signature-override-that-p1-2-was)) | S |
 | **D′** | *new* 3.5 ([1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration-says-so), [1.15](#115-sprockets-rails-3-requires-every-referenced-asset-to-be-declared)) | `ckeditor_rails` on a release that loads under Rails 5; the engine's images declared to sprockets 3; a cucumber number that means something | **M, with an unbounded tail** |
@@ -328,7 +329,7 @@ Distinguish it from the sibling already flagged in [D3](#d3--guestuserupdate_att
 
 **A is first for the same reason Phase 2's stage A was**: it is a load error, so nothing downstream of it is measurable. Two deleted lines are expected to take the Rails 5 functional suite from "does not load" to a readable number, and to move most of the 148 cucumber failures. **Do not scope stage C or the contingencies until A′ has run** — the four other defects in Phase 2's §5 (`StaleObjectError` ×2, `PublishableTestCase#test_publish_on_save`, `PortletTest#test_.blacklist`, and the `ckeditor-jquery` asset resolution) are currently measured *behind* a load error, and some of them may be artefacts of it.
 
-**B before C** because C is 29 judgement calls with no oracle otherwise ([1.10](#110-two-of-the-docs-four-near-certain-optional-true-candidates-are-already-validated-as-required), [1.11](#111-criterion-2-is-not-verifiable-inside-this-phases-own-scope)).
+**B before C** because C is 29 judgement calls with no audit test otherwise ([1.10](#110-two-of-the-docs-four-near-certain-optional-true-candidates-are-already-validated-as-required), [1.11](#111-criterion-2-is-not-verifiable-inside-this-phases-own-scope)).
 
 **D and D′ are the last of the 5.0-breaking set**; once they land, everything remaining is a 5.1-or-later concern and the phase can be cut short without leaving the bump blocked.
 
@@ -384,7 +385,7 @@ One test, in `test/unit/` — enough to make stage C falsifiable and no more:
 # belongs_to_required_by_default is the host application's flag, not the engine's
 # (there is no load_defaults in this repo), so nothing in either bundle exercises
 # required-by-default against these models. This forces it on for the duration of
-# one sweep, which is the only oracle the belongs_to audit has. Phase 4 owns the
+# one sweep, which is the only check the belongs_to audit has. Phase 4 owns the
 # permanent version of this; borrowed here per D2.
 ```
 
@@ -522,7 +523,7 @@ Per [1.2](#12-the-migration-item-cannot-land-in-this-phase--and-does-not-break-a
 
 ### D2 — Borrowing the forced-flag test from Phase 4
 
-Per [1.11](#111-criterion-2-is-not-verifiable-inside-this-phases-own-scope). Same shape as Phase 2's [D1](phase-2-implementation-plan.md#d1--borrowing-two-fixes-from-phase-3), and the same justification: the alternative is shipping the phase's largest work item with no oracle at all. Phase 4 keeps ownership of the permanent version and of everything else in its scope. The README already notes Phases 3 and 4 can run in parallel, so this is a sequencing detail between them rather than a scope transfer.
+Per [1.11](#111-criterion-2-is-not-verifiable-inside-this-phases-own-scope). Same shape as Phase 2's [D1](phase-2-implementation-plan.md#d1--borrowing-two-fixes-from-phase-3), and the same justification: the alternative is shipping the phase's largest work item with no audit test at all. Phase 4 keeps ownership of the permanent version and of everything else in its scope. The README already notes Phases 3 and 4 can run in parallel, so this is a sequencing detail between them rather than a scope transfer.
 
 Recorded as a deliberate deviation. The phase doc's "no new tests" exclusion is written as *"except where a Tier C fix has a behavioural choice in it"* — 29 nil-legitimacy judgements is that, several times over.
 
@@ -550,7 +551,7 @@ Per [1.14](#114-ckeditor_rails-434-is-rails-4-only-at-runtime-and-no-declaration
 **(b)** `"~> 4.5"` unconditionally — both bundles get the same editor, so anything the upgrade breaks in the CMS UI is caught by the 4.2 suite as well, which is the suite that is currently green. Costs a change to a bundle Phase 0 baselined, and moves `Gemfile.lock`.
 **(c)** Pin the oldest release that works on Rails 5 (reported as 4.5.10) for the next bundle — the smallest possible editor jump, and it keeps the `moono` default skin that 4.16+ replaces with `moono-lisa`.
 
-**Recommendation: (c) now, (b) at [Phase 5](phase-5-the-5.0-bump.md).** A default-skin change is a visible, user-facing difference in a CMS's editor; taking it during an upgrade means a UI regression and a Rails regression land in the same commit and get diagnosed as each other. Whichever is chosen, the by-hand editor check in D′.1 is not optional — it is the only oracle that exists.
+**Recommendation: (c) now, (b) at [Phase 5](phase-5-the-5.0-bump.md).** A default-skin change is a visible, user-facing difference in a CMS's editor; taking it during an upgrade means a UI regression and a Rails regression land in the same commit and get diagnosed as each other. Whichever is chosen, the by-hand editor check in D′.1 is not optional — it is the only check that exists.
 
 **This needs a human** for the same reason [D1](#d1--the-migration-item-leaves-the-phase) does: it changes what the phase document says the phase contains, and it is the phase's first gem bump.
 

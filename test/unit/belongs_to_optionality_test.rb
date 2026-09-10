@@ -1,6 +1,6 @@
 require 'test_helper'
 
-# Phase 3, stage B -- the oracle for the belongs_to audit.
+# Phase 3, stage B -- the audit test for the belongs_to declarations.
 #
 # WHAT `belongs_to_required_by_default` ACTUALLY DOES
 #
