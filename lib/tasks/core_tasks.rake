@@ -54,20 +54,52 @@ namespace :coverage do
     actual = result['line'] || result['covered_percent']
     abort "#{path} has no line-coverage key (got #{result.keys.inspect})" if actual.nil?
 
-    # Phase 3 sets the branch floor Phase 2 deferred for want of a measured number.
-    # 70.83 is that number: a full 4.2 chain on a *cleared* resultset, after the Phase 3
-    # diff landed. Phase 2 reported 70.79 on the same instrument, so the phase moved
-    # branch coverage +0.04 and this records where it now stands.
+    # Phase 3 set the branch floor Phase 2 deferred for want of a measured number:
+    # 70.83, a full 4.2 chain on a *cleared* resultset after the Phase 3 diff landed.
+    #
+    # ---------------------------------------------------------------------------
+    # LOWERED TO 70.49 IN PHASE 4, STAGE F. Read this before "restoring" 70.83.
+    #
+    # The number fell because the DENOMINATOR grew, not because anything became less
+    # tested. Phase 4 added test/unit/eager_load_test.rb, which calls
+    # `Rails.application.eager_load!` -- and that loads six files no suite otherwise
+    # touches, contributing 28 branches that nothing exercises:
+    #
+    #   form_entries_controller  12      page_route_options_controller  4
+    #   attachments_input         4      toolbar_controller             4
+    #   page_components_controller 2     portlet_controller             2
+    #
+    # Those branches were always uncovered. They were not in the report because the
+    # files were never loaded, so the old 70.83 was measured over a universe that
+    # silently excluded six untested controllers. 70.49 measures the real one.
+    #
+    # We did not simply accept the drop. Stage F wrote tests for what was worth
+    # testing, which took the figure from 69.54 to 70.50 and found three live defects
+    # on the way -- public form submission 500s, the Forms admin UI 500s, and
+    # Cms::ToolbarController cannot render at all. What remained was not worth
+    # chasing: page_route_options_controller has ZERO routes and is unreachable dead
+    # code, and the last attachments_input branch needs a model with two
+    # multiple-attachment definitions that does not exist. Writing tests for those to
+    # move a percentage is exactly what phase-4-characterization-tests.md rules out.
+    #
+    # So the floor records what the suite honestly covers over the honest denominator.
+    # Full reasoning: stage F of docs/rails-upgrade/phase-4-implementation-plan.md.
+    # ---------------------------------------------------------------------------
     #
     # Set at the measured value, exactly as COVERAGE_MINIMUM was. That leaves no slack,
     # which is the point -- a floor with headroom silently absorbs the first regression.
     # If it turns out to flap, lower it once with a reason in the commit rather than
     # padding it pre-emptively.
     #
+    # RAISED 70.49 -> 70.63 IN PHASE 4, STAGE H. Same policy, opposite direction: stage H
+    # added B2/B7/B8 tests over publishing.rb, soft_deleting.rb and dynamic_attributes.rb
+    # and the measured figure moved up, so the floor moves with it. Measured twice on a
+    # cleared resultset to be sure it was not ordering noise.
+    #
     # Clear coverage/.resultset.json before trusting either number. The five suites merge
     # through it with a 3600s timeout and both bundles use the same suite names, so a
     # partial or cross-bundle run leaves entries that shift the merged percentage.
-    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.83'))
+    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.63'))
     branch = result['branch']
 
     # Print both figures before aborting, so a run that fails one gate still tells you

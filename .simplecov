@@ -6,9 +6,11 @@
 SimpleCov.start 'rails' do
   merge_timeout 3600
 
-  # Gated as of Phase 3: coverage:check compares this against COVERAGE_MINIMUM_BRANCH,
-  # which defaults to the 70.83% measured on a cleared resultset once the Phase 3 diff
-  # had landed. See lib/tasks/core_tasks.rake.
+  # Gated as of Phase 3: coverage:check compares this against COVERAGE_MINIMUM_BRANCH.
+  # Phase 3 set it to 70.83%; Phase 4 stage F re-measured it at 70.49% after the
+  # eager-load test widened the denominator by six never-loaded files. The numerator
+  # did not fall -- see the long note beside the threshold in lib/tasks/core_tasks.rake
+  # before assuming the lower number is a regression.
   enable_coverage :branch
 
   # Each suite must name itself. Left to CommandGuesser, two suites can guess the
