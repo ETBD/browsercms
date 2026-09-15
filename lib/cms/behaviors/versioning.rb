@@ -165,11 +165,63 @@ module Cms
         end
 
         def touch_self_and_ancestors
-          touch if persisted?
+          if persisted?
+            sync_locking_column_before_touch
+            touch
+          end
 
           if respond_to?(:ancestors)
             ancestors.map(&:touch)
           end
+        end
+
+        # `create_content_table` gives every versioned content table a
+        # `lock_version` column (schema_statements.rb:33), so optimistic locking is
+        # enabled on all of them -- including Cms::Page.
+        #
+        # This runs as an after_save, and callers legitimately hold a parent that was
+        # loaded *before* a child update bumped that parent's lock_version in the
+        # database. Two in this repo alone:
+        #
+        #   page_component.rb:31  -- updates each block, then saves the @page it
+        #                            loaded first (measured: in-memory 3, database 4)
+        #   page.rb:256           -- Page#remove_connector, same shape
+        #
+        # Rails 4.2 did not notice. Its touch scoped the UPDATE by id alone and
+        # incremented from whatever stale value it was holding
+        # (persistence.rb:495-505), so the write landed and returned true.
+        #
+        # Rails 5.0 adds the locking column to the WHERE and raises
+        # StaleObjectError when it matches no rows (persistence.rb:513-526).
+        #
+        # Re-read the column so the touch is issued against current state. This
+        # keeps 4.2's outcome exactly -- 4.2 already ended at the same value, just
+        # by incrementing from a stale one -- and unblocks 5.0.
+        #
+        # ⚠️ THIS DOES NOT MAKE OPTIMISTIC LOCKING WORK. A save against a genuinely
+        # stale record still proceeds and still silently overwrites a concurrent
+        # edit, exactly as it has on 4.2 all along. That is a real data-integrity
+        # defect, deliberately left in place here because fixing it means changing
+        # 4.2 behaviour in the engine's busiest path, which is not this phase's to
+        # do. It is written up in docs/rails-upgrade/phase-4-report.md -- do not
+        # read this method as evidence that conflicts are detected.
+        #
+        # Deliberately does not #reload: the record is mid-save and holds pending
+        # changes that a full reload would discard.
+        def sync_locking_column_before_touch
+          return unless locking_enabled?
+
+          locking_column = self.class.locking_column
+          current = self.class.unscoped
+                        .where(self.class.primary_key => id)
+                        .limit(1)
+                        .pluck(locking_column)
+                        .first
+
+          return if current.nil? || current == read_attribute(locking_column)
+
+          write_attribute(locking_column, current)
+          clear_attribute_changes([locking_column])
         end
 
         def build_new_version_and_add_to_versions_list_for_saving

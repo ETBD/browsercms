@@ -72,8 +72,24 @@ module Cms
     def render_editing_frame
       @page_title = @page.page_title
 
-      # Adds all provided parameters to the iframe
-      @edit_page_path = ActionDispatch::Http::URL.url_for(path: edit_content_path(current_page), params: params.except(:controller, :action, :path), only_path: true)
+      # Adds all provided parameters to the iframe.
+      #
+      # `.to_unsafe_h` is load-bearing, not decoration. On 4.2
+      # ActionController::Parameters subclasses HashWithIndifferentAccess, so
+      # url_for flattened it into the query string. On 5.0 it is no longer a Hash
+      # (Tier B, B9), so url_for treats it as one opaque value and builds
+      # `?params%5Bcategory_id%5D=42` instead of `?category_id=42` -- every
+      # parameter silently disappears from the edit-mode iframe's URL, and any
+      # portlet reading params renders its not-found branch inside the editor.
+      #
+      # Unsafe is correct here: these are the current request's own parameters
+      # being copied onto the iframe URL, which is exactly what passing the
+      # Parameters object already did. Nothing is assigned from them.
+      @edit_page_path = ActionDispatch::Http::URL.url_for(
+        path: edit_content_path(current_page),
+        params: params.except(:controller, :action, :path).to_unsafe_h,
+        only_path: true
+      )
       render 'editing_frame', :layout => 'cms/page_editor'
     end
 

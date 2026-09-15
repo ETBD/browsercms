@@ -139,7 +139,7 @@ jobs:
     name: Rails 5.0 (Gemfile.next)
     runs-on: ubuntu-22.04
     timeout-minutes: 45
-    # GATING, and RED until Phase 4.
+    # GATING, and GREEN as of Phase 4 stage B.
     #
     # This is the dual-boot early-warning job. The `test` job above answers
     # "did we break 4.2, which is what ships?"; this one answers "how close is
@@ -147,38 +147,28 @@ jobs:
     # backwards-compatible, and this job is what proves the 5.0 half of that
     # claim on every push rather than at bump time.
     #
-    # Phase 2 made it gating while it still held five defects that were all in
-    # Phase 3's scope. Phase 3 cleared every one of them and the job stayed
-    # red: ten failures remain across the 5.0 suites, none of them a Phase 3
-    # work item and none caused by it. They are a different kind of problem --
-    # they need characterization before they can be fixed.
+    # History, because the red was load-bearing for three phases: Phase 2 made
+    # this gating while it still held five defects, all in Phase 3's scope.
+    # Phase 3 cleared all five and the job stayed red on ten others. Phase 4
+    # stage B cleared those, and the 5.0 bundle is now fully green --
+    # 780 unit / 145 spec / 89 functional / 7 orphan / 154 cucumber, 0F/0E.
     #
-    #   - 7x ONE CLUSTER: content updates do not persist on 5.0. It wears four
-    #     masks: 2x ActiveRecord::StaleObjectError on Cms::Page (unit), 2x
-    #     "Missing partial cms/shared/_version_conflict_error" (functional),
-    #     2x manage_images.feature and 1x sitemap/pages.feature (cucumber).
-    #     The missing partial is a symptom of a symptom -- the update fails, the
-    #     controller re-renders the form, and that partial reference is broken
-    #     on 4.2 too; 4.2 simply never takes the branch. Ruled out against
-    #     Phase 3's single behaviour change by a control run.
-    #   - PublishableTestCase#test_publish_on_save (unit)
-    #   - Cms::TasksControllerTest#test_complete_no_tasks (functional) -- 5.0
-    #     stopped coercing "" to nil on integer casts
-    #   - features/portlets/portlets_with_params.feature (cucumber) -- renders
-    #     the page layout instead of the portlet's own content
+    # Three of the four root causes were NOT Rails 5 incompatibilities. They
+    # were live defects on the shipping 4.2 bundle that only the 5.0 suite
+    # happened to execute:
     #
-    # Also watch PortletTest#test_.blacklist: it passes, but it compares a
-    # class list whose order depends on load order, so treat it as flaky rather
-    # than fixed.
+    #   - optimistic locking silently defeated on every versioned content type
+    #     (4.2's touch incremented lock_version from a stale value)
+    #   - publishing a non-versioned record silently did nothing, an
+    #     ArgumentError swallowed by a `rescue Exception`
+    #   - `?some_id=` blank in a URL was a 500 on both versions
     #
-    # Turning this job green is a Phase 4 exit criterion. It stays gating
-    # deliberately -- the red belongs in the merge path, not filed away in a
-    # report. Consequence to keep in mind: this also holds Phase 0's criteria
-    # 1-2 open, because the default branch cannot show a green run while this
-    # job gates red.
+    # That is the argument for keeping this job gating now that it is green: it
+    # is not a Rails 5 canary, it is a second execution of the suite under
+    # different framework semantics, and it has found more 4.2 bugs than 5.0
+    # ones. See docs/rails-upgrade/phase-4-implementation-plan.md, stage B.
     #
-    # See docs/rails-upgrade/phase-3-report.md section 6 for the failures, and
-    # phase-4-characterization-tests.md for who owns them.
+    # If it goes red, read the failure before assuming Rails 5 is at fault.
 
     services:
       postgres:

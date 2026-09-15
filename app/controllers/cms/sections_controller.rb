@@ -65,7 +65,7 @@ module Cms
     end
 
     def move
-      if params[:section_id]
+      if params[:section_id].present?
         @move_to = Section.find(params[:section_id])
       else
         @move_to = Section.root.first

@@ -125,7 +125,7 @@ module Cms
 
     def version
       load_block
-      if params[:version]
+      if params[:version].present?
         @block = @block.as_of_version(params[:version])
       end
       render "show_in_isolation"

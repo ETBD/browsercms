@@ -71,7 +71,7 @@ module Cms
     #status actions
     {:publish => "published", :hide => "hidden", :archive => "archived"}.each do |status, verb|
       define_method status do
-        if params[:page_ids]
+        if params[:page_ids].present?
           @pages = params[:page_ids].map { |id| Page.find(id) }
           raise Cms::Errors::AccessDenied unless @pages.all? { |page| current_user.able_to_edit?(page) }
           @pages.each { |page| page.send(status) }

@@ -19,7 +19,7 @@ module Cms
     end
 
     def complete
-      if params[:task_ids]
+      if params[:task_ids].present?
         Task.where(["id in (?)", params[:task_ids]]).each do |t|
           if t.assigned_to == current_user
             t.mark_as_complete!

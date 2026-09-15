@@ -96,9 +96,24 @@ class PortletTest < ActiveSupport::TestCase
     assert_equal AaaPortlet, Cms::Portlet.types.first
   end
 
+  # Order-dependent until Phase 4, stage B. `Cms::Portlet.blacklist` memoizes into
+  # @blacklist (portlet.rb:103), and `.types` calls it -- so if any earlier test in
+  # the run touched either, the stub below never takes effect and this asserted
+  # against the real configuration instead:
+  #
+  #   Expected: ["DynamicPortlet"]
+  #     Actual: ["ForgotPasswordPortlet", "DynamicPortlet"]
+  #
+  # It passed or failed depending on test order, which is why Phase 3's closing run
+  # saw it green and recorded it as resolved-but-flaky. Clearing the memo on both
+  # sides makes it order-independent; the `ensure` half also stops the stubbed value
+  # leaking into every test that runs after this one.
   test '.blacklist' do
+    Cms::Portlet.instance_variable_set(:@blacklist, nil)
     Rails.configuration.cms.content_types.expects(:blacklist).returns([:dynamic_portlet]).at_least_once
     assert_equal ["DynamicPortlet"], Cms::Portlet.blacklist
+  ensure
+    Cms::Portlet.instance_variable_set(:@blacklist, nil)
   end
 
   test ".types doesn't return portlets on blacklist'" do
