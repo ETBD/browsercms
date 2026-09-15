@@ -166,11 +166,39 @@ module Cms
       assert_equal [section.node, page.section_node], [root.child_nodes[0], root.child_nodes[1]]
     end
 
+    # ORDER IS THE ASSERTION HERE. Cms::Section#pages was the only sitemap reader that
+    # did not order its results -- child_sections (section.rb:71), visible_child_nodes
+    # (:143) and :226 all chain `.in_order`, which is `order("position asc")` on
+    # SectionNode. `pages` collected straight off ancestry's `children`, which carries
+    # no ORDER BY, so PostgreSQL returned rows in whatever order it liked.
+    #
+    # This test used to assert [page1, page2] and passed on insertion order almost
+    # always. It failed one full CI run during Phase 4 stage I with the two pages
+    # transposed -- identical timestamps, no tiebreaker -- and passed the next nine.
+    # That is what surfaced the omission; the flake had nothing to do with the change
+    # being made at the time.
+    #
+    # `.in_order` was added to #pages in stage I, so the second test below asserts
+    # position order against insertion order and would go red if it were removed.
     test "pages" do
       page1 = create(:page, :section => root)
       page2 = create(:page, :section => root)
 
       assert_equal [page1, page2], root.pages
+    end
+
+    test "pages are returned in sitemap position order, not insertion order" do
+      first_created = create(:page, :section => root)
+      second_created = create(:page, :section => root)
+
+      # Put them back to front in the sitemap without touching insertion order.
+      first_created.section_node.update_column(:position, 1)
+      second_created.section_node.update_column(:position, 0)
+
+      assert_equal [second_created, first_created], root.pages,
+                   "#pages must follow SectionNode#position. Without `.in_order` this " +
+                   "returns whatever PostgreSQL feels like -- usually insertion order, " +
+                   "which is what made the flake above so rare."
     end
 
     test "child_sections" do
