@@ -827,11 +827,28 @@ The item asks for tests on three branches "worth testing *because* they're error
 
 That analysis is correct, and it matters for how the conversion is read: `Relation#uniq` on 4.2 is an **alias for `distinct`**, not `Array#uniq`. `.children` returns a Relation, so the original bound the same way. **Phase 3's change was a true rename with no behaviour change** — the defect it describes is older than the upgrade and is not a Phase 3 regression. Worth stating plainly, because a reader finding a dedupe bug directly above a Phase 3 edit will assume otherwise.
 
-- [ ] `versions` on a non-versioned type returns 501 with the expected body
-- [ ] `update` on an invalid form field returns 500 with the expected body — and the valid path still returns JSON, or the test passes for the wrong reason
-- [ ] `move_to_position` moves the node and reports the siblings needing repositioning, on both bundles
-- [ ] The front-end consumer of the `move_to_position` JSON **read** before the test is written — it is what [D8](#d8--the-move_to_position-dedupe-fix-or-characterize) turns on
-- [ ] The dedupe defect resolved per [D8](#d8--the-move_to_position-dedupe-fix-or-characterize), with the `TODO(Phase 4)` marker removed either way
+#### What I.1 found
+
+Three branches were scoped. All three are now covered, and instrumenting them turned up **three more defects** — none of them caused by the upgrade, all characterized rather than fixed except where noted.
+
+**The dedupe: fixed ([D8](#d8--the-move_to_position-dedupe-fix-or-characterize)).** The consumer was read first, as D8 required. [`Sitemap.prototype.updateValuesOnSuccess`](../../app/assets/javascripts/cms/sitemap.js#L188) is pure assignment — `$row.data('position', position)`, `.html(position)`, `dataset.position = position` — so a repeated triple writes the same values twice and the duplicate was cosmetic. That put it in D8's first branch: the fix is free, and there was nothing left to decide. Before the fix the test failed with every sibling twice on a within-folder move; the `TODO(Phase 4)` marker is gone.
+
+**`move_to_position`'s rescue cannot report the failures most likely to reach it.** [Lines 52-59](../../app/controllers/cms/section_nodes_controller.rb#L52) interpolate `node_to_move.node.name` and `target_parent.node.name` into the failure message, but both locals are assigned by `SectionNode.find` calls *inside* the begin block — so whenever a find is what raised, the handler raises `NoMethodError` on nil and nothing catches it. An unknown id produces an unhandled exception instead of the JSON error the action was written to return. No case was found where the JSON error branch renders at all; even moving a folder into its own descendant returns 200. **Not fixed** — the repair means composing a message without the objects that failed to load, and unlike the dedupe there is no existing intent in the code to read off.
+
+**`form_fields_controller#update` cannot fail.** Three independent facts close every route to the `"Fail"` branch: `:name` is the only validated attribute ([form_field.rb:18](../../app/models/cms/form_field.rb#L18)); it is assigned by `before_validation(on: :create)` so an update never recomputes it ([:14](../../app/models/cms/form_field.rb#L14)); and `permitted_params` is `super - [:name]` so a request cannot set it directly ([:67](../../app/models/cms/form_field.rb#L67)). This took two wrong drafts to establish — a colliding **label** returned 200, then a colliding **name** also returned 200 — which is why all three facts are asserted rather than described. The branch is reached by stubbing, so the `render plain:` conversion still gets verified.
+
+**Why the content type is asserted, not just the status.** `render text:` is removed at 5.1 and Phase 3 converted both sites in `70b22bdf`, but nothing executed either branch afterwards, so the conversions were unverified. `render text:` answers `text/html`; `render plain:` answers `text/plain`. A status-only assertion passes against both and would have proved nothing. Sabotage confirms it: reverting either site to `render text:` turns a test red.
+
+- [x] `versions` on a non-versioned type returns 501 with the expected body **and content type**
+- [x] `update` on an invalid form field returns 500 with the expected body — and the valid path still returns JSON
+- [x] `move_to_position` moves the node and reports the siblings needing repositioning, on both bundles
+- [x] The front-end consumer read before the test was written
+- [x] The dedupe defect resolved per [D8](#d8--the-move_to_position-dedupe-fix-or-characterize) — **fixed**, with the `TODO(Phase 4)` marker removed
+- [x] Four sabotages, each verified to have taken effect: dedupe back inside the parens (1 red), union halved (1 red), both `render text:` reversions (1 red each)
+
+#### And one the stage did not go looking for
+
+A full `ci:test` run failed on an ordering tie in `sitemap_test.rb`, in a file and a method Phase 4 has never touched. It is written up as [D9](#d9--cmssectionpages-returns-rows-in-arbitrary-order): `Cms::Section#pages` was the only reader on that class that did not order its results. **Fixed on the user's call**, after being raised rather than absorbed.
 
 #### I.2 — Exit
 
@@ -961,6 +978,27 @@ Characterizing instead would mean writing a test that asserts a misplaced parent
 ⚠️ **Escalate rather than proceed if reading the consumer shows a third case** — if the front end depends on the duplicate, this stops being Tier C and becomes a Phase 5 conversation.
 
 Either way the `TODO(Phase 4)` marker comes out: the phase it names is this one, and a marker that outlives its phase is worse than no marker.
+
+---
+
+### D9 — `Cms::Section#pages` returns rows in arbitrary order
+
+Found during [stage I](#i--exit-and-the-tier-c-error-branches), and not by looking for it. A full `ci:test` run failed on [`sitemap_test.rb`](../../test/unit/lib/cms/sitemap_test.rb)'s `"pages"` test with two pages transposed — identical timestamps, no tiebreaker — and passed the next nine runs.
+
+**Nothing in this phase caused it.** Both the test and the method are untouched by Phase 4. The cause is that `Section#pages` collects straight off ancestry's `children`, which carries no `ORDER BY`, so PostgreSQL returns the rows in whatever order it likes.
+
+It is the **only** reader on that class which does not order. [`child_sections`](../../app/models/cms/section.rb#L71), [`visible_child_nodes`](../../app/models/cms/section.rb#L143) and [`section.rb:226`](../../app/models/cms/section.rb#L226) all chain `.in_order` — `order("position asc")` on `SectionNode`. That is what makes the omission read as an oversight rather than a decision.
+
+**Decision: fixed, on the user's call, having been raised rather than absorbed.**
+
+This is a behaviour change to the 4.2 bundle that ships, and no Phase 4 work item covers it — so it was surfaced as a question rather than folded in quietly, the same way [D8](#d8--the-move_to_position-dedupe-fix-or-characterize) was. What made it cheap to say yes to:
+
+- **Nothing in the engine calls it.** `grep -rn "\.pages\b" app/ lib/` finds only the test. A downstream caller gets a stable sitemap order where it previously got an arbitrary one, which is the direction nobody argues about.
+- **`#child_nodes` is deliberately left alone.** It is also unordered, but every order-sensitive caller adds `.in_order` itself, and the rest only ask it for `.count` or `.empty?`.
+
+The test now asserts position order **against** insertion order, so removing `.in_order` turns it red rather than leaving it to luck. Verified by sabotage.
+
+**The general point is worth keeping.** A test that passes nine runs in ten is not green, it is unmeasured — and this one had presumably been unmeasured for years. It surfaced only because this phase runs the full chain after every stage, which [§2](#2-execution-order) required for an unrelated reason.
 
 ---
 
