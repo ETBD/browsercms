@@ -150,12 +150,14 @@ jobs:
     # History, because the red was load-bearing for three phases: Phase 2 made
     # this gating while it still held five defects, all in Phase 3's scope.
     # Phase 3 cleared all five and the job stayed red on ten others. Phase 4
-    # stage B cleared those, and the 5.0 bundle is now fully green --
-    # 780 unit / 145 spec / 89 functional / 7 orphan / 154 cucumber, 0F/0E.
+    # stage B cleared those, and the 5.0 bundle has been green since.
     #
-    # Three of the four root causes were NOT Rails 5 incompatibilities. They
-    # were live defects on the shipping 4.2 bundle that only the 5.0 suite
-    # happened to execute:
+    # As of the end of Phase 4, both bundles run identically:
+    # 838 unit / 145 spec / 139 functional / 7 orphan / 154 cucumber, 0F/0E.
+    #
+    # KEEP THIS JOB GATING. Three of the four root causes behind those ten
+    # failures were NOT Rails 5 incompatibilities. They were live defects on
+    # the shipping 4.2 bundle that only the 5.0 suite happened to execute:
     #
     #   - optimistic locking silently defeated on every versioned content type
     #     (4.2's touch incremented lock_version from a stale value)
@@ -163,10 +165,15 @@ jobs:
     #     ArgumentError swallowed by a `rescue Exception`
     #   - `?some_id=` blank in a URL was a 500 on both versions
     #
-    # That is the argument for keeping this job gating now that it is green: it
-    # is not a Rails 5 canary, it is a second execution of the suite under
-    # different framework semantics, and it has found more 4.2 bugs than 5.0
-    # ones. See docs/rails-upgrade/phase-4-implementation-plan.md, stage B.
+    # Phase 4 went on to find more of the same by other means -- public form
+    # submission 500s, the Forms admin UI 500s, a routed controller that can
+    # never render, and an attribute chain that answers nil where it should
+    # raise. Every one fails identically on 4.2.
+    #
+    # So this is not a Rails 5 canary. It is a second execution of the suite
+    # under different framework semantics, and it has found more 4.2 bugs than
+    # 5.0 ones. That is the argument for keeping it gating now that it passes.
+    # See docs/rails-upgrade/phase-4-report.md.
     #
     # If it goes red, read the failure before assuming Rails 5 is at fault.
 

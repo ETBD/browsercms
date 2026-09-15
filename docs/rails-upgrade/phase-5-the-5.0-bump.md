@@ -74,9 +74,23 @@ The [§7 coverage-adequacy table](../../RAILS_UPGRADE_TEST_PRIORITY.md) has four
 - [ ] **Auth / authorization** — log in, log out, password reset, role-based access. The permission join-models are untested and `persistent_user.rb` (209 LOC) has no test at all; **permissions failing *open* is the worst possible upgrade regression.**
 - [ ] **Content-block CRUD end to end** — create, edit, publish, connect to a page, render on the public page, view version history, revert.
 - [ ] **File upload / download / image variants** — Paperclip is still in place, but this is the public upload path.
-- [ ] **Forms** — submission, validation display, CSRF. `form_entries_controller.rb` is 140 lines at **0% coverage** and handles public form submission.
+- [ ] **Forms** — submission, validation display, CSRF. `form_entries_controller.rb` was 140 lines at **0% coverage**; [Phase 4](phase-4-report.md) gave it 10 tests, which replaces part of this manual pass with something that runs every build. ⚠️ It also found that **public form submission 500s** for every form configured to show confirmation text — `Cms::Form.layout` does not exist. That is a **known pre-existing defect**, characterized not fixed: do not read it as a bump regression.
 - [ ] **Assets** — CSS, JS, images load; fingerprinting and compilation work.
 - [ ] Record the results. An unrecorded manual pass is indistinguishable from no manual pass.
+
+### 5.5a — Carried in from Phase 4
+
+Three items Phase 4 could not close in its own scope. **They are listed here so they do not lapse**, not because this phase is the obviously right home for all of them — see [Phase 4's report](phase-4-report.md), §7.
+
+- [ ] **B4 — the three untested Paperclip validation macros.** `validates_attachment_size` (9 missed lines), `validates_attachment_content_type` (6), `validates_attachment_presence` (3). One passing and one failing test each, pinning the current error messages, so they become the acceptance criteria for whatever replaces Paperclip. ⚠️ `validates_attachment_presence` is **defined twice** — [`attaching.rb:89`](../../lib/cms/behaviors/attaching.rb#L89) and `:98` — and the first is dead code silently overwritten. Phase 4 scoped this out deliberately; it is the one work item that phase did not do.
+- [ ] **The `or` half of B8.** [Work item 4.7](phase-4-characterization-tests.md) asks that `soft_deleting`'s default scope compose correctly with `where` **and `or`**. `ActiveRecord::Relation#or` arrives in **Rails 5.0**, so the test could not pass on the `Gemfile` bundle and Phase 4's criterion 11 forbids version branching. **Already measured on 5.0** — the scope distributes correctly across both sides:
+  ```sql
+  WHERE ("cms_html_blocks"."deleted" = 'f' AND "name" = 'OrA'
+      OR "cms_html_blocks"."deleted" = 'f' AND "name" = 'OrB')
+  ```
+  Once this phase lands, the test is one line. Add it to [`soft_deleting_test.rb`](../../test/unit/behaviors/soft_deleting_test.rb).
+- [ ] **Resolve the units suite's mixed database-cleaning strategies, before the bump.** `ActiveSupport::TestCase` rolls each test back in a transaction while [`publishing_mini_test.rb`](../../test/unit/behaviors/publishing_mini_test.rb) — a `Minitest::Spec` inside the units glob — truncates the whole database after every example. Phase 4 saw **two intermittent failures across ~14 full runs** and isolated only one of them ([report §6](phase-4-report.md#6-an-open-question-suite-stability)). One spec file is the entire exposure. ⚠️ Worth doing **first**: a suite that fails one run in seven is at its most expensive during a bump, when every red build is already suspect.
+- [ ] **File tickets for the ten characterized defects.** Phase 4 left ten live defects deliberately unfixed, each pinned by a test that goes red when it is repaired — they are tabulated in [§3 of the report](phase-4-report.md). ⚠️ **These are not Phase 5 work**, and fixing them during the bump would confuse an upgrade regression with a pre-existing one. They need tickets and product decisions. The two worst: **public form submission 500s for unauthenticated visitors**, and **optimistic locking is silently defeated** on every versioned content type.
 
 ### 5.6 — Ship it
 
