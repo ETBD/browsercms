@@ -57,7 +57,24 @@ require 'test_helper'
 # `test_every_belongs_to_is_audited`, and contradicting a verdict fails one of the other
 # two.
 #
-# Phase 4 owns the permanent version of this.
+# ---------------------------------------------------------------------------------
+# THIS IS THE PERMANENT VERSION. Phase 4, stage D adopted the file as written rather
+# than replacing it, and closed the two gaps Phase 3 left: the dynamic declaration in
+# dynamic_attributes.rb had no assertion, and there was no count to check against.
+#
+# ⚠️ On the flag this file's header discusses: Phase 4 criterion 3 originally asked for
+# `config.active_record.belongs_to_required_by_default = true` in the test environment,
+# on the reasoning that without it criterion 4 "is meaningless". The analysis above is
+# why that was struck rather than implemented -- the flag is read at class-definition
+# time, so setting it in a setup block is a no-op even on 5.0, and the accessor does not
+# exist on 4.2 at all. Setting it in test/dummy's environment would work on 5.0 but
+# needs a version guard under test/, which criterion 11 forbids.
+#
+# What replaced it is the property this file already had: the audit is FALSIFIABLE.
+# Adding a belongs_to with no verdict fails a test; contradicting a verdict fails a
+# test; the count moving fails a test. Do not reintroduce the flag -- see D1 in
+# docs/rails-upgrade/phase-4-implementation-plan.md.
+# ---------------------------------------------------------------------------------
 class BelongsToOptionalityTest < ActiveSupport::TestCase
 
   # Verdict per site. :required means "left bare, backed by an existing presence
@@ -208,6 +225,52 @@ class BelongsToOptionalityTest < ActiveSupport::TestCase
     assert reflection, "Cms::HtmlBlock::Version should belong_to :html_block"
     assert optional_declared?(reflection),
            "versioning.rb:115 must pass required: false into version_class.belongs_to"
+  end
+
+  # dynamic_attributes.rb:171 is the second dynamic declaration, and the one with the
+  # wider blast radius of the two.
+  #
+  # `has_dynamic_attributes` is called from Cms::Portlet.inherited (portlet.rb:37), so
+  # it runs again for every portlet subclass -- and each run does
+  # `attribute_class.class_eval { belongs_to base_class, ... }` against the SAME
+  # CmsPortletAttribute class. So CmsPortletAttribute accumulates one belongs_to per
+  # portlet type: four here, and one more for every portlet a downstream project
+  # defines. A missing `required: false` would not fail on one model; it would fail on
+  # whichever portlet the consuming app happened to write.
+  #
+  # Asserted over the reflections rather than by name, because the names are derived
+  # from subclass names that do not exist in this repo.
+  test "the dynamic-attributes behavior injects required: false for every portlet type" do
+    reflections = CmsPortletAttribute.reflect_on_all_associations(:belongs_to)
+
+    assert reflections.any?,
+           "CmsPortletAttribute has no belongs_to at all -- has_dynamic_attributes did " +
+           "not run, and this test is asserting nothing"
+
+    offenders = reflections.reject { |r| optional_declared?(r) }
+    assert offenders.empty?,
+           "dynamic_attributes.rb:171 must pass required: false into the injected " +
+           "belongs_to. Without it, a host app on load_defaults 5.0 cannot save a " +
+           "portlet attribute before its portlet: " + offenders.map(&:name).join(', ')
+  end
+
+  # The count, as a tripwire rather than as the enumeration itself.
+  #
+  # The sweeps above enumerate by reflection, which is deliberate -- it catches a
+  # belongs_to added tomorrow, which a hardcoded list of 29 could not. But Phase 4's
+  # criterion 4 asks that "the count in the test matches 29", and a reviewer checking
+  # one number is a cheap and useful thing to preserve. This is that number.
+  #
+  # If it fails, a declaration was added or removed. Update AUDIT/BEHAVIOR_AUDIT with a
+  # verdict for it first, then update this number -- not the other way round.
+  test "the audit still covers 29 belongs_to declarations" do
+    literal = AUDIT.size                 # one entry per declaration on a named class
+    injected = BEHAVIOR_AUDIT.size       # userstamping x2, categorizing x1
+    dynamic = 2                          # versioning.rb:115, dynamic_attributes.rb:171
+
+    assert_equal 29, literal + injected + dynamic,
+                 "expected 29 audited belongs_to declarations, got " +
+                 "#{literal} literal + #{injected} behavior-injected + #{dynamic} dynamic"
   end
 
   # `required: false` must remain a no-op on 4.2 and must mean optional on 5.0. If this
