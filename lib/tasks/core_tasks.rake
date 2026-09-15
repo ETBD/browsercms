@@ -91,15 +91,17 @@ namespace :coverage do
     # If it turns out to flap, lower it once with a reason in the commit rather than
     # padding it pre-emptively.
     #
-    # RAISED 70.49 -> 70.63 IN PHASE 4, STAGE H. Same policy, opposite direction: stage H
-    # added B2/B7/B8 tests over publishing.rb, soft_deleting.rb and dynamic_attributes.rb
-    # and the measured figure moved up, so the floor moves with it. Measured twice on a
-    # cleared resultset to be sure it was not ordering noise.
+    # RAISED 70.49 -> 70.63 IN PHASE 4, STAGE H, then -> 70.97 IN STAGE I. Same policy,
+    # opposite direction from the stage F drop: each stage's tests moved the measured
+    # figure up, so the floor moves with it. Stage H added B2/B7/B8 over publishing.rb,
+    # soft_deleting.rb and dynamic_attributes.rb; stage I added Tier C's error branches
+    # and the first coverage section_nodes_controller has ever had. Each raise was
+    # measured on a cleared resultset before being written here.
     #
     # Clear coverage/.resultset.json before trusting either number. The five suites merge
     # through it with a 3600s timeout and both bundles use the same suite names, so a
     # partial or cross-bundle run leaves entries that shift the merged percentage.
-    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.63'))
+    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.97'))
     branch = result['branch']
 
     # Print both figures before aborting, so a run that fails one gate still tells you
