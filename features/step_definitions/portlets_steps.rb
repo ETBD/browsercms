@@ -63,9 +63,19 @@ When /^a page with a portlet that raises both a 403 and any other error exists$/
 end
 
 Given /^a portlet that throws an unexpected error exists$/ do
+  # `Exception`, deliberately: prepare_connectables_for_render rescues bare, so
+  # only a non-StandardError gets past it to the 500 page.
+  create_page_with_failing_portlet('raise Exception')
+end
+
+Given /^a portlet that throws an ordinary error exists$/ do
+  create_page_with_failing_portlet('raise "boom"')
+end
+
+def create_page_with_failing_portlet(code)
   @page = create(:public_page)
   @portlet_render = DynamicPortlet.create!(:name => "Test", :connect_to_page_id => @page.id, :connect_to_container => "main", :template => '<p id="hi">hello</p>')
-  @portlet_raise_generic = DynamicPortlet.create!(:name => "Test", :connect_to_page_id => @page.id, :connect_to_container => "main", :code => 'raise Exception')
+  @portlet_raise_generic = DynamicPortlet.create!(:name => "Test", :connect_to_page_id => @page.id, :connect_to_container => "main", :code => code)
   @page.publish!
 end
 Given /^there is a portlet that uses a helper$/ do
@@ -97,11 +107,14 @@ When /^a guest views that page$/ do
   visit @page_path
 end
 
-Then /^the page should show content but not the error$/ do
-  expect(page.body).not_to include('Exception')#, "Exception should not appear on the page"
-  expect(page.body).not_to include('Error')#, "The word 'Error' should not appear on the page"
-  expect(page.body).to include('hello')#, "Should see other content"
-  should_see_a_page_named(most_recently_created_page.title)
+Then /^the page should render the other content with the error inline$/ do
+  expect(page.status_code).to eq(200)
+  expect(page.body).to include('hello')
+  expect(page.body).to include('Exception: boom')
+  # .name, not .title: the :public_page factory sets name and leaves title nil,
+  # so the original step's `most_recently_created_page.title` could only ever
+  # have raised. It never got that far -- it failed on an earlier assertion.
+  should_see_a_page_named(most_recently_created_page.name)
 end
 
 Given /^there is a portlet that finds content by parameter$/ do

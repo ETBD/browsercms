@@ -98,7 +98,10 @@ Cucumber::Rake::Task.new('features:wip:all', 'Run all scenarios (including slow)
 end
 
 Cucumber::Rake::Task.new('features:known-bugs', 'Run all scenarios with known bugs.') do |t|
-  t.cucumber_opts = "features --format progress -t @known-bug"
+  # The tags and format live in the `known_bugs` profile in config/cucumber.yml,
+  # not here. Naming a profile is what stops cucumber auto-applying `default`,
+  # and `default` carries --strict -- see the note on that profile.
+  t.profile = 'known_bugs'
 end
 
 #Rake::Task['features:wip'].enhance ['project:ensure_db_exists', 'app:test:prepare']

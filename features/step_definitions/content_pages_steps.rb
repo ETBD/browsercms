@@ -139,6 +139,11 @@ Then /^I should see the CMS :forbidden page$/ do
   should_see_a_page_named("Access Denied")
 end
 
+Then /^I should see the CMS :server_error page$/ do
+  expect(page.status_code).to eq(500)
+  should_see_a_page_named("Server Error")
+end
+
 Given /^I am adding a page to the root section$/ do
   section = Cms::Section.root.first
   visit "/cms/sections/#{section.id}/pages/new"

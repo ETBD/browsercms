@@ -4,9 +4,13 @@ Feature: Generate Module
 
   Background:
 
-  # bin/browsercms module Doesn't put the initializer into test/dummy app, so the layout generator fails.
-  # Puts it in ./config/initializers like its a rails project.
-  @known-bug
+  # Was @known-bug: "bin/browsercms module doesn't put the initializer into the
+  # test/dummy app, so the layout generator fails -- it puts it in
+  # ./config/initializers like it's a rails project." No longer true. The
+  # generator could not run at all on this Rails/Ruby (`bcms module` raised
+  # LoadError on the Rails-3-era PluginNewGenerator), which is what kept this
+  # red; with that fixed the initializer lands in
+  # test/dummy/config/initializers/browsercms.rb and the layout generates.
   Scenario: Create a BrowserCMS module
     When I create a module named "bcms_store"
     Then a rails engine named "bcms_store" should exist
