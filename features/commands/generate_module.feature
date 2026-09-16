@@ -25,10 +25,15 @@ Feature: Generate Module
     And the following files should exist:
     | test/dummy/db/browsercms.seeds.rb|
     And it should no longer generate a README in the public directory
+    # Split so one scenario covers both bundles: 4.2's routes.rb template leaves a
+    # blank line after `draw do` and 5.0's does not. The two mounts, and their
+    # order, are what this is asserting.
     And the file "test/dummy/config/routes.rb" should contain:
     """
     Rails.application.routes.draw do
-
+    """
+    And the file "test/dummy/config/routes.rb" should contain:
+    """
       mount BcmsWidgets::Engine => "/bcms_widgets"
 
       mount_browsercms

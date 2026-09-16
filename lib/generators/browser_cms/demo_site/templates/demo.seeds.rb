@@ -2,9 +2,12 @@ require 'cms/data_loader'
 include Cms::DataLoader
 
 # Load up data that was created in load seed data migration
-Cms::User.current = Cms::User.first(:conditions => {:login => 'cmsadmin'})
+# where(...).first, not first(:conditions => ...): Rails 4 redefined #first to
+# take a limit, so the old form raised `can't convert Hash into Integer` and
+# `bcms demo` has not been able to seed its own demo site since.
+Cms::User.current = Cms::User.where(:login => 'cmsadmin').first
 root_section = Cms::Section.root.first
-home_page = Cms::Page.first(:conditions => {:name => "Home"})
+home_page = Cms::Page.where(:name => "Home").first
 
 # Apply new templates to core pages
 home_page.template_file_name = "home_page.html.erb"

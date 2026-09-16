@@ -80,12 +80,19 @@ jobs:
     runs-on: ubuntu-22.04
     timeout-minutes: 45
     # Everything the default profile filters out, measured but not gating.
-    # Phase 0 baseline: @cli is 7/34 -- `rails new` fails inside aruba and 15 of
-    # the 27 failures are downstream of that one command. @known-bug is 2
-    # failing scenarios that are tagged precisely because they are known to
-    # fail. This job exists so both numbers stay visible per-run instead of
-    # living only in docs/rails-upgrade/phase-0-baseline.md. Make it gating
-    # once the numbers reach zero.
+    #
+    # @cli was 7/34 at the Phase 0 baseline -- `rails new` failed inside aruba
+    # and most of the rest were downstream of that. It is now 34/34 here (and
+    # 31/34 on Gemfile.next, where two Rails-5-only generator defects remain;
+    # see docs/rails-upgrade/phase-5-the-5.0-bump.md 5.1a). @known-bug is still
+    # 2 failing scenarios that are tagged precisely because they are known to
+    # fail.
+    #
+    # The instruction on this job has always been "make it gating once the
+    # numbers reach zero". @cli has; @known-bug has not, and the two share this
+    # job. So the outstanding decision is whether to split `features:cli` into
+    # the gating `test` job above and leave only @known-bug reporting here.
+    # Deliberately not done unilaterally -- it changes what can block a merge.
     continue-on-error: true
 
     services:

@@ -40,22 +40,28 @@ Feature:
     """
     <dt>Price:</dt><dd><%= show :price %></dd>
     """
+    # Split, and stopping before `t.timestamps`, so that one scenario covers both
+    # bundles. Two lines of this file are written by Rails and differ by version:
+    # the superclass is `ActiveRecord::Migration` on 4.2 and
+    # `ActiveRecord::Migration[5.0]` on 5.0, and timestamps render as
+    # `t.timestamps null: false` on 4.2 and `t.timestamps` on 5.0. What this
+    # scenario is about is create_content_table and the columns.
     And a migration named "create_petstore_products.rb" should contain:
     """
     class CreatePetstoreProducts < ActiveRecord::Migration
+    """
+    And a migration named "create_petstore_products.rb" should contain:
+    """
       def change
         create_content_table :products do |t|
           t.string :name
           t.string :price
-
-          t.timestamps
-        end
-      end
-    end
     """
+    # `rails new` has written Rails.application.routes.draw since Rails 4.1;
+    # Petstore::Application.routes.draw is the Rails 3 spelling.
     And the file "config/routes.rb" should contain:
     """
-    Petstore::Application.routes.draw do
+    Rails.application.routes.draw do
     """
     And the file "config/routes.rb" should contain:
     """
@@ -129,15 +135,14 @@ Feature:
 
   Scenario: Block names starting with 'do' should work
     When I run `rails g cms:content_block dog`
+    # See the note on create_petstore_products above.
     And a migration named "create_petstore_dogs.rb" should contain:
     """
     class CreatePetstoreDogs < ActiveRecord::Migration
+    """
+    And a migration named "create_petstore_dogs.rb" should contain:
+    """
       def change
         create_content_table :dogs do |t|
-
-          t.timestamps
-        end
-      end
-    end
     """
 

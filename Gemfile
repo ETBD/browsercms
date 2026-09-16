@@ -61,6 +61,15 @@ end
 
 group :test do
   gem 'pg'
+  # Not for this engine's own suite -- test/dummy is postgres. This is for the
+  # @cli features: aruba spawns `bcms`/`rails`/`rake` with BUNDLE_GEMFILE still
+  # pointing here, so a generated project runs against THIS bundle (which is the
+  # point -- it is how those features exercise the working tree rather than the
+  # published gem). `rails new` writes a sqlite3 database.yml, so without this
+  # every generated project dies on "Specified 'sqlite3' for database adapter,
+  # but the gem is not loaded" the first time anything boots it.
+  # 1.3.x, not 1.4: activerecord 4.2 and 5.0 both pin `sqlite3 ~> 1.3.6`.
+  gem 'sqlite3', '~> 1.3.6'
   gem 'sass-rails'
   gem 'simplecov', '~> 0.22.0', require: false
 

@@ -17,14 +17,14 @@ When /^the installation script should be created$/ do
   }
   generator = 'lib/generators/bcms_widgets/install/install_generator.rb'
   check_file_presence([generator], true)
-  check_file_content(generator, "BcmsWidgets::InstallGenerator", true)
-  check_file_content(generator, "rake 'bcms_widgets:install:migrations'", true)
-  check_file_content(generator, "mount_engine(BcmsWidgets)", true)
+  expect_file_to_contain(generator, "BcmsWidgets::InstallGenerator")
+  expect_file_to_contain(generator, "rake 'bcms_widgets:install:migrations'")
+  expect_file_to_contain(generator, "mount_engine(BcmsWidgets)")
 
 end
 When /^the engine should be created$/ do
   check_file_presence(['lib/bcms_widgets.rb'], true)
-  check_file_content('lib/bcms_widgets/engine.rb', "include Cms::Module", true)
+  expect_file_to_contain('lib/bcms_widgets/engine.rb', "include Cms::Module")
 
 end
 
