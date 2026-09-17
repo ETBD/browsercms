@@ -70,7 +70,7 @@ module Cms
         #
         # Params:
         #   path - Should match the 'path' attribute for a given section.
-        #   options - Hash of options that will be passed to the before_filter call. See before_filter for valid options.
+        #   options - Hash of options that will be passed to the before_action call. See before_action for valid options.
         #
         # Example:
         #   MyController < ApplicationController
@@ -81,7 +81,7 @@ module Cms
         def requires_permission_for_section(path, options={})
           logger.warn "Setting path #{path}"
           @section_path = path
-          before_filter :check_access_to_section, options
+          before_action :check_access_to_section, options
         end
 
         def in_section

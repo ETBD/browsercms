@@ -1,5 +1,5 @@
 require 'minitest/autorun'
-module MiniTest::Assertions
+module Minitest::Assertions
   def assert_is_published(block)
     assert block.published?, "Expected #{block} to be published."
     klass = block.class

@@ -11,7 +11,7 @@ module Cms
     end
 
     def test_new
-      get :new, :section_id => root_section.id
+      get :new, params: {:section_id => root_section.id}
       assert_response :success
       assert_equal root_section, assigns(:page).section
     end
@@ -22,7 +22,7 @@ module Cms
       # Make a change to the page, unpublished
       @page.update_attributes(:name => "V2")
 
-      get :edit, :id => @page.id
+      get :edit, params: {:id => @page.id}
       assert_response :success
       assert_select "#page_name[value=?]", "V2"
     end
@@ -35,7 +35,7 @@ module Cms
 
       assert @page.draft.hidden?
 
-      put :update, :id => @page.id, :page => {:hidden => false}
+      put :update, params: {:id => @page.id, :page => {:hidden => false}}
       assert_redirected_to '/cms/pages/' + @page.id.to_s
       # RSE Intentional Change
 
@@ -48,7 +48,7 @@ module Cms
       @page.update_attributes(:name => "V2")
       @page.update_attributes(:name => "V3")
 
-      get :versions, :id => @page.to_param
+      get :versions, params: {:id => @page.to_param}
       #log @response.body
       (1..3).each do |n|
         assert_select "tr[id=?]", "revision_#{n}"
@@ -58,14 +58,14 @@ module Cms
     def test_version
       create_page
       @page.update_attributes(:name => "V2")
-      get :version, :id => @page.to_param, :version => 1
+      get :version, params: {:id => @page.to_param, :version => 1}
       assert_response :success
     end
 
     def test_revert_to
       create_draft_page_with_multiple_edits
 
-      put :revert_to, :id => @page.to_param, :version => 1
+      put :revert_to, params: {:id => @page.to_param, :version => 1}
       reset(:page)
 
       assert_redirected_to @page.path
@@ -121,10 +121,10 @@ module Cms
     def test_new_permissions
       login_as(@user)
 
-      get :new, :section_id => @editable_section
+      get :new, params: {:section_id => @editable_section}
       assert_response :success
 
-      get :new, :section_id => @noneditable_section
+      get :new, params: {:section_id => @noneditable_section}
       assert_response 403
       assert_template "cms/shared/access_denied"
     end
@@ -133,10 +133,10 @@ module Cms
       login_as(@user)
 
       skip "Work out how page creation has changed"
-      post :create, :section_id => @editable_section, page: {:name => "Another editable page"}
+      post :create, params: {:section_id => @editable_section, page: {:name => "Another editable page"}}
       assert_response 302
 
-      post :create, :section_id => @noneditable_section, page: {:name => "Another non-editable page"}
+      post :create, params: {:section_id => @noneditable_section, page: {:name => "Another non-editable page"}}
       assert_response 403
       assert_template "cms/shared/access_denied"
     end
@@ -144,10 +144,10 @@ module Cms
     def test_edit_permissions
       login_as(@user)
 
-      get :edit, :id => @editable_page
+      get :edit, params: {:id => @editable_page}
       assert_response :success
 
-      get :edit, :id => @noneditable_page
+      get :edit, params: {:id => @noneditable_page}
       assert_response 403
       assert_template "cms/shared/access_denied"
     end
@@ -156,7 +156,7 @@ module Cms
       login_as(@user)
 
       # Regular update
-      put :update, :id => @editable_page, :page => {:name => "Modified editable page"}
+      put :update, params: {:id => @editable_page, :page => {:name => "Modified editable page"}}
       assert_response :redirect
     end
 
@@ -164,60 +164,60 @@ module Cms
       login_as(@user)
 
 
-      put :update, :id => @noneditable_page, :page => {:name => "Modified non-editable page"}
+      put :update, params: {:id => @noneditable_page, :page => {:name => "Modified non-editable page"}}
       assert_response 403
       assert_template "cms/shared/access_denied"
 
       # archive
-      put :archive, :id => @editable_page
+      put :archive, params: {:id => @editable_page}
       assert_response :redirect
 
-      put :archive, :id => @noneditable_page
+      put :archive, params: {:id => @noneditable_page}
       assert_response 403
       assert_template "cms/shared/access_denied"
 
       # hide
-      put :hide, :id => @editable_page
+      put :hide, params: {:id => @editable_page}
       assert_response :redirect
 
-      put :hide, :id => @noneditable_page
+      put :hide, params: {:id => @noneditable_page}
       assert_response 403
       assert_template "cms/shared/access_denied"
 
       # publish
-      put :publish, :id => @editable_page
+      put :publish, params: {:id => @editable_page}
       assert_response :redirect
 
-      put :publish, :id => @noneditable_page
+      put :publish, params: {:id => @noneditable_page}
       assert_response 403
       assert_template "cms/shared/access_denied"
 
       # publish many
-      put :publish, :page_ids => [@editable_page.id]
+      put :publish, params: {:page_ids => [@editable_page.id]}
       assert_response :redirect
 
-      put :publish, :page_ids => [@noneditable_page.id]
+      put :publish, params: {:page_ids => [@noneditable_page.id]}
       assert_response 403
 
-      put :publish, :page_ids => [@editable_page.id, @noneditable_page.id]
+      put :publish, params: {:page_ids => [@editable_page.id, @noneditable_page.id]}
       assert_response 403
 
       # revert_to
       # can't find route...
-      #    put :revert_to, :id => @editable_page.id
+      #    put :revert_to, params: {:id => @editable_page.id}
       #    assert_response :redirect
 
-      #    put :revert_to, :id => @noneditable_page.id
+      #    put :revert_to, params: {:id => @noneditable_page.id}
       #    assert_response :error # shouldn't it be 403?
     end
 
     def test_destroy_permissions
       login_as(@user)
 
-      delete :destroy, :id => @editable_page
+      delete :destroy, params: {:id => @editable_page}
       assert_response :redirect
 
-      delete :destroy, :id => @noneditable_page
+      delete :destroy, params: {:id => @noneditable_page}
       assert_response 403
       assert_template "cms/shared/access_denied"
     end

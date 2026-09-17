@@ -112,7 +112,12 @@ module Cms
 
           version_class.versioned_class = self
 
-          version_class.belongs_to(name.demodulize.underscore.to_sym, :foreign_key => version_foreign_key, :class_name => name)
+          # required: false is passed into the options hash rather than written as a
+          # literal, so `grep -rn "required: false" app/ lib/` will not find this site in
+          # the shape the exit criteria expect. A version is routinely built before its
+          # parent is saved (build_new_version_and_add_to_versions_list_for_saving), so
+          # nil here is a normal intermediate state.
+          version_class.belongs_to(name.demodulize.underscore.to_sym, :foreign_key => version_foreign_key, :class_name => name, :required => false)
 
           version_class.is_userstamped if userstamped?
 
@@ -160,11 +165,63 @@ module Cms
         end
 
         def touch_self_and_ancestors
-          touch if persisted?
+          if persisted?
+            sync_locking_column_before_touch
+            touch
+          end
 
           if respond_to?(:ancestors)
             ancestors.map(&:touch)
           end
+        end
+
+        # `create_content_table` gives every versioned content table a
+        # `lock_version` column (schema_statements.rb:33), so optimistic locking is
+        # enabled on all of them -- including Cms::Page.
+        #
+        # This runs as an after_save, and callers legitimately hold a parent that was
+        # loaded *before* a child update bumped that parent's lock_version in the
+        # database. Two in this repo alone:
+        #
+        #   page_component.rb:31  -- updates each block, then saves the @page it
+        #                            loaded first (measured: in-memory 3, database 4)
+        #   page.rb:256           -- Page#remove_connector, same shape
+        #
+        # Rails 4.2 did not notice. Its touch scoped the UPDATE by id alone and
+        # incremented from whatever stale value it was holding
+        # (persistence.rb:495-505), so the write landed and returned true.
+        #
+        # Rails 5.0 adds the locking column to the WHERE and raises
+        # StaleObjectError when it matches no rows (persistence.rb:513-526).
+        #
+        # Re-read the column so the touch is issued against current state. This
+        # keeps 4.2's outcome exactly -- 4.2 already ended at the same value, just
+        # by incrementing from a stale one -- and unblocks 5.0.
+        #
+        # ⚠️ THIS DOES NOT MAKE OPTIMISTIC LOCKING WORK. A save against a genuinely
+        # stale record still proceeds and still silently overwrites a concurrent
+        # edit, exactly as it has on 4.2 all along. That is a real data-integrity
+        # defect, deliberately left in place here because fixing it means changing
+        # 4.2 behaviour in the engine's busiest path, which is not this phase's to
+        # do. It is written up in docs/rails-upgrade/phase-4-report.md -- do not
+        # read this method as evidence that conflicts are detected.
+        #
+        # Deliberately does not #reload: the record is mid-save and holds pending
+        # changes that a full reload would discard.
+        def sync_locking_column_before_touch
+          return unless locking_enabled?
+
+          locking_column = self.class.locking_column
+          current = self.class.unscoped
+                        .where(self.class.primary_key => id)
+                        .limit(1)
+                        .pluck(locking_column)
+                        .first
+
+          return if current.nil? || current == read_attribute(locking_column)
+
+          write_attribute(locking_column, current)
+          clear_attribute_changes([locking_column])
         end
 
         def build_new_version_and_add_to_versions_list_for_saving
@@ -227,7 +284,14 @@ module Cms
         # 1. If the record is unchanged, no save is performed, but true is returned. (Skipping after_save callbacks)
         # 2. If its an update, a new version is created and that is saved.
         # 3. If new record, its version is set to 1, and its published if needed.
-        def create_or_update
+        #
+        # Rails 4.2 declares `def create_or_update` (persistence.rb:502) and Rails 5.0
+        # declares `def create_or_update(*args, &block)` (persistence.rb:546). Accept and
+        # forward whatever the framework passes: on 4.2 nothing is passed, so *args is
+        # empty and this behaves exactly as the zero-arity version did. Without it, every
+        # save on Rails 5 raises ArgumentError -- 320 of the 323 unit errors Phase 1
+        # measured. See docs/rails-upgrade/phase-1-gem-report.md, P1-2.
+        def create_or_update(*args, &block)
           logger.debug { "#{self.class}#create_or_update called. Published = #{!!publish_on_save}" }
           self.skip_callbacks = false
           unless different_from_last_draft?
@@ -261,8 +325,21 @@ module Cms
           logger.debug { "New version of #{self.class}::Version is #{@new_version.attributes}" }
         end
 
-        def save!(perform_validations=true)
-          save(:validate => perform_validations) || raise(ActiveRecord::RecordNotSaved.new(errors.full_messages))
+        # Rails never calls save! with a positional boolean. 4.2 calls it as
+        # save!(:validate => x) (has_many_association.rb:39) and 5.0 as
+        # save!(validate: x, &block) (collection_association.rb:510) -- so the old
+        # `perform_validations` parameter was being bound to a Hash, which is truthy, and
+        # the override then called save(validate: true) in precisely the path where the
+        # framework had asked for validations to be skipped. Wrong on 4.2 today, silently.
+        #
+        # On 5.0 there is a second half: collection_association.rb:501 passes a block into
+        # insert_record for create_or_update to yield after the insert, and the old
+        # signature dropped it before it could reach the (*args, &block) signature Phase 2
+        # gave create_or_update directly below. Same defect as P1-2, one method up -- and
+        # the Phase 2 fix is what makes this gap reachable at all.
+        # See docs/rails-upgrade/phase-1-gem-report.md.
+        def save!(*args, &block)
+          save(*args, &block) || raise(ActiveRecord::RecordNotSaved.new(errors.full_messages))
         end
 
         # Returns the most recently created Version for this class. Drafts are the most recent change from

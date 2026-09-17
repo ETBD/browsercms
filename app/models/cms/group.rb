@@ -15,7 +15,7 @@ module Cms
     has_many :group_sections, :class_name => 'Cms::GroupSection'
     has_many :sections, :through => :group_sections, :class_name => 'Cms::Section'
 
-    belongs_to :group_type, :class_name => 'Cms::GroupType'
+    belongs_to :group_type, :class_name => 'Cms::GroupType', :required => false
 
     extend Cms::DefaultAccessible
 

@@ -89,13 +89,37 @@ Feature: Portlets
     When I visit that page
     Then I should see the CMS :forbidden page
 
-  # Portlet errors should not throw 500 and blow up the page.
-  @known-bug
-  Scenario: Portlet errors should not blow up the page
+  # Inverted from "Portlet errors should not blow up the page", which was
+  # @known-bug from the Phase 0 baseline onwards and could never have passed:
+  # it asserted the body contained neither "Exception" nor "Error", while the
+  # engine's own inline marker for a failed connectable is "Exception: <msg>".
+  #
+  # The assertion now matches what the engine does and what the consuming app
+  # wants -- a portlet that fails takes the page to the CMS server error page
+  # rather than rendering half a page. See cms's
+  # config/initializers/override_bcms_partial_error_rescue.rb: "If a partial
+  # errors out, we want to show the user a 500, not a partially rendered page."
+  #
+  # NOTE the fixture raises `Exception`, and that is load-bearing:
+  # prepare_connectables_for_render rescues bare (so, StandardError), stashes
+  # the error on the connectable and renders it inline. Only a non-StandardError
+  # escapes to the 500. An ordinary portlet error does NOT reach this page --
+  # that is pinned by the scenario below.
+  Scenario: A portlet raising a non-StandardError takes the page to the 500
     Given I am not logged in
     And a portlet that throws an unexpected error exists
     When I view that page
-    Then the page should show content but not the error
+    Then I should see the CMS :server_error page
+
+  # Characterization, not an endorsement: this is what the engine does today
+  # with an ordinary error, and it is the half-rendered page the consuming app
+  # overrides the engine to avoid. Flip it if the inline rescue at
+  # lib/cms/content_rendering_support.rb:99 is ever removed.
+  Scenario: A portlet raising a StandardError renders inline and the page survives
+    Given I am not logged in
+    And a portlet that throws an ordinary error exists
+    When I view that page
+    Then the page should render the other content with the error inline
 
   Scenario: Multiple Pages
     Given there are multiple pages of portlets in the Content Library

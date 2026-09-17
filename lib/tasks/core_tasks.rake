@@ -26,6 +26,100 @@ namespace :db do
   end
 end
 
+namespace :coverage do
+
+  # Not SimpleCov's own `minimum_coverage`: that is enforced in *every* test
+  # process's at_exit, so the units suite alone would fail the build for not
+  # meeting a threshold set for the whole chain. coverage/.last_run.json is
+  # written unconditionally, and the last suite to finish writes the fully
+  # merged figure, so one check after the chain is both correct and enough.
+  desc 'Fail if merged coverage fell below the recorded Phase 0 baseline'
+  task :check do
+    require 'json'
+    # 78.35, not the 75.82 Phase 0 recorded: the simplecov 0.12 -> 0.22 bump
+    # changed the instrument, not the tests. Measured across that bump on
+    # identical code, the covered-line count was identical at 4901 and only the
+    # denominator moved, 6460 -> 6255, because 0.18+ narrowed what counts as a
+    # relevant line. See docs/rails-upgrade/phase-2-harness-report.md.
+    threshold = Float(ENV.fetch('COVERAGE_MINIMUM', '78.35'))
+    path = 'coverage/.last_run.json'
+    abort "#{path} is missing -- did the suite run?" unless File.exist?(path)
+
+    result = JSON.parse(File.read(path)).fetch('result')
+
+    # simplecov < 0.18 wrote {"result": {"covered_percent": 75.82}}. From 0.18 that
+    # key is gone and the shape is {"result": {"line": 75.82}}, plus "branch" once
+    # enable_coverage :branch is on. Accept either, so the gate keeps working across
+    # the bump -- and abort on neither, rather than comparing nil to a Float.
+    actual = result['line'] || result['covered_percent']
+    abort "#{path} has no line-coverage key (got #{result.keys.inspect})" if actual.nil?
+
+    # Phase 3 set the branch floor Phase 2 deferred for want of a measured number:
+    # 70.83, a full 4.2 chain on a *cleared* resultset after the Phase 3 diff landed.
+    #
+    # ---------------------------------------------------------------------------
+    # LOWERED TO 70.49 IN PHASE 4, STAGE F. Read this before "restoring" 70.83.
+    #
+    # The number fell because the DENOMINATOR grew, not because anything became less
+    # tested. Phase 4 added test/unit/eager_load_test.rb, which calls
+    # `Rails.application.eager_load!` -- and that loads six files no suite otherwise
+    # touches, contributing 28 branches that nothing exercises:
+    #
+    #   form_entries_controller  12      page_route_options_controller  4
+    #   attachments_input         4      toolbar_controller             4
+    #   page_components_controller 2     portlet_controller             2
+    #
+    # Those branches were always uncovered. They were not in the report because the
+    # files were never loaded, so the old 70.83 was measured over a universe that
+    # silently excluded six untested controllers. 70.49 measures the real one.
+    #
+    # We did not simply accept the drop. Stage F wrote tests for what was worth
+    # testing, which took the figure from 69.54 to 70.50 and found three live defects
+    # on the way -- public form submission 500s, the Forms admin UI 500s, and
+    # Cms::ToolbarController cannot render at all. What remained was not worth
+    # chasing: page_route_options_controller has ZERO routes and is unreachable dead
+    # code, and the last attachments_input branch needs a model with two
+    # multiple-attachment definitions that does not exist. Writing tests for those to
+    # move a percentage is exactly what phase-4-characterization-tests.md rules out.
+    #
+    # So the floor records what the suite honestly covers over the honest denominator.
+    # Full reasoning: stage F of docs/rails-upgrade/phase-4-implementation-plan.md.
+    # ---------------------------------------------------------------------------
+    #
+    # Set at the measured value, exactly as COVERAGE_MINIMUM was. That leaves no slack,
+    # which is the point -- a floor with headroom silently absorbs the first regression.
+    # If it turns out to flap, lower it once with a reason in the commit rather than
+    # padding it pre-emptively.
+    #
+    # RAISED 70.49 -> 70.63 IN PHASE 4, STAGE H, then -> 70.97 IN STAGE I. Same policy,
+    # opposite direction from the stage F drop: each stage's tests moved the measured
+    # figure up, so the floor moves with it. Stage H added B2/B7/B8 over publishing.rb,
+    # soft_deleting.rb and dynamic_attributes.rb; stage I added Tier C's error branches
+    # and the first coverage section_nodes_controller has ever had. Each raise was
+    # measured on a cleared resultset before being written here.
+    #
+    # Clear coverage/.resultset.json before trusting either number. The five suites merge
+    # through it with a 3600s timeout and both bundles use the same suite names, so a
+    # partial or cross-bundle run leaves entries that shift the merged percentage.
+    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.97'))
+    branch = result['branch']
+
+    # Print both figures before aborting, so a run that fails one gate still tells you
+    # where the other stands.
+    puts format('Coverage %.2f%% (baseline %.2f%%)', actual, threshold)
+    puts format('Branch coverage %.2f%% (baseline %.2f%%)', branch, branch_threshold) if branch
+
+    failures = []
+    if actual < threshold
+      failures << format('Coverage %.2f%% is below the %.2f%% baseline.', actual, threshold)
+    end
+    if branch && branch < branch_threshold
+      failures << format('Branch coverage %.2f%% is below the %.2f%% baseline.', branch, branch_threshold)
+    end
+    abort failures.join("\n") unless failures.empty?
+  end
+end
+
 # These are tasks for the core browsercms project, and shouldn't be bundled into the distributable gem
 namespace :project do
 
@@ -48,7 +142,7 @@ namespace :project do
   #end
 
   task :ensure_db_exists do
-    unless File.exists?("test/dummy/config/database.yml")
+    unless File.exist?("test/dummy/config/database.yml")
       fail("Need to create a database.yml file before running tests. Run:\n $ rake project:setup[database] to create a sample database.yml for the project.")
     end
   end

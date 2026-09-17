@@ -85,8 +85,25 @@ module Cms
       self.node.children
     end
 
+    # Ordered by sitemap position, like every other reader on this class.
+    #
+    # `.in_order` was added in Phase 4 stage I. Without it this collected straight off
+    # ancestry's `children`, which carries no ORDER BY, so PostgreSQL returned the rows
+    # in whatever order it liked -- usually insertion order, and once, measurably, not.
+    # That flake is what surfaced it: sitemap_test.rb's "pages" test failed a full CI
+    # run with two pages transposed and passed on the next nine.
+    #
+    # This was the only reader here that did not order. child_sections (:71),
+    # visible_child_nodes (:143) and :226 all chain .in_order already, which is why the
+    # omission reads as an oversight rather than a decision.
+    #
+    # It IS a behaviour change to the 4.2 bundle that ships, so: nothing in this engine
+    # calls #pages -- `grep -rn "\.pages\b" app/ lib/` finds only the test -- and a
+    # downstream caller gets a stable sitemap order where it previously got an
+    # arbitrary one. Deliberately NOT extended to #child_nodes, which is also
+    # unordered but whose order-sensitive callers each add .in_order themselves.
     def pages
-      child_pages = self.node.children.collect do |section_node|
+      child_pages = self.node.children.in_order.collect do |section_node|
         section_node.node if section_node.page?
       end
       child_pages.compact

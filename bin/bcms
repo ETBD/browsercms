@@ -150,11 +150,14 @@ TEXT
 
   def create_rails_plugin(name)
     require 'rails/generators'
-    require 'rails/generators/rails/plugin_new/plugin_new_generator'
+    # Rails 4.0 renamed the `plugin_new` generator to `plugin`, taking
+    # PluginNewGenerator with it. `bcms module` has raised LoadError on the old
+    # path ever since -- the same path/constant is correct on 4.2 and 5.0.
+    require 'rails/generators/rails/plugin/plugin_generator'
 
     rails_options = {:skip_bundle => true}
     rails_options[:mountable] = true
-    plugin_script = Rails::Generators::PluginNewGenerator.new([name], rails_options)
+    plugin_script = Rails::Generators::PluginGenerator.new([name], rails_options)
     plugin_script.invoke_all
 
   end
@@ -162,6 +165,8 @@ TEXT
   def create_mountable_app(name = @project_name)
     create_rails_plugin(name)
     cd_to(name)
+
+    patch_engine_bin_rails_for_big_decimal
 
     gemspec "browsercms", :version => "~> #{::Cms::VERSION}"
     add_browsercms_dependency
@@ -206,6 +211,9 @@ TEXT
   end
 
   def generate_browsercms_project
+    # Must come first: install_migrations shells out to rake, which boots the
+    # generated app, which is where the unpatched BigDecimal blows up.
+    patch_boot_for_big_decimal
     install_migrations
 
     inside rails_app do

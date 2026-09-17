@@ -217,7 +217,7 @@ class Cms::Page < ActiveRecord::Base
       #              (connectable.class.publishable? ? connectable.published? : true)
       should_publish = false
       # binding.pry
-      update_attributes(
+      update(
           :version_comment => "#{connectable} was added to the '#{container}' container",
           :publish_on_save => should_publish
       )
@@ -240,7 +240,7 @@ class Cms::Page < ActiveRecord::Base
         raise "Connector is nil" unless connector
         raise "Direction is nil" unless direction
         orientation = direction[/_/] ? "#{direction.sub('_', ' the ')} of" : "#{direction} within"
-        update_attributes(:version_comment => "#{connector.connectable} was moved #{orientation} the '#{connector.container}' container", :publish_on_save => false)
+        update(:version_comment => "#{connector.connectable} was moved #{orientation} the '#{connector.container}' container", :publish_on_save => false)
         connectors.for_page_version(draft.version).like(connector).first.send("move_#{direction}")
       end
     end
@@ -255,7 +255,7 @@ class Cms::Page < ActiveRecord::Base
   def remove_connector(connector)
     transaction do
       raise "Connector is nil" unless connector
-      update_attributes(version_comment: "#{connector.connectable} was removed from the '#{connector.container}' container", publish_on_save: false)
+      update(version_comment: "#{connector.connectable} was removed from the '#{connector.container}' container", publish_on_save: false)
 
       #The logic of this is to go ahead and let the container get copied forward, then delete the new connector
       if new_connector = connectors.for_page_version(draft.version).like(connector).first

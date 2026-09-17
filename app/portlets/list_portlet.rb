@@ -19,7 +19,7 @@ class ListPortlet < Cms::Portlet
 
   # This is far less flexible than prepending additional view paths, but it suffices for now.
   def view_as_full_path
-    if File.exists?(expected_view_path())
+    if File.exist?(expected_view_path())
       "portlets/list/#{self.name.parameterize('_')}/_#{self.view_as}"
     else
       "portlets/list/_#{self.view_as}"

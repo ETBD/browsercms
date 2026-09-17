@@ -1,6 +1,38 @@
 require "test_helper"
 
 module Cms
+
+  # Merged here from test/unit/lib/cms_domain_support_test.rb, which tested the
+  # same file through Cms::ApplicationController rather than through the module.
+  class CmsSiteDetectionTest < ActiveSupport::TestCase
+
+    test "cms_site? determines if the first subdomain is 'cms'" do
+      c = Cms::ApplicationController.new
+      request = mock
+
+      c.expects(:request).returns(request)
+      request.expects(:subdomains).returns(["cms"])
+
+      assert c.send :cms_site?
+    end
+
+    test "A url that isn't a cms domain" do
+      c = Cms::ApplicationController.new
+      request = mock
+
+      c.expects(:request).returns(request)
+      request.expects(:subdomains).returns(["www"])
+
+      assert_equal false, c.send(:cms_site?)
+    end
+
+    test "default cms domain" do
+      c = Cms::ApplicationController.new
+
+      assert_equal "cms", c.send(:cms_domain_prefix)
+    end
+  end
+
   class DomainSupportTest < ActiveSupport::TestCase
 
     include DomainSupport

@@ -10,7 +10,7 @@ module Cms
     # Used to display older versions in the editor interface.
     def show
       @attachment = Attachment.unscoped.find(params[:id])
-      @attachment = @attachment.as_of_version(params[:version]) if params[:version]
+      @attachment = @attachment.as_of_version(params[:version]) if params[:version].present?
       send_attachment(@attachment)
     end
 

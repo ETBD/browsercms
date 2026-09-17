@@ -16,7 +16,7 @@ module CustomAssertions
   #end
 
   def assert_file_exists(file_name, message=nil)
-    assert File.exists?(file_name), 
+    assert File.exist?(file_name), 
       (message || "Expected File '#{file_name}' to exist, but it does not")
   end  
 

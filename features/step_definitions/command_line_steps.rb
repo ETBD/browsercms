@@ -31,13 +31,13 @@ Then /^a rails engine named "([^"]*)" should exist$/ do |engine_name|
 end
 
 When /^BrowserCMS should be added the \.gemspec file$/ do
-  check_file_content("#{project_name}/#{project_name}.gemspec", "s.add_dependency \"browsercms\", \"~> #{Cms::VERSION}\"", true)
+  expect_file_to_contain("#{project_name}/#{project_name}.gemspec", "s.add_dependency \"browsercms\", \"~> #{Cms::VERSION}\"")
 end
 
 Then /^BrowserCMS should be installed in the project$/ do
   assert_matching_output("BrowserCMS has been installed", all_output)
   # This is a not a really complete check but it at least verifies the generator completes.
-  check_file_content('config/routes.rb', 'mount_browsercms', true)
+  expect_file_to_contain('config/routes.rb', 'mount_browsercms')
   verify_seed_data_requires_browsercms_seeds
 end
 
@@ -54,18 +54,26 @@ Then /^a demo project named "([^"]*)" should be created$/ do |project|
   check_file_presence expected_files, true
 end
 
+# Generating a project is the single most expensive thing these features do, so
+# it happens once per run and every scenario gets a copy.
+#
+# This used to swap @dirs to point aruba at the scratch directory and generate
+# there directly. Aruba 0.14 has no @dirs -- the swap did nothing, the scratch
+# directory stayed empty, and the copy below then failed on a source that was
+# never created. Generate into aruba's working directory (the only place aruba
+# will run a command) and copy *out* to the cache instead; aruba wipes the
+# working directory between scenarios, so the cached copy is what survives.
 Given /^a BrowserCMS project named "([^"]*)" exists$/ do |project_name|
+  cached = File.absolute_path(File.join(ARUBA_SCRATCH_DIR, project_name))
 
-  unless File.exists?("#{@scratch_dir}/#{project_name}")
-    old_dirs = @dirs
-    @dirs = [@scratch_dir]
-    create_bcms_project("petstore")
-    @dirs = old_dirs
+  unless File.exist?(cached)
+    create_bcms_project(project_name)
+    FileUtils.mkdir_p(File.dirname(cached))
+    FileUtils.cp_r(expand_path(project_name), cached)
   end
-  from = File.absolute_path("#{@scratch_dir}/#{project_name}")
-  to = File.absolute_path("#{@aruba_dir}/#{project_name}")
-  FileUtils.mkdir_p(@aruba_dir)
-  FileUtils.cp_r(from, to)
+
+  FileUtils.mkdir_p(expand_path('.'))
+  FileUtils.cp_r(cached, expand_path(project_name))
 
   self.project_name = project_name
 end
@@ -77,11 +85,11 @@ When /^I run `([^`]*)` in the project$/ do |cmd|
 end
 
 Then /^a project file named "([^"]*)" should contain "([^"]*)"$/ do |file, partial_content|
-  check_file_content(prefix_project_name_to(file), partial_content, true)
+  expect_file_to_contain(prefix_project_name_to(file), partial_content)
 end
 
 Then /^a project file named "([^"]*)" should not contain "([^"]*)"$/ do |file, partial_content|
-  check_file_content(prefix_project_name_to(file), partial_content, false)
+  expect_file_not_to_contain(prefix_project_name_to(file), partial_content)
 end
 
 When /^I cd into the project "([^"]*)"$/ do |project|
@@ -91,14 +99,18 @@ end
 
 When /^a migration named "([^"]*)" (#{SHOULD_OR_NOT}) contain:$/ do |file, should_or_not, partial_content|
   migration = find_migration_with_name(file)
-  check_file_content(migration, partial_content, should_or_not)
+  if should_or_not
+    expect_file_to_contain(migration, partial_content)
+  else
+    expect_file_not_to_contain(migration, partial_content)
+  end
 end
 
 # A table of string values to check
 When /^a migration named "([^"]*)" should contain the following:$/ do |file, table|
   migration = find_migration_with_name(file)
   table.rows.each do |row|
-    check_file_content(migration, row.first, true)
+    expect_file_to_contain(migration, row.first)
   end
 end
 
@@ -113,35 +125,45 @@ end
 
 Then /^the file "([^"]*)" should contain the following content:$/ do |file, table|
   table.rows.each do |row|
-    check_file_content(file, row[0], true)
+    expect_file_to_contain(file, row[0])
   end
 end
 
-# Opposite of aruba step 'the file "x" should contain:'
-When /^the file "([^"]*)" should not contain:$/ do |file, partial_content|
-  check_file_content(file, partial_content, false)
-end
+# The negated form used to be missing from aruba, so it was defined here. Aruba
+# 0.14 provides it -- `(?:a|the) file(?: named)? "..." should (not )?contain:` --
+# and keeping this one made every use of it a Cucumber::Ambiguous abort, which
+# took down the whole @cli run before a single result was reported.
 
 When /^the correct version of Rails should be added to the Gemfile$/ do
-  check_file_content("#{project_name}/Gemfile", "gem 'rails', '#{Rails::VERSION::STRING}'", true)
+  # Not a literal: `rails new` writes `gem 'rails', '4.2.11.3'` on 4.2 but
+  # `gem 'rails', '~> 5.0.7', '>= 5.0.7.2'` on 5.0 -- app_base.rb's
+  # #rails_version_specifier splits a four-segment version into a pair of
+  # constraints. What the step means is "a rails entry naming the version this
+  # bcms is running under", which is the same claim on both.
+  expect_file_to_match(
+    "#{project_name}/Gemfile",
+    /^gem 'rails',.*#{Regexp.escape(Rails::VERSION::STRING)}/
+  )
 end
 
 When /^BrowserCMS should be added the Gemfile$/ do
-  check_file_content("#{project_name}/Gemfile", 'gem "browsercms"', true)
+  # Single quotes: this line is written by Rails::Generators::Actions#gem, which
+  # has emitted single-quoted names since Rails 4.
+  expect_file_to_contain("#{project_name}/Gemfile", "gem 'browsercms'")
 end
 
 Then /^Gemfile should have the correct version of BrowserCMS$/ do
-  check_file_content("Gemfile", %!gem "browsercms", "#{Cms::VERSION}"!, true)
+  expect_file_to_contain("Gemfile", %!gem "browsercms", "#{Cms::VERSION}"!)
 end
 
 When /^the production environment should be configured with reasonable defaults$/ do
   production_rb = "#{project_name}/config/environments/production.rb"
-  check_file_content production_rb, "config.assets.compile = true", true
-  check_file_content production_rb, %!# config.cms.site_domain = "www.example.com"!, true
+  expect_file_to_contain production_rb, "config.assets.compile = true"
+  expect_file_to_contain production_rb, %!# config.cms.site_domain = "www.example.com"!
 end
 
 When /^it should comment out Rails in the Gemfile$/ do
-  check_file_content("Gemfile", "# gem 'rails', '#{Rails::VERSION::STRING}'", true)
+  expect_file_to_contain("Gemfile", "# gem 'rails', '#{Rails::VERSION::STRING}'")
 end
 
 When /^it should run bundle install$/ do
@@ -218,7 +240,7 @@ Then /^it should display the current version of BrowserCMS$/ do
 end
 
 When /^rails script be configured to work with engines$/ do
-  check_file_content "script/rails", "ENGINE_PATH = ", true
+  expect_file_to_contain "script/rails", "ENGINE_PATH = "
 end
 
 # Note: We skip running `rake rails:update` as part of these tests since it requires an interactive

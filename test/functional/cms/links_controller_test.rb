@@ -35,10 +35,10 @@ class LinksControllerPermissionsTest < ActionController::TestCase
   def test_new_permissions
     login_as(@user)
 
-    get :new, :section_id => @editable_section
+    get :new, params: {:section_id => @editable_section}
     assert_response :success
 
-    get :new, :section_id => @noneditable_section
+    get :new, params: {:section_id => @noneditable_section}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -46,10 +46,10 @@ class LinksControllerPermissionsTest < ActionController::TestCase
   def test_create_permissions
     login_as(@user)
 
-    post :create, :section_id => @editable_section, link: {:name => "Another editable link"}
+    post :create, params: {:section_id => @editable_section, link: {:name => "Another editable link"}}
     assert_response :redirect
 
-    post :create, :section_id => @noneditable_section, link: {:name => "Another non-editable link"}
+    post :create, params: {:section_id => @noneditable_section, link: {:name => "Another non-editable link"}}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -57,10 +57,10 @@ class LinksControllerPermissionsTest < ActionController::TestCase
   def test_edit_permissions
     login_as(@user)
 
-    get :edit, :id => @editable_link
+    get :edit, params: {:id => @editable_link}
     assert_response :success
 
-    get :edit, :id => @noneditable_link
+    get :edit, params: {:id => @noneditable_link}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -68,10 +68,10 @@ class LinksControllerPermissionsTest < ActionController::TestCase
   def test_update_permissions
     login_as(@user)
 
-    put :update, :id => @editable_link, link: {:name => "Modified editable link"}
+    put :update, params: {:id => @editable_link, link: {:name => "Modified editable link"}}
     assert_response :redirect
 
-    put :update, :id => @noneditable_link, link: {:name => "Modified non-editable link"}
+    put :update, params: {:id => @noneditable_link, link: {:name => "Modified non-editable link"}}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -79,10 +79,10 @@ class LinksControllerPermissionsTest < ActionController::TestCase
   def test_destroy_permissions
     login_as(@user)
 
-    delete :destroy, :id => @editable_link
+    delete :destroy, params: {:id => @editable_link}
     assert_response :redirect
 
-    delete :destroy, :id => @noneditable_link
+    delete :destroy, params: {:id => @noneditable_link}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end

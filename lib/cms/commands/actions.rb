@@ -61,6 +61,39 @@ module Cms
         rake 'cms:install:migrations'
       end
 
+      # Rails 4.2's active_support/core_ext/object/duplicable.rb calls
+      # BigDecimal.new at load time, and bigdecimal 2.0 removed it. That runs
+      # inside `require 'rails/all'`, which is long before Bundler.require pulls
+      # in browsercms -- so the engine cannot install the patch from its own
+      # code. The generated app has to load it from boot.rb, which is exactly
+      # what test/dummy/config/boot.rb does for this repo's own suite.
+      #
+      # Without this, every rails and rake command in a freshly generated
+      # project aborts with `undefined method 'new' for BigDecimal:Class`,
+      # starting with the `rake cms:install:migrations` in the generator itself.
+      def patch_boot_for_big_decimal
+        in_root do
+          append_to_file 'config/boot.rb', <<-RUBY
+
+# Rails 4.2 calls the removed BigDecimal.new while loading rails/all, before
+# Bundler.require runs. See browsercms lib/cms/extensions/big_decimal.rb.
+require 'cms/extensions/big_decimal'
+          RUBY
+        end
+      end
+
+      # The module equivalent of patch_boot_for_big_decimal. A generated engine's
+      # bin/rails does not go through any boot.rb at all -- it calls
+      # `require 'rails/all'` directly -- so `rails g` inside a module needs the
+      # patch injected there instead.
+      def patch_engine_bin_rails_for_big_decimal
+        inject_into_file 'bin/rails', :before => "require 'rails/all'" do
+          "# Rails 4.2 calls the removed BigDecimal.new while loading rails/all.\n" \
+          "# See browsercms lib/cms/extensions/big_decimal.rb.\n" \
+          "require 'cms/extensions/big_decimal'\n\n"
+        end
+      end
+
       def install_cms_seed_data
         # Copy from Gem
         copy_file File.expand_path(File.join(__FILE__, "../../../../db/browsercms.seeds.rb")), "db/browsercms.seeds.rb"

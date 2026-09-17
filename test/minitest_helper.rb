@@ -3,7 +3,6 @@ require File.expand_path("../dummy/config/environment.rb", __FILE__)
 require "rails/test_help"
 require "minitest/spec"
 #require "minitest/autorun"
-require "minitest/unit"
 
 #ENV["RAILS_ENV"] = "test"
 #require File.expand_path("../dummy/config/environment.rb", __FILE__)
@@ -16,7 +15,7 @@ require 'factories/factories'
 require 'factories/attachable_factories'
 
 require 'minitest/reporters'
-MiniTest::Reporters.use!
+Minitest::Reporters.use!
 
 # Uncomment if you want Capybara in accceptance/integration tests
 # require "minitest/rails/capybara"
@@ -31,7 +30,7 @@ class Minitest::Spec
   after :each do
     DatabaseCleaner.clean
   end
-  include FactoryGirl::Syntax::Methods
+  include FactoryBot::Syntax::Methods
   include FactoryHelpers
 end
 

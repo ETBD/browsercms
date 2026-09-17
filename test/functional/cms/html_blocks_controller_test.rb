@@ -17,7 +17,7 @@ module Cms
 
     def test_add_to_page
       @page = create(:page, :path => "/test", :section => root_section)
-      get :new, :html_block => {:connect_to_page_id => @page.id, :connect_to_container => "test"}
+      get :new, params: {:html_block => {:connect_to_page_id => @page.id, :connect_to_container => "test"}}
       assert_response :success
       assert_select "input[name=?][value=?]", "html_block[connect_to_page_id]", @page.id.to_s
       assert_select "input[name=?][value=?]", "html_block[connect_to_container]", "test"
@@ -27,8 +27,8 @@ module Cms
       @page = create(:page, :path => "/test", :section => root_section)
       html_block_count = HtmlBlock.count
 
-      post :create, :html_block => FactoryGirl.attributes_for(:html_block).merge(
-          :connect_to_page_id => @page.id, :connect_to_container => "test")
+      post :create, params: {:html_block => FactoryBot.attributes_for(:html_block).merge(
+          :connect_to_page_id => @page.id, :connect_to_container => "test")}
 
       assert_incremented html_block_count, HtmlBlock.count
       assert_equal "test", @page.reload.connectors.first.container
@@ -37,17 +37,17 @@ module Cms
 
     def test_search
       skip("deeper dive needed on why these indexes are not rendering")
-      get :index, :search => {:term => 'test'}
+      get :index, params: {:search => {:term => 'test'}}
       assert_response :success
       assert_select "td", "Test"
 
-      get :index, :search => {:term => 'worked', :include_body => true}
+      get :index, params: {:search => {:term => 'worked', :include_body => true}}
       assert_response :success
       assert_select "td", "Test"
     end
 
     def test_edit
-      get :edit, :id => @block.id
+      get :edit, params: {:id => @block.id}
       assert_response :success
       assert_select "input[id=?][value=?]", "html_block_name", "Test"
     end
@@ -57,7 +57,7 @@ module Cms
       html_block_count = HtmlBlock.count
       html_block_version_count = HtmlBlock::Version.count
 
-      put :update, :id => @block.id, :html_block => {:name => "Test V2"}
+      put :update, params: {:id => @block.id, :html_block => {:name => "Test V2"}}
       reset(:block)
 
       assert_redirected_to @block
@@ -68,7 +68,7 @@ module Cms
     end
 
     def test_versions
-      get :versions, :id => @block.id
+      get :versions, params: {:id => @block.id}
       assert_response :success
       assert_equal @block, assigns(:block)
     end
@@ -77,7 +77,7 @@ module Cms
       @block.update_attributes(:name => "Test V2", :publish_on_save => false)
       reset(:block)
 
-      put :revert_to, :id => @block.id, :version => "1"
+      put :revert_to, params: {:id => @block.id, :version => "1"}
       reset(:block)
 
       assert_equal 3, @block.draft.version
@@ -92,7 +92,7 @@ module Cms
 
       html_block_version_count = HtmlBlock::Version.count
 
-      put :revert_to, :id => @block.id, :version => 99
+      put :revert_to, params: {:id => @block.id, :version => 99}
       reset(:block)
 
       assert_equal html_block_version_count, HtmlBlock::Version.count

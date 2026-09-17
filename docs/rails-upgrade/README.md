@@ -1,0 +1,149 @@
+# BrowserCMS Rails Upgrade — Phase Plan
+
+**Target:** Rails 4.2.11.3 → Rails 8.x, sequentially, one minor version at a time.
+**Scope of these files:** the pre-bump work and the **first hop only (4.2 → 5.0)**. Hops 5.1 through 8.0 are handled by repeating [Phase 6](phase-6-subsequent-hops.md).
+**Repo:** `browsercms` (the engine). The consuming `cms` app has its own blockers; they are noted where they gate this work but are not planned here.
+
+---
+
+## How these documents fit together
+
+Each phase has up to three files, and they have different jobs. Knowing which is which saves the most common confusion in this directory — *"where are the criteria?"*
+
+| File | Job | Authority |
+|---|---|---|
+| `phase-N-<name>.md` — **the phase file** | The **contract**. Goal, work items, and the numbered **exit criteria** | Owns the criteria. Every "criterion 8" anywhere in this directory means row 8 of *this* file's table |
+| `phase-N-implementation-plan.md` — **the plan** | The **approach**. Pre-flight findings, stage-by-stage order, decisions needing a human | Written *before* the work. Where a plan and its phase file disagree, the plan says so explicitly in its findings |
+| `phase-N-<report\|baseline\|gem-report>.md` — **the report** | The **record**. What was actually measured, which criteria passed, where the plan was wrong | **Supersedes the plan.** Each plan says so in its own header |
+
+Three rules that follow from the split, and are worth stating because each has already caught someone out:
+
+1. **Criteria are always numbered from the phase file**, never from the plan or the report. The plan's traceability table and the report's results table both reuse those numbers, abbreviated. If a number is referenced with no table in sight, the phase file is where it lives.
+2. **The count of criteria can change after a phase runs.** Rows get struck (they turn out to be impossible or inapplicable) or moved to another phase, and are marked in place rather than deleted so the numbering stays stable. So "14 of 14" and "17 rows" can both be true of the same table — read the struck rows before concluding a phase skipped something. Phase 3 is the worked example.
+3. **A plan is a hypothesis.** These were written from static reading; measurement has moved work items, struck criteria, and reversed conclusions in every phase so far. That is the process working. The report is where the truth ends up.
+
+---
+
+## How to read a phase file
+
+Every file has the same five sections, in this order:
+
+| Section | What it answers |
+|---|---|
+| **Goal** | One sentence. If you read nothing else, read this. |
+| **Why this phase exists** | The specific risk it retires. |
+| **Work items** | The concrete changes, with counts and `file:line` references. |
+| **Exit criteria** | A checklist where **every item is objectively verifiable** — most have a command next to them. This is how you judge whether the goal was reached. |
+| **Explicitly not in this phase** | Deferred work, so a reviewer can tell a gap from an oversight. |
+
+**A phase is complete when every exit criterion passes — not when the work items are done.** Work items are the plan; exit criteria are the contract. If a work item turns out to be unnecessary, that's fine. If an exit criterion can't be met, the phase isn't finished.
+
+---
+
+## The phases
+
+| # | Phase | Goal in brief | Blocking? | Status |
+|---|---|---|---|---|
+| **0** | [Baseline and CI](phase-0-baseline-and-ci.md) | Know the true pass rate and get a green button that runs on every push | 🔴 **Yes** — nothing else can start | ✅ **Done** — [plan](phase-0-implementation-plan.md) · [results](phase-0-baseline.md) |
+| **1** | [Gem compatibility and dual-boot](phase-1-gem-compatibility-and-dual-boot.md) | Find out which gems actually block Rails 5, and be able to boot both versions | 🔴 **Yes** — its output scopes Phase 2 | ✅ **Done** — [plan](phase-1-implementation-plan.md) · [results](phase-1-gem-report.md) |
+| **2** | [Harness migration](phase-2-harness-migration.md) | Make the test suite capable of running on Rails 5, while still on 4.2 | 🔴 **Yes** — the suite cannot boot on Rails 5 today | ⚠️ **Done, 11 of 12 criteria** — [plan](phase-2-implementation-plan.md) · [results](phase-2-harness-report.md) |
+| **3** | [Backwards-compatible code fixes](phase-3-backwards-compatible-fixes.md) | Land ~96 mechanical changes that work on 4.2 *and* 5.0+, shrinking the bump diff | 🟡 Strongly recommended — but it owned the defects keeping CI red | ✅ **Done, 14 of 14 criteria** — [plan](phase-3-implementation-plan.md) · [results](phase-3-report.md) |
+| **4** | [Characterization tests](phase-4-characterization-tests.md) | Pin the behaviour that Rails 5 changes *silently*, before it can drift | 🔴 **Yes** for the four 5.0-specific items | ✅ **Done** — **both bundles green and identical**, 13 of 14 criteria (two as amended) · [plan](phase-4-implementation-plan.md) · [report](phase-4-report.md) |
+| **5** | [The 5.0 bump](phase-5-the-5.0-bump.md) | Rails 5.0 green, deployed, with `load_defaults` handled deliberately | — | — |
+| **6** | [Subsequent hops](phase-6-subsequent-hops.md) | A repeatable checklist for 5.1 → 5.2 → 6.0 → … → 8.0 | — | — |
+
+**Phase 0 is done with two caveats**, both about the default branch rather than the work: its exit criteria 1 and 2 ask for a green CI run on the *default* branch, and the work currently sits on `feature/cms-420-migrate-tests`.
+
+✅ **Unblocked as of Phase 4 stage B.** These were held open while the gating `next-rails` job was red — merging would have made the default branch red rather than green. **Both bundles are now green**, so criteria 1 and 2 close on the next merge into `develop`, as originally intended.
+
+**Phase 3 is done — all 14 of its live criteria pass.** Getting there took two criteria off the list and one off to another phase, each recorded rather than dropped: **12** was struck during execution (`ActiveRecord::Migration[4.2]` does not exist on 4.2), **15** is struck as inapplicable to an engine (see the note below), and **16** — a green `next-rails` job — moved to [Phase 4](phase-4-characterization-tests.md), because Phase 3 cleared every defect in its own scope and the job stayed red on ten others. Criterion 1 was amended for the same reason: it now asserts the 4.2 bundle, with the 5.0 half travelling to Phase 4.
+
+**Read that as a scope correction, not as a phase that graded itself.** The [report](phase-3-report.md) is blunt about it: Rails 5 is still red, and the honest summary is that Phase 3 removed everything *it* could and what remains is a different kind of problem. The one thing still owed from Phase 3 and not covered by any criterion is the **by-hand CKEditor check** (4.3.4 → 4.5.11, zero `@javascript` scenarios) — and it needs `BUNDLE_GEMFILE=Gemfile.next`, because the bump is gated behind `NEXT_BOOT` in the gemspec. Pointing a downstream app at this branch exercises the *old* editor. See the report's §9.
+
+**Phase 4 is done, and it changed what we thought we were doing.** Both bundles are green and identical for the first time in the upgrade, and the `next-rails` job passes for the first time since Phase 2 made it gating. But the headline is not the point of the phase, and reporting it as one would misrepresent what happened.
+
+The phase was scoped to pin behaviour that Rails 5 changes *silently*. Its actual output was **fifteen defects, fourteen of which fail identically on Rails 4.2** — optimistic locking silently defeated on every versioned content type, publishing a non-versioned record silently doing nothing, `?some_id=` blank returning a 500, public form submission 500ing for unauthenticated visitors, the Forms admin UI 500ing, a routed controller that can never render, `read_attribute` answering nil on every portlet, and every version saved through the CMS commented with the whole record. None was caused by the upgrade. **The upgrade was the excuse to look.**
+
+Ten of them are left standing deliberately, each pinned by a test that goes red when it is repaired — they need product decisions, not upgrade work, and they are tabulated in the [report](phase-4-report.md). That report is also where to read about the two work items the implementation plan dropped and the checkbox audit that recovered them, and about the coverage gate being **lowered** once before being raised twice.
+
+Stage G added two more of the same kind, and they are the clearest statement of why the phase is shaped this way. The edit-conflict screen for Pages pointed at two partials that do not exist, so it has raised `MissingTemplate` for as long as the paths have said `shared` — invisible because the branch is unreachable except during a real conflict. And `build_object_from_version` clears the dirty state of the wrong object, so every version saved through the CMS admin UI is commented with the entire record instead of what changed. The original author left a comment saying they suspected exactly that and never found it; 96.91% line coverage on the file did not find it either. **Neither defect is a Rails 5 incompatibility. Both were found by asking what the code does rather than whether it runs.**
+
+**One quality gate moved**, and it is worth understanding rather than reverting: branch coverage's floor went 70.83% → 70.49% because the new eager-load test widened the denominator by six files no suite had ever loaded. The numerator never fell, and line coverage rose 78.44% → 83.54% for the same reason. The reasoning is recorded beside the threshold in [`lib/tasks/core_tasks.rake`](../../lib/tasks/core_tasks.rake).
+
+**Phase 2 is done, with criterion 3 unmet and knowingly so.** The harness migration itself is complete: the 4.2 suite is green at 78.35% (the number moved because simplecov moved, not because coverage did — see the [report](phase-2-harness-report.md)), and on Rails 5 the unit suite went from 323 errors to 3 while cucumber went from "does not load" to 154 scenarios collected. What remains red on Rails 5 is five *application* defects that no harness work can reach, and they belong to Phase 3. The `next-rails` CI job was made gating anyway, deliberately. Phase 3 then cleared all five and the job **stayed** red on ten different failures; [Phase 4](phase-4-characterization-tests.md) stage B cleared those and **the job is green**. Keeping it gating through three phases of red is what surfaced them — and three of the four root causes turned out to be live **4.2** bugs that only the 5.0 suite executed, not Rails 5 incompatibilities.
+
+Phase 2's original Poltergeist migration had nothing to migrate (Phase 0 established that no Capybara driver is ever selected), and Phase 1 showed most of the gems it planned to move carry no Rails 5 cap. Both were dropped. The report also records six places the plan was wrong, including two that broke the 4.2 suite before being caught.
+
+### browsercms is an engine, not an application — and some criteria assume otherwise
+
+The phase files are derived from the `rails-upgrade` skill, whose methodology assumes it is
+upgrading an **application**. It isn't. browsercms is a Rails engine shipped as a gem, and one
+family of criteria does not survive the translation: **"deployed to production."**
+
+There is no production to deploy an engine to. It gets released as a gem, and the risk is
+realized when a consuming application upgrades — which, on this plan, happens once, after the
+last hop. So a per-phase deploy gate cannot be met by anyone at any point in the sequence, and
+asserting it per phase misrepresents what has been verified.
+
+**Decision: per-phase production-deploy criteria are struck**, replaced by a single
+`cms`-integration gate after the final hop. Struck rather than deleted — the numbering in the
+reports still lines up, and the reasoning stays legible.
+
+| Where | Criterion | Status |
+|---|---|---|
+| [Phase 3](phase-3-backwards-compatible-fixes.md) | 15 — deployed to production on 4.2 | ✅ Struck, recorded in the [report](phase-3-report.md) |
+| [Phase 5](phase-5-the-5.0-bump.md) | 12 — deployed and stable past the rollback window | ⚠️ Not yet amended |
+| [Phase 6](phase-6-subsequent-hops.md) | 10, and B — each hop deployed before the next | ⚠️ Not yet amended |
+
+The two unamended ones are left for whoever reaches those phases, because the *shape* of the
+replacement depends on how `cms` ends up consuming this gem. What should **not** happen is
+silently dropping them: the underlying instinct — don't stack unverified version bumps — is
+correct and still applies. It just has to be re-expressed as "released, and exercised by a real
+consumer" rather than "deployed."
+
+**This does not weaken the incremental discipline.** The point of the skill's rule is that each
+hop is independently verifiable before the next begins, and that is preserved by the two CI jobs
+and the exit criteria. Only the deployment half is inapplicable.
+
+**Ordering note:** Phase 1 comes before Phase 2 deliberately. The gem compatibility check determines how much of the harness migration is actually forced, so running it first prevents Phase 2 from being scoped on guesswork.
+
+Phases 3 and 4 can run in parallel — Phase 3 is mechanical and Phase 4 requires thought, so they compete for different attention rather than the same hands.
+
+---
+
+## Supporting documentation
+
+These phase files are a distillation. The reasoning, evidence, and per-file coverage data live here:
+
+| Document | What it holds |
+|---|---|
+[`RAILS_UPGRADE_TEST_PRIORITY.md`](../../RAILS_UPGRADE_TEST_PRIORITY.md) | **The primary source.** Breakage risk ranked by *silence* rather than likelihood. §0 carries the skill reconciliation verdicts, §3 the Tier B silent-change items (B1–B10), §4 the Tier C loud ones, §5 the verified-clean list, §7 the coverage-adequacy assessment. |
+| [`TEST_COVERAGE_PLAN.md`](../../TEST_COVERAGE_PLAN.md) | Real measured coverage (72.64%), per-file, ordered by coverage-gained-per-unit-effort. The secondary lens for sequencing *within* a phase. |
+| [`TEST_COVERAGE_ANALYSIS.md`](../../TEST_COVERAGE_ANALYSIS.md) | The wider gap analysis across both repos, including the `cms` integration surface and the content-block lifecycle gap. Its estimates were superseded by `TEST_COVERAGE_PLAN.md`; its *structural* findings still stand. |
+
+### The `rails-upgrade` skill
+
+The methodology behind this plan (FastRuby.io, *The Complete Guide to Upgrade Rails*). Not in this repo — it lives in the `ombulabs-ai` checkout at `rails-upgrade/3.3.0/rails-upgrade/`. Files referenced by these phases:
+
+- `SKILL.md` — the mandated step order, and the rule that **version skipping is not allowed**
+- `version-guides/upgrade-4.2-to-5.0.md` — the hop these phases build toward
+- `workflows/test-suite-verification-workflow.md` — Phase 0
+- `workflows/gem-compatibility-workflow.md`, `workflows/boot-smoke-test-workflow.md` — Phase 1
+- `workflows/ci-sync-workflow.md` — Phase 0 and every hop's PR
+- `references/testing-checklist.md` — the exit-criteria source for Phase 5
+- `detection-scripts/patterns/rails-*.yml` — the per-version detection patterns, re-run at every hop in Phase 6
+
+---
+
+## Two things that were unknown — now measured
+
+Both were called out here as the questions the downstream estimates depended on. Phase 0 answered them. Full numbers in [`phase-0-baseline.md`](phase-0-baseline.md).
+
+1. **Does the suite pass?** **Yes.** 994 Minitest tests, 0 failures, 0 errors, 19 skips — every skip carrying a stated reason. Coverage 75.82%, enforced by `rake coverage:check`.
+2. **Are the 53 Cucumber features green?** **Mostly, and the exceptions are concentrated.** 154/154 in the default profile. Across all 53 files it is 161/193 — and **27 of the 29 failures are the `@cli` set**, which shares a single root cause: `rails new` failing inside aruba. The remaining two are tagged `@known-bug` and `@missing-feature`.
+
+The third answer nobody asked for is the most useful one: **Poltergeist was never in play.** There are no `@javascript` tags anywhere and both Capybara driver assignments are commented out, so the suite is green on a runner with no browser installed. The "abandoned since 2018" driver risk that shaped Phase 2's scope does not exist.
+
+So the plan does **not** change shape the way this section feared — with one exception. The `@cli` features are the only coverage `lib/generators` has, and they are 79% red going into a sequence of hops that rewrite generator APIs. That is the gap to close, and it is tracked as O1 in the baseline rather than buried here.
+
+Effort estimates from the source documents were **not** revisited during distillation and are deliberately omitted from these files. Sequence and exit criteria are the useful parts; days-per-phase should be estimated by whoever picks up the work, now that Phase 0 has reported real numbers.

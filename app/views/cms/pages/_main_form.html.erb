@@ -1,5 +1,5 @@
 <% if @other_version %>
-  <%= render :partial => 'cms/shared/version_conflict_error', :locals => {:other_version => @other_version, :your_version => @page} %>
+  <%= render :partial => 'cms/application/version_conflict_error', :locals => {:other_version => @other_version, :your_version => @page} %>
   <%= f.hidden_field :lock_version, :value => @other_version.lock_version %>
 <% else %>
   <%= f.hidden_field :lock_version %>
@@ -20,5 +20,5 @@
 
 </div>
 <% if @other_version %>
-    <%= render :partial => "cms/shared/version_conflict_diff", :locals => {:other_version => @other_version, :your_version => @page} %>
+    <%= render :partial => "cms/application/version_conflict_diff", :locals => {:other_version => @other_version, :your_version => @page} %>
 <% end %>

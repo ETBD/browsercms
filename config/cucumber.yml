@@ -4,5 +4,13 @@ rerun_opts = rerun.to_s.strip.empty? ? "--format #{ENV['CUCUMBER_FORMAT'] || 'pr
 std_opts = "--format #{ENV['CUCUMBER_FORMAT'] || 'pretty'} --strict --tags ~@wip"
 %>
 default: <%= std_opts %> features
+# Deliberately without --strict, and therefore deliberately a profile rather
+# than plain cucumber_opts on the rake task: cucumber applies `default` to any
+# run that names no profile, and `default` carries --strict, which fails a run
+# on PENDING steps alone. This task exists to report on scenarios that are
+# known to be broken or unimplemented, so pending is an expected state here --
+# but a real failure must still exit non-zero, which it does. cucumber 2.4 has
+# no --no-strict to express this on the command line.
+known_bugs: --format progress --tags @known-bug features
 wip: --tags @wip:3 --wip features
 rerun: <%= rerun_opts %> --format rerun --out rerun.txt --strict --tags ~@wip

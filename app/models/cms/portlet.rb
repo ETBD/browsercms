@@ -225,7 +225,7 @@ module Cms
     end
 
     def store_hash_in_flash(key, hash)
-      flash[key] = hash.inject(HashWithIndifferentAccess.new) do |p, (k, v)|
+      flash[key] = hash.inject(ActiveSupport::HashWithIndifferentAccess.new) do |p, (k, v)|
         unless StringIO === v || Tempfile === v
           p[k.to_sym] = v
         end

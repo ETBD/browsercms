@@ -70,9 +70,9 @@ module Cms
         def destroy
           run_callbacks :destroy do
             if self.class.publishable?
-              update_attributes(:deleted => true, :publish_on_save => true)
+              update(:deleted => true, :publish_on_save => true)
             else
-              update_attributes(:deleted => true)
+              update(:deleted => true)
             end
           end
         end

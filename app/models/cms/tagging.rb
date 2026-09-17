@@ -1,7 +1,7 @@
 module Cms
   class Tagging < ActiveRecord::Base
-    belongs_to :tag, :class_name => 'Cms::Tag'
-    belongs_to :taggable, :polymorphic => true, :class_name => 'Cms::Taggable', :foreign_type => 'taggable_type'
+    belongs_to :tag, :class_name => 'Cms::Tag', :required => false
+    belongs_to :taggable, :polymorphic => true, :class_name => 'Cms::Taggable', :foreign_type => 'taggable_type', :required => false
 
     extend DefaultAccessible
    #attr_accessible :tag, :taggable

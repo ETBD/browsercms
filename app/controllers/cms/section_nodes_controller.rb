@@ -70,9 +70,25 @@ module Cms
     # Retrieves all siblings that will need updating on success. This includes all siblings
     # from the node's previous location as well as siblings from the node's new/target location. Also
     # includes the node itself.
+    #
+    # The dedupe is deliberately OUTSIDE the union and keyed on id. It used to be
+    # `.distinct` on the second relation, inside the parens, where it was a SELECT
+    # DISTINCT over rows that were already distinct and could not see across the two
+    # halves -- and duplicates between the halves are the only kind this method
+    # produces. It produces them on every move within a single folder, because
+    # previous_parent and target_parent are then the same record and both queries
+    # return the same siblings.
+    #
+    # Fixed in Phase 4 stage I, after reading the consumer:
+    # Sitemap.prototype.updateValuesOnSuccess (cms/sitemap.js:188) only assigns, so the
+    # duplicate was cosmetic and the change is safe. Covered by
+    # test/functional/cms/section_nodes_controller_test.rb, in both directions -- one
+    # test fails if duplicates come back, another if the union stops including the
+    # previous parent's siblings.
     def nodes_to_update_on_success(previous_parent, target_parent)
-      (previous_parent.children.not_of_type(Cms::Section::HIDDEN_NODE_TYPES) +
-      target_parent.children.not_of_type(Cms::Section::HIDDEN_NODE_TYPES).uniq).map { |n| [n.id, n.position, n.depth] }
+      siblings = previous_parent.children.not_of_type(Cms::Section::HIDDEN_NODE_TYPES) +
+                 target_parent.children.not_of_type(Cms::Section::HIDDEN_NODE_TYPES)
+      siblings.uniq(&:id).map { |n| [n.id, n.position, n.depth] }
     end
   end
 end

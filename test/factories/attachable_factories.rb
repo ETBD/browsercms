@@ -17,7 +17,7 @@ class HasThumbnail < ActiveRecord::Base
   has_attachment :document, :styles => {:thumbnail => "50x50"}
 end
 
-FactoryGirl.define do
+FactoryBot.define do
 
   # Duplicates :file_block
   factory :versioned_attachable, :class => VersionedAttachable do |m|
@@ -33,7 +33,7 @@ FactoryGirl.define do
       opts[:data_file_path] = evaluator.attachment_file_path if evaluator.attachment_file_path
       f.attachments.build(opts)
     }
-    m.publish_on_save true
+    m.publish_on_save { true }
   end
 
   factory :has_many_attachments, :class => HasManyAttachments do |m|
@@ -49,40 +49,40 @@ FactoryGirl.define do
       opts[:data_file_path] = evaluator.attachment_file_path if evaluator.attachment_file_path
       f.attachments.build(opts)
     }
-    m.publish_on_save true
+    m.publish_on_save { true }
   end
 
   factory :has_many_documents, :class => Cms::Attachment do |m|
-      m.attachment_name "documents"
-      m.attachable_type "HasManyAttachments"
+      m.attachment_name { "documents" }
+      m.attachable_type { "HasManyAttachments" }
       m.data { mock_file }
       m.parent { find_or_create_root_section }
-      m.attachable_version 1
-      m.publish_on_save true
+      m.attachable_version { 1 }
+      m.publish_on_save { true }
   end
 
   factory :attachment_document, :class => Cms::Attachment do |m|
-    m.attachment_name "document"
-    m.attachable_type "VersionedAttachable"
+    m.attachment_name { "document" }
+    m.attachable_type { "VersionedAttachable" }
     m.data { mock_file }
     m.parent { find_or_create_root_section }
-    m.publish_on_save true
+    m.publish_on_save { true }
   end
 
   factory :thumbnail_attachment, :class => Cms::Attachment do |m|
-      m.attachment_name "document"
-      m.attachable_type "HasThumbnail"
+      m.attachment_name { "document" }
+      m.attachable_type { "HasThumbnail" }
       m.data { mock_file }
       m.parent { find_or_create_root_section }
-      m.publish_on_save true
+      m.publish_on_save { true }
   end
 
   factory :catalog_attachment, :class => Cms::Attachment do |m|
-    m.attachment_name "photos"
-    m.attachable_type "Dummy::Catalog"
+    m.attachment_name { "photos" }
+    m.attachable_type { "Dummy::Catalog" }
     m.data { mock_text_file }
     m.parent { find_or_create_root_section }
-    m.publish_on_save true
+    m.publish_on_save { true }
   end
 
 end

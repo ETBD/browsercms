@@ -32,18 +32,22 @@ Feature: Generate Content Blocks
     """
     <dt>Price:</dt><dd><%= show :price %></dd>
     """
+    # Split, and stopping before `t.timestamps`, so that one scenario covers both
+    # bundles. Two lines of this file are written by Rails and differ by version:
+    # the superclass is `ActiveRecord::Migration` on 4.2 and
+    # `ActiveRecord::Migration[5.0]` on 5.0, and timestamps render as
+    # `t.timestamps null: false` on 4.2 and `t.timestamps` on 5.0. What this
+    # scenario is about is create_content_table and the columns.
     And a migration named "create_bcms_widgets_products.rb" should contain:
     """
     class CreateBcmsWidgetsProducts < ActiveRecord::Migration
+    """
+    And a migration named "create_bcms_widgets_products.rb" should contain:
+    """
       def change
         create_content_table :bcms_widgets_products do |t|
           t.string :name
           t.string :price
-
-          t.timestamps
-        end
-      end
-    end
     """
     And the file "config/routes.rb" should contain:
     """

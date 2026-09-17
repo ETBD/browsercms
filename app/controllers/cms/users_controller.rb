@@ -3,8 +3,8 @@ module Cms
     include Cms::AdminTab
 
     check_permissions :administrate, :except => [:change_password, :update_password]
-    before_filter :only_self_or_administrator, :only => [:change_password, :update_password]
-    after_filter :update_flash, :only => [:update]
+    before_action :only_self_or_administrator, :only => [:change_password, :update_password]
+    after_action :update_flash, :only => [:update]
 
 
     def index
@@ -32,7 +32,13 @@ module Cms
       per_page = params[:per_page] || 10
 
       page_num = params[:page] ? params[:page].to_i : 1
-      @users = PersistentUser.where(conditions).paginate(page: page_num, per_page: per_page).includes(:user_group_memberships).references(:user_group_memberships).order("first_name, last_name, email")
+      # All three filters above are optional, so `query` is empty whenever show_expired is
+      # set with no keyword and no group -- which makes `conditions` == [""]. Rails 4.2
+      # dropped an empty condition string and emitted no WHERE clause at all; 5.0 emits a
+      # literal empty one, producing `WHERE  ORDER BY ...` and a PG::SyntaxError.
+      # Skipping the call reproduces 4.2's SQL exactly on both versions.
+      scope = query.empty? ? PersistentUser.all : PersistentUser.where(conditions)
+      @users = scope.paginate(page: page_num, per_page: per_page).includes(:user_group_memberships).references(:user_group_memberships).order("first_name, last_name, email")
     end
 
     def new

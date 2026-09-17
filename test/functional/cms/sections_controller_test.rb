@@ -12,7 +12,7 @@ class SectionsControllerTest < ActionController::TestCase
   
   test "GET new should set the groups to the parent section's groups by default" do
     @group = create(:group, :name => "Test", :group_type => create(:group_type, :name => "CMS User", :cms_access => true))
-    get :new, :section_id => root_section.to_param
+    get :new, params: {:section_id => root_section.to_param}
 
     assert_response :success
     expected_groups = root_section.groups
@@ -24,7 +24,7 @@ class SectionsControllerTest < ActionController::TestCase
     @section = create(:section, :name => "V1", :parent => root_section, :groups => root_section.groups)
     
 
-    put :update, :id => @section.to_param, :section => {:name => "V2"}
+    put :update, params: {:id => @section.to_param, :section => {:name => "V2"}}
     reset(:section)
     
     assert_redirected_to @section
@@ -70,10 +70,10 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
   def test_new_permissions
     login_as(@user)
 
-    get :new, :section_id => @editable_section
+    get :new, params: {:section_id => @editable_section}
     assert_response :success
 
-    get :new, :section_id => @noneditable_section
+    get :new, params: {:section_id => @noneditable_section}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -81,7 +81,7 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
   test "POST create should set the groups to the parent section's groups for non-admin user" do
     @group = create(:group, :name => "Test", :group_type => create(:group_type, :name => "CMS User", :cms_access => true))
     login_as(@user)
-    get :new, :section_id => @editable_section
+    get :new, params: {:section_id => @editable_section}
     assert_equal @editable_section.groups, assigns(:section).groups
     assert !assigns(:section).groups.include?(@group)
   end
@@ -89,10 +89,10 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
   def test_create_permissions
     login_as(@user)
 
-    post :create, :section_id => @editable_section, section: {:name => "Another editable subsection"}
+    post :create, params: {:section_id => @editable_section, section: {:name => "Another editable subsection"}}
     assert_response :success
 
-    post :create, :section_id => @noneditable_section, section: {:name => "Another non-editable subsection"}
+    post :create, params: {:section_id => @noneditable_section, section: {:name => "Another non-editable subsection"}}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -100,10 +100,10 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
   def test_edit_permissions
     login_as(@user)
 
-    get :edit, :id => @editable_section
+    get :edit, params: {:id => @editable_section}
     assert_response :success
 
-    get :edit, :id => @noneditable_section
+    get :edit, params: {:id => @noneditable_section}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -111,10 +111,10 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
   def test_update_permissions
     login_as(@user)
 
-    put :update, :id => @editable_section, :name => "Modified editable subsection", section:{name: "Anything"}
+    put :update, params: {:id => @editable_section, :name => "Modified editable subsection", section:{name: "Anything"}}
     assert_response :redirect
 
-    put :update, :id => @noneditable_section, :name => "Modified non-editable subsection" , section:{name: "Anything"}
+    put :update, params: {:id => @noneditable_section, :name => "Modified non-editable subsection" , section:{name: "Anything"}}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -122,10 +122,10 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
   def test_update_permissions_of_subsection
     login_as(@user)
 
-    put :update, :id => @editable_section, :name => "Modified editable subsection", section:{name: "Anything"}
+    put :update, params: {:id => @editable_section, :name => "Modified editable subsection", section:{name: "Anything"}}
     assert_response :redirect
 
-    put :update, :id => @editable_subsection, :name => "Section below editable section", section:{name: "Anything"}
+    put :update, params: {:id => @editable_subsection, :name => "Section below editable section", section:{name: "Anything"}}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end
@@ -134,7 +134,7 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
     @group2 = create(:group, :name => "Test", :group_type => create(:group_type, :name => "CMS User", :cms_access => true))
     expected_groups = @editable_section.groups
     login_as(@user)
-    put :update, :id => @editable_section, section: {:name => "V2"}
+    put :update, params: {:id => @editable_section, section: {:name => "V2"}}
     assert_response :redirect
     assert_equal expected_groups, assigns(:section).groups
     assert !assigns(:section).groups.include?(@group2)
@@ -144,7 +144,7 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
     @group2 = create(:group, :name => "Test", :group_type => create(:group_type, :name => "CMS User", :cms_access => true))
     expected_groups = @editable_section.groups
     login_as(@user)
-    put :update, :id => @editable_section, :section => {:name => "new name", :group_ids => [@group.id, @group2.id]}
+    put :update, params: {:id => @editable_section, :section => {:name => "new name", :group_ids => [@group.id, @group2.id]}}
 
     assert_response :redirect
     assert_equal expected_groups, assigns(:section).groups
@@ -160,17 +160,17 @@ class SectionsControllerPermissionsTest < ActionController::TestCase
     @group2 = create(:cms_user_group)
     expected_groups = [@group, @group2]
     login_as_cms_admin
-    put :update, :id => @editable_subsection, :section => {:name => "new name", :group_ids => [@group.id, @group2.id]}
+    put :update, params: {:id => @editable_subsection, :section => {:name => "new name", :group_ids => [@group.id, @group2.id]}}
     assert_response :redirect
   end
 
   def test_destroy_permissions
     login_as(@user)
 
-    delete :destroy, :id => @editable_section
+    delete :destroy, params: {:id => @editable_section}
     assert_response :redirect
 
-    delete :destroy, :id => @noneditable_section
+    delete :destroy, params: {:id => @noneditable_section}
     assert_response 403
     assert_template "cms/shared/access_denied"
   end

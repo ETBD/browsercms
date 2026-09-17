@@ -7,7 +7,7 @@ module Cms
     attr_accessor :page_id, :page_title, :blocks
 
     def initialize(page_id, params)
-      params = HashWithIndifferentAccess.new(params)
+      params = ActiveSupport::HashWithIndifferentAccess.new(params)
       self.page_title = params[:page_title]
       self.blocks = params[:blocks] ? params[:blocks] : []
       self.page_id = page_id
@@ -25,7 +25,7 @@ module Cms
         content_ids.each do |block_id|
           block = content_block_class.constantize.find(block_id)
           assignment_hash = convert_mercury_params_to_assignment_hash(block_id, block_type)
-          block.update_attributes(assignment_hash)
+          block.update(assignment_hash)
         end
       end
       @page.save

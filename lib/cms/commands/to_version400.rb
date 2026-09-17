@@ -1,3 +1,14 @@
+# Do not delete. This looked dead to a grep over app/ lib/ test/ spec/ features/ config/,
+# but bin/bcms -- a shipped executable (browsercms.gemspec:43) -- requires it at :11 and
+# includes it into Cms::Install at :28. Removing the file breaks the `bcms` command at
+# require time for every downstream user. generate_devise_configuration below is called
+# by `bcms new`, `bcms demo`, `bcms module`, `bcms install` and `bcms upgrade`.
+
+# devise.rb.erb interpolates SecureRandom.hex. Nothing in the `bcms` executable's
+# require chain pulls securerandom in on its own any more, so the template died
+# with `uninitialized constant SecureRandom` at render time.
+require 'securerandom'
+
 module Cms
   module Commands
     module ToVersion400

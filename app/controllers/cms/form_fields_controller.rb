@@ -40,7 +40,7 @@ module Cms
         include_edit_path_in_json(field)
         render json: field
       else
-        render text: "Fail", status: 500
+        render plain: "Fail", status: 500
       end
     end
 

@@ -19,15 +19,15 @@ module Cms
                            :publish_on_save => true)
       @foo_section = create(:section, :name => "Foo", :parent => root_section)
 
-      get :index, :section_id => root_section.id
+      get :index, params: {:section_id => root_section.id}
       assert_response :success
       assert_select "td", "Test File"
 
-      get :index, :section_id => @foo_section.id
+      get :index, params: {:section_id => @foo_section.id}
       assert_response :success
       assert_select "td", {:count => 0, :text => "Test File"}
 
-      get :index, :section_id => 'all'
+      get :index, params: {:section_id => 'all'}
       assert_response :success
       assert_select "td", "Test File"
     end

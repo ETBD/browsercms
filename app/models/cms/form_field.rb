@@ -2,7 +2,7 @@ module Cms
   class FormField < ActiveRecord::Base
     extend DefaultAccessible
 
-    belongs_to :form
+    belongs_to :form, required: false
     acts_as_list scope: :form
 
     attr_accessor :edit_path, :delete_path

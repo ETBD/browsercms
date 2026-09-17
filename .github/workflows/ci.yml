@@ -1,0 +1,266 @@
+name: CI
+
+on:
+  push:
+    branches: [master, develop]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Suite (Ruby 2.7.8, Postgres 15)
+    # Pinned, not ubuntu-latest: ruby/setup-ruby has no prebuilt 2.7.8 for 24.04.
+    # If 22.04 is retired, move to `container: ruby:2.7.8-bullseye` with
+    # PGHOST: postgres rather than chasing runner images.
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+
+    env:
+      # test/dummy/config/database.yml defines only `test`. Anything that boots
+      # the dummy app in `development` -- db:migrate and db:seed both do, via
+      # db:install -- aborts with ActiveRecord::AdapterNotSpecified.
+      RAILS_ENV: test
+      # database.yml specifies no host, so libpq falls back to PGHOST. That
+      # points it at the service container instead of a unix socket that does
+      # not exist on the runner, without editing the tracked config.
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      # Rails deprecations print regardless; this adds the Ruby-level ones.
+      RUBYOPT: '-W:deprecated'
+      # features/support/open_on_first_failure.rb pops the first failed page
+      # open via Capybara's save_and_open_page -> Launchy -> xdg-open. Useful at
+      # a desk, useless on a headless runner, where it only prints "Couldn't
+      # find a suitable web browser!". Nothing here drives a real browser: there
+      # are no @javascript scenarios and no Capybara driver is ever selected.
+      launch_on_failure: 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.8'
+          bundler: '1.17.3'
+          bundler-cache: true
+
+      # Travis passed --without development. Not carried over: `rake` is
+      # declared in the :development group and the whole chain is rake-driven.
+      #
+      # `rake` alone, deliberately -- not features:all. The default cucumber
+      # profile excludes @cli, @known-bug and @missing-feature, and those
+      # exclusions are the point of the tags. @known-bug stays measured by the
+      # non-blocking job below so the number stays visible; @cli is now gating,
+      # in the step after this one. `ci:test` runs coverage:check after the
+      # suite.
+      - name: Full suite (units, spec, functionals, orphans, features)
+        run: bundle exec rake
+
+      # GATING as of the @cli repair: 7/34 at the Phase 0 baseline, 34/34 now.
+      # Promoted out of the reporting job below on that job's own standing
+      # instruction ("make it gating once the numbers reach zero").
+      #
+      # Runs after `rake`, not before, and that ordering is required: these
+      # scenarios need a seeded database and ci:test is what creates one
+      # (db:drop, db:create:all, db:install). It also means coverage:check has
+      # already run, so the uploaded artifact ends up richer than the number
+      # that was checked -- fine, but do not read the artifact as the gate.
+      #
+      # This is the only gating step that shells out to generators, so it is the
+      # most likely to break for environmental reasons rather than code ones.
+      # It does not hit the network: aruba passes BUNDLE_GEMFILE through, so the
+      # `bundle install` inside a generated project resolves against this
+      # repo's already-cached bundle. If it starts failing on timeouts rather
+      # than assertions, raise `config.exit_timeout` in features/support/env.rb
+      # before assuming a regression.
+      - name: Cucumber - @cli features (generators and the bcms CLI)
+        run: bundle exec rake features:cli
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage
+          path: coverage/
+          retention-days: 30
+
+  excluded-features:
+    name: Cucumber @known-bug (reporting only)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    # What the default profile filters out and nothing else gates: @known-bug.
+    #
+    # @cli used to live here too. It was 7/34 at the Phase 0 baseline, reached
+    # 34/34, and has moved to the `test` job above on this job's own standing
+    # instruction -- "make it gating once the numbers reach zero".
+    #
+    # @known-bug has not reached zero, so it stays here. It is currently 3
+    # pending and 0 failing: the one scenario that actually failed
+    # (portlets.feature -- "Portlet errors should not blow up the page") turned
+    # out to assert the opposite of what the engine does and what the consuming
+    # app wants, and was inverted, which moved it into the gating suite. The
+    # three that remain are unimplemented steps, not defects.
+    #
+    # So this job passes today. It is still `continue-on-error` on purpose:
+    # pending scenarios are an expected state here, and the next one someone
+    # marks PENDING should not block a merge. `features:known-bugs` runs under
+    # its own cucumber profile precisely so pending does not fail the run --
+    # see the note on `known_bugs` in config/cucumber.yml. A real failure here
+    # still exits non-zero and still shows up red.
+    continue-on-error: true
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+
+    env:
+      RAILS_ENV: test
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      # This job is the one that actually trips it: the After hook is
+      # After('~@cli'), so it fires on the @known-bug failures, not the @cli
+      # ones. See the note in the test job.
+      launch_on_failure: 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.8'
+          bundler: '1.17.3'
+          bundler-cache: true
+
+      # This job gets its own empty Postgres container. The `test` job only has
+      # a database because ci:test starts with db:drop, db:create:all,
+      # db:install -- the cucumber tasks assume one already exists, and
+      # project:ensure_db_exists only checks that database.yml is present, not
+      # that the database is. The same prefix ci:test uses -- including the
+      # drop, which has nothing to drop on a fresh container but keeps the step
+      # rerunnable: db:seed is not idempotent and fails on an already-seeded
+      # database with "Name has already been taken".
+      - name: Create and seed the test database
+        run: bundle exec rake db:drop db:create:all db:install
+
+      - name: Cucumber - @known-bug scenarios
+        run: bundle exec rake features:known-bugs
+
+  next-rails:
+    name: Rails 5.0 (Gemfile.next)
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    # GATING, and GREEN as of Phase 4 stage B.
+    #
+    # This is the dual-boot early-warning job. The `test` job above answers
+    # "did we break 4.2, which is what ships?"; this one answers "how close is
+    # Rails 5?" Every phase before the bump (Phase 5) is meant to be
+    # backwards-compatible, and this job is what proves the 5.0 half of that
+    # claim on every push rather than at bump time.
+    #
+    # History, because the red was load-bearing for three phases: Phase 2 made
+    # this gating while it still held five defects, all in Phase 3's scope.
+    # Phase 3 cleared all five and the job stayed red on ten others. Phase 4
+    # stage B cleared those, and the 5.0 bundle has been green since.
+    #
+    # As of the end of Phase 4, both bundles run identically:
+    # 838 unit / 145 spec / 139 functional / 7 orphan / 154 cucumber, 0F/0E.
+    #
+    # KEEP THIS JOB GATING. Three of the four root causes behind those ten
+    # failures were NOT Rails 5 incompatibilities. They were live defects on
+    # the shipping 4.2 bundle that only the 5.0 suite happened to execute:
+    #
+    #   - optimistic locking silently defeated on every versioned content type
+    #     (4.2's touch incremented lock_version from a stale value)
+    #   - publishing a non-versioned record silently did nothing, an
+    #     ArgumentError swallowed by a `rescue Exception`
+    #   - `?some_id=` blank in a URL was a 500 on both versions
+    #
+    # Phase 4 went on to find more of the same by other means -- public form
+    # submission 500s, the Forms admin UI 500s, a routed controller that can
+    # never render, and an attribute chain that answers nil where it should
+    # raise. Every one fails identically on 4.2.
+    #
+    # So this is not a Rails 5 canary. It is a second execution of the suite
+    # under different framework semantics, and it has found more 4.2 bugs than
+    # 5.0 ones. That is the argument for keeping it gating now that it passes.
+    # See docs/rails-upgrade/phase-4-report.md.
+    #
+    # If it goes red, read the failure before assuming Rails 5 is at fault.
+    #
+    # NOTE: this job runs `rake` and deliberately NOT `features:cli`, even
+    # though that step is now gating on the 4.2 job. @cli is 31/34 here: two
+    # generator defects that only appear on Rails 5 -- `cms:content_block`
+    # emitting an empty `< ApplicationRecord` model, and `bcms module` losing
+    # its gemspec insert because Rails 5's plugin template dropped the
+    # `s.test_files` anchor. Both are Phase 5 work, tracked as 5.1a in
+    # docs/rails-upgrade/phase-5-the-5.0-bump.md with an exit criterion. Add the
+    # step here when they are fixed, not before.
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready --health-interval 10s
+          --health-timeout 5s --health-retries 5
+
+    env:
+      BUNDLE_GEMFILE: Gemfile.next
+      RAILS_ENV: test
+      PGHOST: localhost
+      PGPORT: '5432'
+      PGUSER: postgres
+      launch_on_failure: 'false'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '2.7.8'
+          bundler: '1.17.3'
+          bundler-cache: true
+
+      # Assert the version rather than trusting BUNDLE_GEMFILE. test/dummy's
+      # boot.rb used to reassign BUNDLE_GEMFILE unconditionally, which made every
+      # spawned test process silently fall back to 4.2 -- a job like this one
+      # would have reported green while testing the wrong Rails for four phases.
+      # If this step ever fails, dual-boot is broken, not Rails 5.
+      - name: Assert the bundle really is Rails 5.0
+        run: |
+          bundle exec ruby -e '
+            require "./test/dummy/config/environment"
+            v = Rails.version
+            abort "Expected Rails 5.0.x, booted #{v} -- dual-boot is broken" unless v.start_with?("5.0.")
+            puts "Booted Rails #{v}"
+          '
+
+      - name: Create and seed the test database
+        run: bundle exec rake db:drop db:create:all db:install
+
+      # `if: always()` went with continue-on-error: with the job gating, a step
+      # that runs regardless of whether the database step succeeded only turns
+      # one clear failure into two confusing ones.
+      - name: Suite
+        run: bundle exec rake

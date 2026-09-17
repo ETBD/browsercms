@@ -14,14 +14,14 @@ module Cms
 
     def test_show_another_page
       @page = create(:page, :section => root_section, :path => "/about", :name => "Test About", :template_file_name => "default.html.erb", :publish_on_save => true)
-      get :show, :path => "about"
+      get :show, params: {:path => "about"}
       assert_select "title", "Test About"
     end
 
     def test_page_not_found_to_cms_admin
       skip 'Page routing is not working correctly'
       login_as_cms_admin
-      get :show, :path => "foo"
+      get :show, params: {:path => "foo"}
       assert_response :not_found
       assert_select "title", "Page Not Found"
       assert_select "p", "There is no page at /foo"
@@ -32,7 +32,7 @@ module Cms
 
       login_as @privileged_user
 
-      get :show, :path => "secret"
+      get :show, params: {:path => "secret"}
       assert_response :success
       assert_select "title", "Shhh... It is a Secret"
     end
@@ -42,7 +42,7 @@ module Cms
       create_archived_page
       login_as_cms_admin
 
-      get :show, :path => "archived"
+      get :show, params: {:path => "archived"}
       assert_response :success
       assert_select "title", "Archived"
     end
@@ -61,7 +61,7 @@ module Cms
       @page.publish!
 
       skip "Page routes are not working as expected"
-      get :show_page_route, :foo => "42", :_page_route_id => @page_route.id
+      get :show_page_route, params: {:foo => "42", :_page_route_id => @page_route.id}
       assert_response :success
       assert_select "h1", "42"
     end
@@ -69,7 +69,7 @@ module Cms
     def test_show_page_with_content
       skip 'Routing isnt working correctly'
       create_page_with_content
-      get :show, :path => "page_with_content"
+      get :show, params: {:path => "page_with_content"}
       assert_response :success
       assert_select "h3", "TEST"
     end
@@ -182,7 +182,7 @@ module Cms
 
     def test_guest_user_views_page_on_public_site
       @request.host = "mysite.com"
-      get :show, :path => "page"
+      get :show, params: {:path => "page"}
       assert_response :success
       assert_select "title", "Test Page"
     end
@@ -192,7 +192,7 @@ module Cms
       login_as @registered_user
       @request.host = "mysite.com"
 
-      get :show, :path => "page"
+      get :show, params: {:path => "page"}
 
       assert_response :success
       assert_select "title", "Test Page"
@@ -203,7 +203,7 @@ module Cms
       @request.session[:page_mode] = "edit"
       @request.host = "mysite.com"
 
-      get :show, :path => "page"
+      get :show, params: {:path => "page"}
 
       assert_response :success
       assert_select "title", "Test Page"
@@ -215,7 +215,7 @@ module Cms
       @request.session[:page_mode] = "edit"
       @request.host = "cms.mysite.com"
 
-      get :show, :path => "page", :use_route => false
+      get :show, params: {:path => "page", :use_route => false}
 
       assert_response :success
       assert_select "title", "Test Page"
@@ -251,14 +251,14 @@ module Cms
 
     def test_guest_user_views_page_on_public_site
       @request.host = "mysite.com"
-      get :show, :path => "page"
+      get :show, params: {:path => "page"}
       assert_response :success
       assert_select "title", "Test Page"
     end
 
     def test_guest_user_views_page_on_cms_site
       @request.host = "mysite.com"
-      get :show, :path => "page"
+      get :show, params: {:path => "page"}
       assert_response :success
       assert_select "title", "Test Page"
     end
@@ -267,7 +267,7 @@ module Cms
       login_as @registered_user
       @request.host = "mysite.com"
 
-      get :show, :path => "page"
+      get :show, params: {:path => "page"}
 
       assert_response :success
       assert_select "title", "Test Page"
@@ -277,7 +277,7 @@ module Cms
       login_as @registered_user
       @request.host = "mysite.com"
 
-      get :show, :path => "page"
+      get :show, params: {:path => "page"}
 
       assert_response :success
       assert_select "title", "Test Page"
@@ -288,7 +288,7 @@ module Cms
       @request.session[:page_mode] = "edit"
       @request.host = "mysite.com"
 
-      get :show, :path => "page"
+      get :show, params: {:path => "page"}
 
       assert_response :success
       assert_select "title", "Test Page"
@@ -299,7 +299,7 @@ module Cms
       @request.session[:page_mode] = "edit"
       @request.host = "cms.mysite.com"
 
-      get :show, :path => "page", :use_route => false
+      get :show, params: {:path => "page", :use_route => false}
 
       assert_response :success
       assert_select "title", "Test Page"

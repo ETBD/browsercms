@@ -1,7 +1,7 @@
 module Cms
   class TasksController < Cms::BaseController
 
-    before_filter :load_page, :only => [:new, :create]
+    before_action :load_page, :only => [:new, :create]
 
     def new
       @task = @page.tasks.build(:assigned_by => current_user)
@@ -19,7 +19,7 @@ module Cms
     end
 
     def complete
-      if params[:task_ids]
+      if params[:task_ids].present?
         Task.where(["id in (?)", params[:task_ids]]).each do |t|
           if t.assigned_to == current_user
             t.mark_as_complete!

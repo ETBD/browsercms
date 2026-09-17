@@ -4,9 +4,13 @@ Feature: Generate Module
 
   Background:
 
-  # bin/browsercms module Doesn't put the initializer into test/dummy app, so the layout generator fails.
-  # Puts it in ./config/initializers like its a rails project.
-  @known-bug
+  # Was @known-bug: "bin/browsercms module doesn't put the initializer into the
+  # test/dummy app, so the layout generator fails -- it puts it in
+  # ./config/initializers like it's a rails project." No longer true. The
+  # generator could not run at all on this Rails/Ruby (`bcms module` raised
+  # LoadError on the Rails-3-era PluginNewGenerator), which is what kept this
+  # red; with that fixed the initializer lands in
+  # test/dummy/config/initializers/browsercms.rb and the layout generates.
   Scenario: Create a BrowserCMS module
     When I create a module named "bcms_store"
     Then a rails engine named "bcms_store" should exist
@@ -25,10 +29,15 @@ Feature: Generate Module
     And the following files should exist:
     | test/dummy/db/browsercms.seeds.rb|
     And it should no longer generate a README in the public directory
+    # Split so one scenario covers both bundles: 4.2's routes.rb template leaves a
+    # blank line after `draw do` and 5.0's does not. The two mounts, and their
+    # order, are what this is asserting.
     And the file "test/dummy/config/routes.rb" should contain:
     """
     Rails.application.routes.draw do
-
+    """
+    And the file "test/dummy/config/routes.rb" should contain:
+    """
       mount BcmsWidgets::Engine => "/bcms_widgets"
 
       mount_browsercms

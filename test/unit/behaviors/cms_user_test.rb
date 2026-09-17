@@ -9,7 +9,7 @@ ActiveRecord::Base.connection.instance_eval do
 end
 
 
-EXTERNAL_USER_GROUPS = Hash.new {|hash,key| hash[key] = FactoryGirl.build(:group)}
+EXTERNAL_USER_GROUPS = Hash.new {|hash,key| hash[key] = FactoryBot.build(:group)}
 
 class ExternalUser < ActiveRecord::Base
  #attr_accessible :name

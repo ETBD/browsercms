@@ -129,7 +129,7 @@ module Cms
                 # or the draft version is greater than the live version
                 if !self.published? || d.version > self.version
 
-                  d.update_attributes(:published => true)
+                  d.update(:published => true)
 
                   main_record = self.class.unscoped.where("#{self.class.primary_key} = ?", id).first
                   self.class.versioned_columns.each do |column|
@@ -140,10 +140,26 @@ module Cms
 
                 end
               else
+                # `quote_value` was `quote_value(value, column)` on 4.2 and lost the
+                # second parameter by 5.0, so this one-argument call raised
+                # ArgumentError on 4.2 -- and `publish` (above) rescues Exception and
+                # returns false, so publishing a non-versioned record silently did
+                # nothing on the bundle that ships today. `connection.quote` takes one
+                # argument on both. See docs/rails-upgrade/phase-4-report.md, B.4.
+                #
+                # No model in this engine is publishable-but-not-versioned, so this
+                # branch is unreachable here; a downstream project defining one does
+                # reach it. That is why this is a fix rather than a deletion.
+                #
+                # ⚠️ The two-argument `connection.quote(value, column)` on the next line
+                # is deprecated at 5.0 and removed at 5.1 (Tier B, B7). Left alone
+                # deliberately: it still works on both current bundles, it is in this
+                # same unreachable branch, and changing how a boolean is quoted is a
+                # different risk from fixing an outright ArgumentError.
                 self.class.connection.update(
                   "UPDATE #{self.class.quoted_table_name} " +
                     "SET published = #{self.class.connection.quote(true, self.class.columns_hash["published"])} " +
-                    "WHERE #{self.class.connection.quote_column_name(self.class.primary_key)} = #{self.class.quote_value(id)}",
+                    "WHERE #{self.class.connection.quote_column_name(self.class.primary_key)} = #{self.class.connection.quote(id)}",
                   "#{self.class.name.demodulize} Publish"
                 )
                 did_publish = true

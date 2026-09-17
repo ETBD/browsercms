@@ -125,7 +125,7 @@ module Cms
 
     def version
       load_block
-      if params[:version]
+      if params[:version].present?
         @block = @block.as_of_version(params[:version])
       end
       render "show_in_isolation"
@@ -135,7 +135,7 @@ module Cms
       if model_class.versioned?
         load_block
       else
-        render :text => "Not Implemented", :status => :not_implemented
+        render :plain => "Not Implemented", :status => :not_implemented
       end
     end
 
@@ -264,7 +264,7 @@ module Cms
     # update related methods
     def update_block
       load_block
-      @block.update_attributes(model_params())
+      @block.update(model_params())
     end
 
     # Returns the parameters for the block to be saved.
@@ -272,7 +272,21 @@ module Cms
     def model_params
       defaults = {"publish_on_save" => false}
       model_params = params[model_form_name]
-      defaults.merge(model_params)
+      # `.to_unsafe_h` is explicit about what this already does, and is required from
+      # 5.1. `Hash#merge(Parameters)` coerces via `to_hash`, which Rails 5.0 deprecates
+      # ("#to_hash unexpectedly ignores parameter filtering, and will change to enforce
+      # it in Rails 5.1") -- so at 5.1 this would start dropping unpermitted keys and
+      # content blocks would silently lose fields on save.
+      #
+      # Unfiltered is the existing behaviour, not a new choice: Hash#merge already
+      # returns a plain Hash, so the result was never subject to strong-parameter
+      # checking. The comment above about "eventually 'strong_params'" is still
+      # accurate -- properly permitting these is its own piece of work.
+      #
+      # Found in Phase 4 stage F: an eleventh B9 site, surfaced only once a
+      # 0%-coverage controller was finally instantiated. `to_unsafe_h` exists on both
+      # 4.2 and 5.0 and produces identical results.
+      defaults.merge(model_params.to_unsafe_h)
     end
 
     def after_update_on_success

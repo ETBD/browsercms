@@ -8,15 +8,19 @@ module Cms
     include Cms::MobileAware
     helper MobileHelper
 
-    skip_before_filter :redirect_to_cms_site
-    before_filter :redirect_non_cms_users_to_public_site, :only => [:show, :show_page_route]
-    before_filter :construct_path, :only => [:show]
-    before_filter :construct_path_from_route, :only => [:show_page_route]
-    before_filter :try_to_redirect, :only => [:show]
-    before_filter :try_to_stream_file, :only => [:show]
-    before_filter :load_page, :only => [:show, :show_page_route]
-    before_filter :check_access_to_page, :except => [:edit, :preview]
-    before_filter :select_cache_directory
+    # There is deliberately no skip of :redirect_to_cms_site here. That callback is
+    # registered only on Cms::BaseController (base_controller.rb:3), which is a
+    # sibling of this class, not an ancestor -- so there has never been anything to
+    # skip. 4.2's skip_callback silently deleted nil; 5.0 raises ArgumentError.
+
+    before_action :redirect_non_cms_users_to_public_site, :only => [:show, :show_page_route]
+    before_action :construct_path, :only => [:show]
+    before_action :construct_path_from_route, :only => [:show_page_route]
+    before_action :try_to_redirect, :only => [:show]
+    before_action :try_to_stream_file, :only => [:show]
+    before_action :load_page, :only => [:show, :show_page_route]
+    before_action :check_access_to_page, :except => [:edit, :preview]
+    before_action :select_cache_directory
 
     self.responder = Cms::ContentResponder
 
@@ -68,8 +72,24 @@ module Cms
     def render_editing_frame
       @page_title = @page.page_title
 
-      # Adds all provided parameters to the iframe
-      @edit_page_path = ActionDispatch::Http::URL.url_for(path: edit_content_path(current_page), params: params.except(:controller, :action, :path), only_path: true)
+      # Adds all provided parameters to the iframe.
+      #
+      # `.to_unsafe_h` is load-bearing, not decoration. On 4.2
+      # ActionController::Parameters subclasses HashWithIndifferentAccess, so
+      # url_for flattened it into the query string. On 5.0 it is no longer a Hash
+      # (Tier B, B9), so url_for treats it as one opaque value and builds
+      # `?params%5Bcategory_id%5D=42` instead of `?category_id=42` -- every
+      # parameter silently disappears from the edit-mode iframe's URL, and any
+      # portlet reading params renders its not-found branch inside the editor.
+      #
+      # Unsafe is correct here: these are the current request's own parameters
+      # being copied onto the iframe URL, which is exactly what passing the
+      # Parameters object already did. Nothing is assigned from them.
+      @edit_page_path = ActionDispatch::Http::URL.url_for(
+        path: edit_content_path(current_page),
+        params: params.except(:controller, :action, :path).to_unsafe_h,
+        only_path: true
+      )
       render 'editing_frame', :layout => 'cms/page_editor'
     end
 
