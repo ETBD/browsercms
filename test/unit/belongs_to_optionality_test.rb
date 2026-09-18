@@ -100,8 +100,6 @@ class BelongsToOptionalityTest < ActiveSupport::TestCase
     'Cms::Tagging#tag'              => :optional,
     'Cms::Tagging#taggable'         => :optional,  # polymorphic, unvalidated
     'Cms::SectionNode#node'         => :optional,  # polymorphic, unvalidated; a node is built before it is linked
-    'Cms::FormEntry#form'           => :optional,
-    'Cms::FormField#form'           => :optional,
     'Cms::PageRouteOption#page_route' => :optional,
     'Cms::GroupSection#group'       => :optional,
     'Cms::GroupSection#section'     => :optional,
@@ -126,7 +124,7 @@ class BelongsToOptionalityTest < ActiveSupport::TestCase
   # Classes carrying the literal declarations audited above.
   AUDITED_CLASSES = %w[
     Cms::Category Cms::Connector Cms::PageRoute Cms::Task Cms::Group Cms::Attachment
-    Cms::Tagging Cms::SectionNode Cms::FormEntry Cms::FormField Cms::PageRouteOption
+    Cms::Tagging Cms::SectionNode Cms::PageRouteOption
     Cms::GroupSection Cms::UserGroupMembership Cms::GroupTypePermission Cms::GroupPermission
   ].freeze
 
@@ -257,19 +255,22 @@ class BelongsToOptionalityTest < ActiveSupport::TestCase
   # The count, as a tripwire rather than as the enumeration itself.
   #
   # The sweeps above enumerate by reflection, which is deliberate -- it catches a
-  # belongs_to added tomorrow, which a hardcoded list of 29 could not. But Phase 4's
-  # criterion 4 asks that "the count in the test matches 29", and a reviewer checking
+  # belongs_to added tomorrow, which a hardcoded list of 27 could not. But Phase 4's
+  # criterion 4 asks that "the count in the test matches", and a reviewer checking
   # one number is a cheap and useful thing to preserve. This is that number.
+  #
+  # It was 29 until the Forms subsystem was removed, which took Cms::FormEntry#form and
+  # Cms::FormField#form out of AUDIT along with their classes.
   #
   # If it fails, a declaration was added or removed. Update AUDIT/BEHAVIOR_AUDIT with a
   # verdict for it first, then update this number -- not the other way round.
-  test "the audit still covers 29 belongs_to declarations" do
+  test "the audit still covers 27 belongs_to declarations" do
     literal = AUDIT.size                 # one entry per declaration on a named class
     injected = BEHAVIOR_AUDIT.size       # userstamping x2, categorizing x1
     dynamic = 2                          # versioning.rb:115, dynamic_attributes.rb:171
 
-    assert_equal 29, literal + injected + dynamic,
-                 "expected 29 audited belongs_to declarations, got " +
+    assert_equal 27, literal + injected + dynamic,
+                 "expected 27 audited belongs_to declarations, got " +
                  "#{literal} literal + #{injected} behavior-injected + #{dynamic} dynamic"
   end
 
