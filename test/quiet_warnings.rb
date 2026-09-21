@@ -14,8 +14,18 @@
 #
 # and Fixnum is gone in Ruby 3.2, so it must stay visible.
 #
-# Set VERBOSE_WARNINGS=1 to disable the filtering and see everything.
-unless ENV['VERBOSE_WARNINGS']
+# Two ways to switch the filtering off and see everything:
+#
+#   VERBOSE_WARNINGS=1                -- the short local form
+#   RUBYOPT='-W:deprecated'           -- asking Ruby for the warnings directly
+#
+# The second is what CI already does. .github/workflows/ci.yml sets
+# `RUBYOPT: '-W:deprecated'` on the 4.2 `test` job specifically to surface Ruby-level
+# deprecations, so keying off it means this filter cannot quietly undo that: if you have
+# asked Ruby for the warnings, you get all of them. The `next-rails` job does not set it,
+# which is unchanged from before this file existed -- Ruby-level warnings were never
+# enabled there.
+unless ENV['VERBOSE_WARNINGS'] || ENV['RUBYOPT'].to_s.include?('-W:deprecated')
   module QuietGemWarnings
     def warn(message, *args, **kwargs)
       return if message.to_s.include?('/gems/')
