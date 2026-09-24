@@ -76,7 +76,7 @@ Four edits, all in [`lib/cms/behaviors/versioning.rb`](../../lib/cms/behaviors/v
 
 Three details worth keeping:
 
-- **The check reads from the database, not from memory.** The whole point is to compare what the editor's browser posted back against what is there *now*.
+- **The check reads from the database, not from memory.** The whole point is to compare what the editor's browser posted back against what is there *now*. It is a read-then-compare, though, not the atomic `WHERE`-clause check ActiveRecord uses — §10 says what that costs and why the obvious repair is a trap.
 - **It runs before the version row is built**, so a conflict leaves no partial write behind.
 - **The flag is reset after the save**, so a later save on the same instance is not re-checked against a value the caller never supplied for it.
 
@@ -200,4 +200,10 @@ Identical counts on both bundles is exactly what Phase 1's **false green** warni
 - **The conflict screen itself.** It was already built, already tested, and — since Phase 4 fixed the two partial paths — already working. It had simply never been reachable. Nothing in this ticket touched a view.
 - **`sync_locking_column_before_touch`.** See §3.
 - **The `content_block_controller` conflict path** beyond confirming it rescues the same error. It shares `check_for_stale_lock_version!` and is covered at the behaviour level by the content-block test in the unit file; it has no equivalent of the pages functional test.
+- **The last millisecond of the race.** The check is read-then-compare: `SELECT` the locking column, compare in Ruby, raise or proceed. ActiveRecord's own mechanism is stronger — it puts the comparison *inside* the `UPDATE`'s `WHERE` and infers the conflict from the affected row count, so the losing writer cannot pass. This one cannot borrow that, because §2.1 is precisely that a versioned save issues no `UPDATE` against the content row to hang a `WHERE` on.
+
+  So under PostgreSQL's default READ COMMITTED, two saves landing within the same few milliseconds can both read the same value, both pass, and both proceed. **Known and accepted.** The exposure is not what it replaces: the old behaviour lost the edit *unconditionally*, at any spacing, whereas this loses it only in a genuine race — and when it does, the outcome degrades to that old behaviour rather than to anything worse.
+
+  ⚠️ The obvious repair is a compare-and-swap — `UPDATE ... WHERE id = ? AND lock_version = ?`, incrementing, then checking the affected count. **It is wrong here**, and the reason is not obvious: `touch` already increments the locking column (`activerecord-4.2.11.3/lib/active_record/persistence.rb:470`) via the after-save `touch_self_and_ancestors`, so a CAS would increment twice per save. That breaks the lockstep between `lock_version` and `version` that the conflict screen's arithmetic depends on (§2.3), reintroducing the wrong-version-number bug by another route. The shape that works is a row lock — `.lock` on the read, leaving the incrementing to the touch — and it needs the deadlock question answered first, since `touch_self_and_ancestors` walks up and touches every ancestor section inside the same transaction.
+
 - **Any schema change.** Adding `lock_version` to the `_versions` tables would be another way to solve §2.2 and a worse one: it duplicates a column whose authority is the content row, and every existing installation would need a migration.
