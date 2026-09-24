@@ -306,6 +306,25 @@ module Cms
         #
         # Called before the new version row is built or saved, so a conflict leaves no
         # partial write behind. `save` wraps this in a transaction in any case.
+        #
+        # ⚠️ Read-then-compare, so it is not atomic. ActiveRecord's own locking puts the
+        # comparison inside the UPDATE's WHERE and reads the conflict off the affected
+        # row count, which no concurrent writer can slip past; this cannot borrow that,
+        # because the whole problem is that a versioned save issues no UPDATE against
+        # the content row. Two saves landing within a few milliseconds of each other can
+        # therefore both read the same value and both proceed. Known and accepted: that
+        # is the behaviour this replaced, now confined to a real race instead of
+        # happening at any spacing.
+        #
+        # Do NOT "fix" this with a compare-and-swap (UPDATE ... WHERE lock_version = ?,
+        # incrementing, checking the affected count). `touch` already increments the
+        # locking column (persistence.rb:470), so that would increment twice per save
+        # and break the lockstep between lock_version and version that the conflict
+        # screen's "based off version N" arithmetic depends on -- see
+        # _version_conflict_error.html.erb:4. A row lock on the read is the shape that
+        # works; it needs the deadlock question answered first, because
+        # touch_self_and_ancestors locks every ancestor in the same transaction.
+        # docs/rails-upgrade/cms-435-optimistic-locking.md §10.
         def check_for_stale_lock_version!
           return unless locking_enabled?
           return unless @locking_column_supplied_by_caller
