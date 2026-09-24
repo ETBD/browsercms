@@ -1,3 +1,9 @@
+# Every test entry point (test/test_helper.rb, spec/minitest_helper.rb,
+# features/support/env.rb) requires simplecov first, which loads this file, so this is
+# the one place shared by all five suites. See test/quiet_warnings.rb for what it does
+# and how to turn it off.
+require_relative 'test/quiet_warnings'
+
 # The suite runs as five separate processes (units, spec, functionals, orphans,
 # features) that merge through coverage/.resultset.json. SimpleCov discards any stored
 # result older than merge_timeout, which defaults to 600s -- so on a full run,
