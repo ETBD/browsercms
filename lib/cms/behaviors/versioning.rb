@@ -26,7 +26,35 @@ module Cms
         end
         obj.id = original_record_id
 
-        #obj.lock_version = lock_version
+        # The commented-out line this replaces could never have worked: `lock_version`
+        # is in `non_versioned_columns`, so `create_content_table` does not put the
+        # column on the _versions table at all (schema_statements_test.rb:141 asserts
+        # exactly that). There is no `lock_version` on `self` to copy.
+        #
+        # So every object built from a version row carried the column default -- 0 --
+        # whatever the content row actually said. Both edit screens load their record
+        # this way (`load_draft_page`, `load_block_draft`), which means the
+        # `lock_version` hidden field in the form was **always 0** and the value the
+        # browser posted back identified nothing. Measured before this change: a page
+        # whose content row was at lock_version 4 rendered `value="0"`.
+        #
+        # That is the reason optimistic locking could not be switched on by fixing the
+        # save path alone -- there was nothing to compare against. Read it from the
+        # content row, which is where the column lives.
+        #
+        # Written with write_attribute and then cleared, so building a draft does not
+        # count as the caller supplying a lock_version -- see the locking-column writer
+        # in `is_versioned`, which is what arms the conflict check.
+        if versioned_class.locking_enabled?
+          lock_col = versioned_class.locking_column
+          current_lock = versioned_class.unscoped
+                             .where(versioned_class.primary_key => original_record_id)
+                             .limit(1)
+                             .pluck(lock_col)
+                             .first
+          obj.send(:write_attribute, lock_col, current_lock) unless current_lock.nil?
+          obj.send(:clear_attribute_changes, [lock_col])
+        end
 
         # Need to do this so associations can be loaded
         obj.instance_variable_set("@persisted", true)
@@ -121,6 +149,35 @@ module Cms
 
           version_class.is_userstamped if userstamped?
 
+          # Arms the conflict check in `check_for_stale_lock_version!`.
+          #
+          # A stale save must raise for the case that matters -- two people editing one
+          # page, second save wins, first edit gone -- without raising for the internal
+          # flows that legitimately hold a parent whose lock_version has moved on.
+          # `PageComponent#save` (Mercury inline editing) is the measured example: it
+          # loads the page, updates each block on it, and each block update copies the
+          # page's connectors forward and bumps the page. Measured in-memory 3 against
+          # database 4, every time, with no second editor anywhere near it. An
+          # unconditional check turns every inline edit into a false conflict.
+          #
+          # The two cases are not distinguishable by comparing values -- both are
+          # "in-memory is behind the database". What separates them is where the value
+          # came from. A form round-trips lock_version and posts it back; internal code
+          # never assigns it at all. So the check runs only when a caller has assigned
+          # the locking column on this instance, which is exactly the form case, and
+          # every caller that does not mention lock_version keeps today's behaviour --
+          # including downstream applications built on this engine.
+          #
+          # Defined here rather than as `def lock_version=` in InstanceMethods so it
+          # tracks `locking_column` if it is ever customised, and so it lands directly
+          # on the class, ahead of ActiveRecord's generated attribute-methods module,
+          # without depending on `super` resolving through it.
+          lock_col = locking_column
+          define_method("#{lock_col}=") do |value|
+            @locking_column_supplied_by_caller = true
+            write_attribute(lock_col, value)
+          end
+
         end
       end
       module ClassMethods
@@ -198,13 +255,18 @@ module Cms
         # keeps 4.2's outcome exactly -- 4.2 already ended at the same value, just
         # by incrementing from a stale one -- and unblocks 5.0.
         #
-        # ⚠️ THIS DOES NOT MAKE OPTIMISTIC LOCKING WORK. A save against a genuinely
-        # stale record still proceeds and still silently overwrites a concurrent
-        # edit, exactly as it has on 4.2 all along. That is a real data-integrity
-        # defect, deliberately left in place here because fixing it means changing
-        # 4.2 behaviour in the engine's busiest path, which is not this phase's to
-        # do. It is written up in docs/rails-upgrade/phase-4-report.md -- do not
-        # read this method as evidence that conflicts are detected.
+        # ⚠️ THIS METHOD IS NOT WHERE CONFLICTS ARE DETECTED, and it must not become
+        # so. Its whole job is to let the after_save touch through against a record
+        # whose lock_version moved for reasons that are not a concurrent edit -- a
+        # child update bumping its parent, most of all. Conflicts are detected before
+        # the write instead, in `check_for_stale_lock_version!`, against the value the
+        # editor's browser posted back.
+        #
+        # (Phase 4 left the locking defect open here and said so in this comment. It
+        # is closed now -- CMS-435. What that took was not a change to this method: it
+        # needed the conflict check adding to a save path that never issued an UPDATE,
+        # and `build_object_from_version` populating a lock_version that was
+        # structurally always 0. This method was right as it stood.)
         #
         # Deliberately does not #reload: the record is mid-save and holds pending
         # changes that a full reload would discard.
@@ -222,6 +284,45 @@ module Cms
 
           write_attribute(locking_column, current)
           clear_attribute_changes([locking_column])
+        end
+
+        # Raise ActiveRecord::StaleObjectError when the caller is saving against a
+        # version of this record that someone else has already replaced.
+        #
+        # ActiveRecord's own optimistic locking never runs on a versioned save. Its
+        # check lives in `_update_record`, which adds the locking column to the WHERE
+        # of an UPDATE against the content row -- and `create_or_update` below does not
+        # issue one. An update saves a row into the _versions table instead, so the
+        # content row's lock_version is never part of any WHERE clause and the two
+        # editors' writes never collide. That is why `lock_version` has been on these
+        # tables, and `rescue ActiveRecord::StaleObjectError` has been in
+        # pages_controller.rb and content_block_controller.rb, for years without a
+        # single conflict ever being raised.
+        #
+        # Gated on the caller having supplied the value -- see the writer defined in
+        # `is_versioned`. Read the column straight from the database rather than
+        # trusting anything in memory: the point is to compare what the editor's browser
+        # posted back against what is there now.
+        #
+        # Called before the new version row is built or saved, so a conflict leaves no
+        # partial write behind. `save` wraps this in a transaction in any case.
+        def check_for_stale_lock_version!
+          return unless locking_enabled?
+          return unless @locking_column_supplied_by_caller
+
+          locking_column = self.class.locking_column
+          current = self.class.unscoped
+                        .where(self.class.primary_key => id)
+                        .limit(1)
+                        .pluck(locking_column)
+                        .first
+
+          # No row means the record was destroyed underneath us. That is not a stale
+          # edit, and the save that follows will fail on its own terms.
+          return if current.nil?
+          return if current == read_attribute(locking_column)
+
+          raise ActiveRecord::StaleObjectError.new(self, "update")
         end
 
         def build_new_version_and_add_to_versions_list_for_saving
@@ -307,11 +408,20 @@ module Cms
             clear_changes_information
           else
             logger.debug { "#{self.class}#update" }
+            # The one place a versioned update can detect a concurrent edit. Nothing
+            # below issues an UPDATE against the content row, so ActiveRecord's own
+            # locking check never gets the chance to run.
+            check_for_stale_lock_version!
             # Because we are 'skipping' the normal ActiveRecord update here, we must manually call the save callback chain.
             run_callbacks :save do
               saved_correctly = @new_version.save
             end
           end
+          # The supplied value has been honoured; the after_save touch resyncs the
+          # column to what is now in the database. Leaving the flag set would have a
+          # later save on the same instance re-checked against a value the caller never
+          # supplied for it.
+          @locking_column_supplied_by_caller = false
           publish_if_needed
           return saved_correctly
         end
