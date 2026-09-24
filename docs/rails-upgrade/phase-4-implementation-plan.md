@@ -924,6 +924,11 @@ Work item 4.0 says "characterize before fixing", which implies both. Worth stati
 
 > ### ✅ Decided: fix the cluster, leave the locking defect.
 > The fix re-reads the locking column before the after_save touch, so a stale save proceeds exactly as it does on 4.2 today. **Optimistic locking stays silently defeated** — two editors on one page, second writer wins, no conflict raised. That is a real data-integrity defect and it is now pinned by a characterization test that fails if anyone makes conflicts raise, with a failure message pointing back here. Escalating it properly is the follow-up this phase owes; it is not a Rails-upgrade decision.
+>
+> ### ✅ Follow-up closed by CMS-435 (2026-09-24). See [cms-435-optimistic-locking.md](cms-435-optimistic-locking.md).
+> The escalation happened and the answer was **yes, make it raise** — gated on the caller having assigned `lock_version`, which is what a form round-trip does and what internal engine code never does. The characterization test this phase wrote has been deleted, as designed: its failure was the signal.
+>
+> Phase 4 read the defect as one problem. It was **three**, and this phase could only have seen the first: AR's check never runs on a versioned save (`create_or_update` INSERTs a version row rather than UPDATEing the content row), `build_object_from_version` left `lock_version` at the column default so both edit forms posted back a constant 0, and an *unconditional* raise breaks `PageComponent#save`. Fixing the save path alone — the obvious reading of this row — would have produced a check with nothing to check against.
 
 ### D7 — ~~What happens if stage A finds the dumper working~~ — resolved
 
