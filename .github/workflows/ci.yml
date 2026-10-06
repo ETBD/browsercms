@@ -39,7 +39,13 @@ jobs:
       PGHOST: localhost
       PGPORT: '5432'
       PGUSER: postgres
-      # Rails deprecations print regardless; this adds the Ruby-level ones.
+      # Rails deprecations print regardless (test.rb sets deprecation = :stderr);
+      # this adds the Ruby-level ones.
+      #
+      # It is also the off-switch for test/quiet_warnings.rb, which otherwise filters
+      # gem-origin Ruby warnings out of local runs -- ~650 lines a run, none of it from
+      # our own code. Setting this here keeps CI's record complete. Remove this and CI
+      # loses the Ruby-level warnings twice over.
       RUBYOPT: '-W:deprecated'
       # features/support/open_on_first_failure.rb pops the first failed page
       # open via Capybara's save_and_open_page -> Launchy -> xdg-open. Useful at
@@ -181,8 +187,11 @@ jobs:
     # Phase 3 cleared all five and the job stayed red on ten others. Phase 4
     # stage B cleared those, and the 5.0 bundle has been green since.
     #
-    # As of the end of Phase 4, both bundles run identically:
+    # As of the end of Phase 4, both bundles ran identically:
     # 838 unit / 145 spec / 139 functional / 7 orphan / 154 cucumber, 0F/0E.
+    # CMS-434 then removed the Forms subsystem and its tests. Do not treat the
+    # numbers above as the current expectation -- `script/test-summary` prints
+    # every group's summary in one place if you need today's.
     #
     # KEEP THIS JOB GATING. Three of the four root causes behind those ten
     # failures were NOT Rails 5 incompatibilities. They were live defects on
@@ -198,6 +207,10 @@ jobs:
     # submission 500s, the Forms admin UI 500s, a routed controller that can
     # never render, and an attribute chain that answers nil where it should
     # raise. Every one fails identically on 4.2.
+    #
+    # (The two Forms defects were closed by CMS-434, which removed the subsystem
+    # rather than repairing it -- unused in production, unreachable from the admin
+    # UI. The argument above is unaffected: they were still found this way.)
     #
     # So this is not a Rails 5 canary. It is a second execution of the suite
     # under different framework semantics, and it has found more 4.2 bugs than

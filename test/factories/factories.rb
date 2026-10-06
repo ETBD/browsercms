@@ -279,12 +279,4 @@ FactoryBot.define do
     product.sequence(:slug) { |n| "/product-#{n}" }
   end
 
-  # `slug` was removed here in Phase 4, stage F. Cms::Form has no slug attribute --
-  # cms_forms has name, description, confirmation_* and notification_email -- so every
-  # call raised NoMethodError. Nothing noticed because nothing called it: this factory
-  # had zero usages anywhere in test/, spec/ or features/, which is the same 0%-coverage
-  # hole in the Forms subsystem that criterion 7 exists to close.
-  factory :form, :class => Cms::Form do |form|
-    form.sequence(:name) { |n| "Form #{n}" }
-  end
 end

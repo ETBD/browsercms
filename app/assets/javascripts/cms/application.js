@@ -11,7 +11,6 @@
 //= require cms/core_library
 //= require cms/content_types
 //= require cms/attachment_manager
-//= require cms/form_builder
 //= require cms/sitemap
 //= require bootstrap
 //= require bcms/ckeditor

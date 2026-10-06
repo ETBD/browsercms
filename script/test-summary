@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+#
+# Run the test suite and print only the results.
+#
+#   script/test-summary                 # the full suite (rake test)
+#   script/test-summary test:units      # one group
+#   TEST_LOG=/tmp/x.log script/test-summary
+#
+# Full output, warnings and all, still goes to the log so a failure can be read in
+# context. Two things this exists to get right:
+#
+#   1. The exit code is rake's. `rake test | tail` reports the exit code of `tail`,
+#      which is always 0 -- a piped run looks green over `rake aborted!`.
+#   2. `rake test` runs five suites in separate processes and only the last one's
+#      summary lands at the end of the output, so a trailing "0 failures" says
+#      nothing about the other four. This prints every group's summary.
+set -uo pipefail
+
+cd "$(dirname "$0")/.."
+
+LOG="${TEST_LOG:-tmp/test-run.log}"
+mkdir -p "$(dirname "$LOG")"
+
+TASKS=("$@")
+[ ${#TASKS[@]} -eq 0 ] && TASKS=("test")
+
+echo "running: rake ${TASKS[*]}  (full output: $LOG)"
+bundle exec rake "${TASKS[@]}" > "$LOG" 2>&1
+STATUS=$?
+
+rule() { printf '\n\033[2m%s\033[0m\n' "── $1 ──────────────────────────────────"; }
+
+rule "results"
+grep -hE "^[0-9]+ (tests|runs|examples), |^[0-9]+ scenarios |^[0-9]+ steps " "$LOG" \
+  || echo "(no suite summaries found -- the run probably died early; see $LOG)"
+
+# Failure and error detail, with enough trailing context to be actionable.
+if grep -qE "^ *[0-9]+\) (Failure|Error)|^Failing Scenarios" "$LOG"; then
+  rule "failures"
+  grep -hE -A 6 "^ *[0-9]+\) (Failure|Error)" "$LOG"
+  grep -hE -A 20 "^Failing Scenarios" "$LOG"
+fi
+
+# A group can fail while the tail of the log still reads "0 failures".
+if grep -qE "^FAILED:|^rake aborted" "$LOG"; then
+  rule "aborted"
+  grep -hE "^FAILED:|^rake aborted|^Test failures in:" "$LOG"
+fi
+
+rule "coverage"
+grep -hE "^(Line|Branch) Coverage:" "$LOG" | tail -2
+
+if [ $STATUS -eq 0 ]; then
+  printf '\n\033[32mPASS\033[0m (rake exit 0)\n'
+else
+  printf '\n\033[31mFAIL\033[0m (rake exit %s) -- full output: %s\n' "$STATUS" "$LOG"
+fi
+
+exit $STATUS

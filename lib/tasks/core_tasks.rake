@@ -33,15 +33,33 @@ namespace :coverage do
   # meeting a threshold set for the whole chain. coverage/.last_run.json is
   # written unconditionally, and the last suite to finish writes the fully
   # merged figure, so one check after the chain is both correct and enough.
-  desc 'Fail if merged coverage fell below the recorded Phase 0 baseline'
+  desc 'Fail if merged coverage fell below the recorded baseline'
   task :check do
     require 'json'
-    # 78.35, not the 75.82 Phase 0 recorded: the simplecov 0.12 -> 0.22 bump
-    # changed the instrument, not the tests. Measured across that bump on
-    # identical code, the covered-line count was identical at 4901 and only the
-    # denominator moved, 6460 -> 6255, because 0.18+ narrowed what counts as a
-    # relevant line. See docs/rails-upgrade/phase-2-harness-report.md.
-    threshold = Float(ENV.fetch('COVERAGE_MINIMUM', '78.35'))
+    # Phase 0 recorded 75.82 and this was 78.35 for everything up to CMS-434: not a
+    # raise, a re-measurement. The simplecov 0.12 -> 0.22 bump changed the instrument,
+    # not the tests -- across that bump on identical code the covered-line count was
+    # identical at 4901 and only the denominator moved, 6460 -> 6255, because 0.18+
+    # narrowed what counts as a relevant line. See
+    # docs/rails-upgrade/phase-2-harness-report.md.
+    #
+    # RAISED 78.35 -> 83.71 AFTER CMS-434. This is the first time the line floor has
+    # moved since Phase 0, and it is catching up rather than recording new work: five
+    # phases of tests had lifted the measured figure 5.5 points above the floor, which
+    # is exactly the "headroom silently absorbs the first regression" the branch floor's
+    # note below argues against. Deleting every Forms test would not have tripped it.
+    #
+    # 83.71 IS THE 5.0 FIGURE, AND THAT IS DELIBERATE -- do not raise it to 4.2's. The
+    # two bundles do not agree on lines, measured on cleared resultsets at this commit:
+    #
+    #   4.2.11.3   4942 / 5895   83.83
+    #   5.0.7.2    4935 / 5895   83.71
+    #
+    # Same denominator, seven fewer covered lines on 5.0. One floor gates both jobs, so
+    # it tracks the lower bundle or the next-rails job goes red on a difference that is
+    # about framework internals, not about this repo's tests. If the gap ever closes,
+    # re-measure both and raise to the new lower figure.
+    threshold = Float(ENV.fetch('COVERAGE_MINIMUM', '83.71'))
     path = 'coverage/.last_run.json'
     abort "#{path} is missing -- did the suite run?" unless File.exist?(path)
 
@@ -98,10 +116,40 @@ namespace :coverage do
     # and the first coverage section_nodes_controller has ever had. Each raise was
     # measured on a cleared resultset before being written here.
     #
+    # ---------------------------------------------------------------------------
+    # LOWERED 70.97 -> 70.63 BY CMS-434, which removed the Forms subsystem. Read this
+    # before "restoring" 70.97.
+    #
+    # Nothing that survives became less tested. The removed code was better tested than
+    # the average of what remains, so taking it out pulled the mean down. Measured on
+    # cleared resultsets, 4.2 bundle, either side of the removal:
+    #
+    #   before (9a6427ee)   1038 / 1461   71.05%
+    #   after               1001 / 1420   70.49%
+    #
+    # 41 branches went with the Forms files and 35 of them were covered -- 85%, against
+    # a suite average of 71%:
+    #
+    #   form_field.rb              14/15     form_entries_controller.rb   8/12
+    #   form_entry.rb               5/6      form_fields_controller.rb    4/4
+    #   form.rb                     4/4
+    #
+    # The other two of the 37 lost are in lib/acts_as_list.rb, and they were the one
+    # real loss: Cms::FormField was the only caller passing a Symbol :scope, and the
+    # two that remain -- Cms::Connector (String scope) and Cms::SectionNode (default)
+    # -- both take the else branch, so `acts_as_list :scope => :some_association`
+    # became live engine code with no test. Untested, not unreachable, so it got one:
+    # test/unit/lib/acts_as_list_test.rb, the first test the file has ever had.
+    #
+    # THAT PUTS THE FLOOR AT 70.63, NOT 70.49. Reclaiming those two is the whole of
+    # the difference -- 1003/1420 against 1001/1420 -- and both bundles measure the
+    # same, so one floor still serves 4.2 and 5.0.
+    # ---------------------------------------------------------------------------
+    #
     # Clear coverage/.resultset.json before trusting either number. The five suites merge
     # through it with a 3600s timeout and both bundles use the same suite names, so a
     # partial or cross-bundle run leaves entries that shift the merged percentage.
-    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.97'))
+    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.63'))
     branch = result['branch']
 
     # Print both figures before aborting, so a run that fails one gate still tells you

@@ -38,15 +38,15 @@ Phase 4 was scoped to write characterization tests: pin what the code does *toda
 | Publishing a non-versioned record silently did nothing for years | B | **yes** |
 | `?some_id=` blank in a URL was a 500 | B | **yes** |
 | The edit-conflict screen raised `MissingTemplate` — two broken partial paths, not one | G | **yes** |
-| Public form submission 500s for every form showing confirmation text | F | **yes** |
-| The Forms admin UI 500s | F | **yes** |
+| Public form submission 500s for every form showing confirmation text ✅ *resolved by CMS-434 — Forms removed* | F | **yes** |
+| The Forms admin UI 500s ✅ *resolved by CMS-434 — Forms removed* | F | **yes** |
 | `Cms::ToolbarController` is routed but can never render | F | **yes** |
 | Every version saved through the CMS is commented with the whole record | G | **yes** |
 | `Model.exists?` with no arguments raises on every soft-deleting model | H | **yes** |
 | `read_attribute` returns **nil** on every portlet instead of raising | H | **yes** |
 | `nonversioned_class` raises `FrozenError` in the only case it exists for | H | **yes** |
 | `move_to_position`'s rescue cannot report either lookup failure | I | **yes** |
-| `form_fields_controller#update` cannot fail at all | I | **yes** |
+| `form_fields_controller#update` cannot fail at all ✅ *moot as of CMS-434 — controller removed* | I | **yes** |
 | `Cms::Section#pages` returned rows in arbitrary order | I | **yes** |
 
 **Fourteen of the fifteen fail identically on Rails 4.2.** None was caused by the upgrade. The upgrade was the excuse to look.
@@ -77,7 +77,7 @@ That is the finding worth carrying out of this phase: **the dual-boot suite is n
 | `read_attribute` private and answering nil on portlets | Changes the public surface of every portlet class in every installation |
 | `respond_to?` disagrees with `method_missing` | A correct `respond_to_missing?` would have to return true for every name |
 | `nonversioned_class` raises `FrozenError` | Unreachable in this engine; the repair enables a path that has never run anywhere |
-| Public form submission and the Forms admin UI 500 | Both need a product decision about the Forms subsystem's abandoned addressable migration |
+| Public form submission and the Forms admin UI 500 | Both need a product decision about the Forms subsystem's abandoned addressable migration. ✅ **Answered in CMS-434: remove.** Production held zero forms, zero entries and zero connectors, and the subsystem was unreachable from the admin UI |
 | `Cms::ToolbarController` is vestigial | Deleting a routed controller is the admin UI owner's call |
 | `move_to_position`'s rescue raises on lookup failure | The repair means deciding what the error says without the objects that failed to load |
 
@@ -153,14 +153,14 @@ Hence the rule adopted mid-phase and applied for the rest of it: **verify that a
 
 - [ ] **B4 — the three untested Paperclip validation macros.** Deliberately out of scope: the phase document scopes it to validation tests with no replacement. ⚠️ It needs a destination in the Phase 5 or Phase 6 document rather than lapsing here. `validates_attachment_presence` is also **defined twice** (`attaching.rb:89` and `:98`), the first silently overwritten.
 - [ ] **The `or` half of B8.** `ActiveRecord::Relation#or` arrives in Rails 5.0, so a test using it cannot pass on the `Gemfile` bundle and criterion 11 forbids version branching. Measured on 5.0 — the default scope distributes correctly across both sides — and handed to Phase 5 with the answer attached.
-- [ ] **The ten characterized defects in [§3](#3-what-was-fixed-and-what-was-deliberately-left).** Each needs a ticket and a product decision. The two worst are public form submission 500ing for unauthenticated visitors, and optimistic locking being silently defeated.
+- [ ] **The ten characterized defects in [§3](#3-what-was-fixed-and-what-was-deliberately-left).** Each needs a ticket and a product decision. The two worst are public form submission 500ing for unauthenticated visitors, and optimistic locking being silently defeated. ✅ **Three are now closed by CMS-434** (both Forms 500s and `form_fields_controller#update`), leaving **seven**; of the two named worst, only optimistic locking survives. Their pinning tests went with the code.
 
 ## 9. For Phase 5
 
 Phase 5 is the bump itself. Three things from here bear on it:
 
 1. **The `next-rails` job should stay gating.** It is green now, and the argument for keeping it is in [`ci.yml`](../../.github/workflows/ci.yml): it has found more 4.2 bugs than 5.0 ones.
-2. **`form_entries_controller` is on Phase 5's manual-verification list** and now has 10 tests, which replaces part of that manual pass with something that runs every build. It is also where the most serious open defect lives.
+2. ~~**`form_entries_controller` is on Phase 5's manual-verification list**~~ ✅ **Superseded by CMS-434.** The controller, its 10 tests and the whole Forms subsystem were removed, and the Forms bullet has been struck from Phase 5 §5.5. What was the most serious open defect here — public submission 500ing for unauthenticated visitors — is closed by deletion rather than repair.
 3. **Two 5.1 landmines are now covered rather than merely converted:** `render text:` at two sites and the two-argument `connection.quote` in `publishing.rb`. The tests assert behaviour rather than API shape, so they survive the removal and fail only if the fix for it is wrong.
 
 The Zeitwerk inventory from stage C also scopes **Phase 6**: one misnamed file, and an `autoload_paths` block in `engine.rb` that is at most one entry additive and can mostly be deleted.
