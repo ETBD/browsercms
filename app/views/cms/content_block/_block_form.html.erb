@@ -10,6 +10,10 @@
       </div>
       <%= render partial: 'sidebar', layout: 'sidebar_layout' unless @block.new_record? %>
     </div>
-    <%= render :partial => "version_conflict_diff", :locals => {:other_version => @other_version, :your_version => @block} if @other_version %>
+    <% if @other_version %>
+        <div class="padded">
+          <%= render :partial => "version_conflict_diff", :locals => {:other_version => @other_version, :your_version => @block} %>
+        </div>
+    <% end %>
     <%= bottom_buttons f %>
 <% end %>
