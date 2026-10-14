@@ -345,4 +345,64 @@ class VersioningLockingTest < ActiveSupport::TestCase
 
     assert_nothing_raised { held_page.save! }
   end
+
+  # ===========================================================================
+  # The degenerate sides of the CMS-435 guards.
+  #
+  # Each guard below has a "nothing to do" branch that no other test reaches, so
+  # removing the guard would still leave this file green. They mirror the two
+  # tests above for `sync_locking_column_before_touch`, which exist for the same
+  # reason against the same two conditions.
+  # ===========================================================================
+
+  # versioning.rb:329. Mirrors "the lock sync does nothing when the model has no
+  # locking column". The gate is what lets a downstream model without a
+  # lock_version column keep saving; without it, this raises.
+  test "the conflict check does nothing when the model has no locking column" do
+    @page.lock_version = db_lock_version(@page) - 1
+    @page.stubs(:locking_enabled?).returns(false)
+
+    assert_nothing_raised do
+      @page.send(:check_for_stale_lock_version!)
+    end
+  end
+
+  # versioning.rb:341. A destroyed row is not a stale edit -- the save that
+  # follows fails on its own terms, and a conflict screen would be a lie.
+  test "the conflict check does not raise when the row has disappeared" do
+    @page.lock_version = db_lock_version(@page) - 1
+    Cms::Page.connection.execute("DELETE FROM cms_pages WHERE id = #{@page.id}")
+
+    assert_nothing_raised do
+      @page.send(:check_for_stale_lock_version!)
+    end
+  end
+
+  # versioning.rb:48. With locking off there is no column to read, so the draft
+  # must come back carrying the default rather than a value read from the row.
+  test "building a draft skips the lock_version read when locking is off" do
+    @page.update(name: "Moved The Lock Version")
+    assert_operator db_lock_version(@page), :>, 0,
+                    "precondition: the row must have a lock_version worth skipping"
+    version = Cms::Page.find(@page.id).draft
+    Cms::Page.stubs(:locking_enabled?).returns(false)
+
+    obj = version.build_object_from_version
+
+    assert_equal @page.id, obj.id
+    assert_equal 0, obj.lock_version,
+                 "with locking off the content row must not be consulted"
+  end
+
+  # versioning.rb:55. pluck returns nil when the row is gone; writing that nil
+  # into the attribute would be worse than leaving the default in place.
+  test "building a draft leaves lock_version alone when the row has disappeared" do
+    version = Cms::Page.find(@page.id).draft
+    Cms::Page.connection.execute("DELETE FROM cms_pages WHERE id = #{@page.id}")
+
+    obj = version.build_object_from_version
+
+    assert_equal 0, obj.lock_version,
+                 "a missing row must not write nil over the column default"
+  end
 end
