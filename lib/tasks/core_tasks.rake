@@ -146,10 +146,29 @@ namespace :coverage do
     # same, so one floor still serves 4.2 and 5.0.
     # ---------------------------------------------------------------------------
     #
+    # RAISED 70.63 -> 70.87 BY CMS-435. Same policy as stages H and I: the tests moved
+    # the measured figure up, so the floor moves with it.
+    #
+    # CMS-435 added 12 branches to versioning.rb -- the two guards in
+    # check_for_stale_lock_version! and the two in build_object_from_version. The
+    # conflict tests covered eight of them; the four "nothing to do" sides had nothing
+    # reaching them, which took the merged figure to 1011/1432 (70.60%) and failed this
+    # gate at 70.63. They now have the same pair of tests sync_locking_column_before_touch
+    # has had since Phase 4 -- locking disabled, and the row deleted underneath -- for
+    # both methods. Measured on cleared resultsets:
+    #
+    #   4.2 bundle   1015 / 1432   70.88%
+    #   5.0 bundle   1015 / 1432   70.88%
+    #
+    # Identical on both, so the one-floor-serves-both claim above still holds. Note the
+    # report prints 70.88 where .last_run.json stores 70.87, and this gate reads the
+    # JSON -- hence 70.87 and not 70.88, which would fail a run that is actually fine.
+    # ---------------------------------------------------------------------------
+    #
     # Clear coverage/.resultset.json before trusting either number. The five suites merge
     # through it with a 3600s timeout and both bundles use the same suite names, so a
     # partial or cross-bundle run leaves entries that shift the merged percentage.
-    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.63'))
+    branch_threshold = Float(ENV.fetch('COVERAGE_MINIMUM_BRANCH', '70.87'))
     branch = result['branch']
 
     # Print both figures before aborting, so a run that fails one gate still tells you

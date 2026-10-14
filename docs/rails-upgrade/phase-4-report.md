@@ -70,14 +70,14 @@ That is the finding worth carrying out of this phase: **the dual-boot suite is n
 
 | Defect | Why not fixed |
 |---|---|
-| Optimistic locking still silently overwrites concurrent edits | Making conflicts raise changes 4.2 behaviour on the engine's busiest path. A product decision ([D6](phase-4-implementation-plan.md)) |
+| ~~Optimistic locking still silently overwrites concurrent edits~~ **— fixed by CMS-435** | Making conflicts raise changes 4.2 behaviour on the engine's busiest path. A product decision ([D6](phase-4-implementation-plan.md)) — taken, and the answer was to raise. [cms-435-optimistic-locking.md](cms-435-optimistic-locking.md) |
 | `version_comment` names every field on the CMS edit path | The one-word fix also switches on a skip-save branch that has never run in any released version |
 | `publish` swallows `Exception`, including programming errors | Narrowing it changes every save of every content type |
 | `Model.exists?` with no arguments raises | The override also answers with `count > 0` rather than `LIMIT 1`; "fixing" the signature commits every caller to a full count |
 | `read_attribute` private and answering nil on portlets | Changes the public surface of every portlet class in every installation |
 | `respond_to?` disagrees with `method_missing` | A correct `respond_to_missing?` would have to return true for every name |
 | `nonversioned_class` raises `FrozenError` | Unreachable in this engine; the repair enables a path that has never run anywhere |
-| Public form submission and the Forms admin UI 500 | Both need a product decision about the Forms subsystem's abandoned addressable migration. ✅ **Answered in CMS-434: remove.** Production held zero forms, zero entries and zero connectors, and the subsystem was unreachable from the admin UI |
+| ~~Public form submission and the Forms admin UI 500~~ **— removed by CMS-434** | Both need a product decision about the Forms subsystem's abandoned addressable migration. ✅ **Answered in CMS-434: remove.** Production held zero forms, zero entries and zero connectors, and the subsystem was unreachable from the admin UI |
 | `Cms::ToolbarController` is vestigial | Deleting a routed controller is the admin UI owner's call |
 | `move_to_position`'s rescue raises on lookup failure | The repair means deciding what the error says without the objects that failed to load |
 
@@ -153,7 +153,9 @@ Hence the rule adopted mid-phase and applied for the rest of it: **verify that a
 
 - [ ] **B4 — the three untested Paperclip validation macros.** Deliberately out of scope: the phase document scopes it to validation tests with no replacement. ⚠️ It needs a destination in the Phase 5 or Phase 6 document rather than lapsing here. `validates_attachment_presence` is also **defined twice** (`attaching.rb:89` and `:98`), the first silently overwritten.
 - [ ] **The `or` half of B8.** `ActiveRecord::Relation#or` arrives in Rails 5.0, so a test using it cannot pass on the `Gemfile` bundle and criterion 11 forbids version branching. Measured on 5.0 — the default scope distributes correctly across both sides — and handed to Phase 5 with the answer attached.
-- [ ] **The ten characterized defects in [§3](#3-what-was-fixed-and-what-was-deliberately-left).** Each needs a ticket and a product decision. The two worst are public form submission 500ing for unauthenticated visitors, and optimistic locking being silently defeated. ✅ **Three are now closed by CMS-434** (both Forms 500s and `form_fields_controller#update`), leaving **seven**; of the two named worst, only optimistic locking survives. Their pinning tests went with the code.
+- [ ] **The ten characterized defects in [§3](#3-what-was-fixed-and-what-was-deliberately-left).** Each needs a ticket and a product decision. The two worst are public form submission 500ing for unauthenticated visitors, and optimistic locking being silently defeated. **Four are now closed, leaving six — and neither of the two named worst is among them.**
+  - ✅ **The Forms 500s — closed by CMS-434.** Three of the ten: both Forms 500s and `form_fields_controller#update`. Their pinning tests went with the code.
+  - ✅ **Optimistic locking — closed by CMS-435 (2026-09-24).** A stale versioned save now raises, gated on the caller having supplied `lock_version`. The characterization test was deleted as designed. This phase saw one defect where there were three; the write-up is [cms-435-optimistic-locking.md](cms-435-optimistic-locking.md).
 
 ## 9. For Phase 5
 

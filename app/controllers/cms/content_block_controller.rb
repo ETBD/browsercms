@@ -299,7 +299,7 @@ module Cms
     end
 
     def after_update_on_edit_conflict
-      @other_version = @block.class.find(@block.id)
+      @other_version = @block.class.find(@block.id).as_of_draft_version
       after_update_on_failure
     end
 

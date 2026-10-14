@@ -50,7 +50,7 @@ module Cms
         render :action => "edit"
       end
     rescue ActiveRecord::StaleObjectError => e
-      @other_version = @page.class.find(@page.id)
+      @other_version = @page.class.find(@page.id).as_of_draft_version
       render :action => "edit"
     end
 
